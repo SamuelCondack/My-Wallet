@@ -1,0 +1,28 @@
+.newRegister{
+    width: 100%;
+    margin-right: 10%;
+}
+.inputsContainer{
+    display: flex;
+    flex-direction: column;
+}
+label{
+    margin-top: 15px;
+}
+.inclusionDate{
+    height: 200px;
+    text-align: unset!important;
+}
+.registerButton{
+    background-color: #33b249;
+    color: #fff;
+    border: none;
+    margin-top: 20px;
+    padding: 10px;
+    text-transform: uppercase;
+    font-size: 14px;
+    letter-spacing: 3px;
+}
+.registerButton:hover{
+    cursor: pointer;
+}
