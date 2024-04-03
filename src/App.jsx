@@ -12,8 +12,8 @@ function App() {
         <aside className={styles.asideMenu}>
           <Link to="/" className={styles.iconDiv}><img src={walletIcon} alt="Wallet Icon" className={styles.icon} /><p className={styles.namep}>MyWallet</p></Link>
           <ul className={styles.options}>
-            <Link to="/" className={styles.menuLinks}>Despesas</Link>
-            <Link to="novoregistro" className={styles.menuLinks}>Novo Registro</Link>
+            <Link to="/" className={styles.menuLinks}>Expenses</Link>
+            <Link to="novoregistro" className={styles.menuLinks}>New Register</Link>
           </ul>
         </aside>
         <Outlet />

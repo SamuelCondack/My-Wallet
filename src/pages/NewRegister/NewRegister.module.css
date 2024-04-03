@@ -1,19 +1,41 @@
-.newRegister{
+.newRegister {
     width: 100%;
     margin-right: 10%;
-}
-.inputsContainer{
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
-label{
+
+.newRegisterTitle {
+    color: #fff;
+}
+
+.inputsContainer {
+    display: flex;
+    flex-direction: column;
+    width: 500px;
+}
+
+.newRegisterLabels {
+    color: #fff;
+}
+
+.newRegisterInputs {
+    border-radius: 10px;
+    width: 100%;
+}
+
+label {
     margin-top: 15px;
 }
-.inclusionDate{
+
+.inclusionDate {
     height: 200px;
-    text-align: unset!important;
+    text-align: unset !important;
 }
-.registerButton{
+
+.registerButton {
     background-color: #33b249;
     color: #fff;
     border: none;
@@ -22,7 +44,10 @@ label{
     text-transform: uppercase;
     font-size: 14px;
     letter-spacing: 3px;
+    border-radius: 10px;
+    width: 100%;
 }
-.registerButton:hover{
+
+.registerButton:hover {
     cursor: pointer;
 }
