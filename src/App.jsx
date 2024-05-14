@@ -1,25 +1,9 @@
-import walletIcon from "./assets/walletIcon.png"
-import styles from "./App.module.css"
-import NewRegister from "./pages/NewRegister/NewRegister"
-import { Link } from "react-router-dom"
-import { Outlet } from "react-router-dom"
+import HomeNoAuth from "./pages/homeNoAuth/"
 
-function App() {
-
-  return (
+export default function App(){
+  return(
     <>
-      <main className={styles.mainContainer}>
-        <aside className={styles.asideMenu}>
-          <Link to="/" className={styles.iconDiv}><img src={walletIcon} alt="Wallet Icon" className={styles.icon} /><p className={styles.namep}>MyWallet</p></Link>
-          <ul className={styles.options}>
-            <Link to="/" className={styles.menuLinks}>Expenses</Link>
-            <Link to="novoregistro" className={styles.menuLinks}>New Register</Link>
-          </ul>
-        </aside>
-        <Outlet />
-      </main>
+    <HomeNoAuth/>
     </>
   )
 }
-
-export default App

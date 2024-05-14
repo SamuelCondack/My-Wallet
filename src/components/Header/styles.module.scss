@@ -1,0 +1,45 @@
+@import "../../Global/variables.scss";
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.headerContent {
+    display: flex;
+    flex-direction: row;
+    width: 90%;
+    padding: 10px 0;
+    justify-content: space-around;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(0, 0, 0, 0.888);
+    border-radius: 50px;
+    color: #fff;
+
+    a {
+        color: #fff;
+        text-decoration: none;
+        padding: 10px;
+        border-radius: 10px;
+        transition: .4s;
+
+        &:hover {
+            background-color: $defaultBlue;
+            font-weight: 800;
+        }
+    }
+}
+
+.logoDiv {
+    width: 50px;
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    width: 50px;
+}
+
+.logoImg {
+    width: 100%;
+}

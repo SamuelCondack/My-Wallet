@@ -1,0 +1,54 @@
+@import '../../Global/variables.scss';
+
+.firstContent{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 5% 0 5%;
+}
+
+.title{
+    p{
+        font-size: 56px;
+        font-weight: 800;
+        &::after{
+            content: "best life";
+            background-color: $defaultBlue;
+            color: white;
+        }
+    }
+}
+
+.subTitle{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    width: 20%;
+    font-size: 20px;
+}
+
+.buttonLink{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.registerBtn{
+    width: 50%;
+    background-color: transparent;
+    border: 1px solid black;
+    font-size: 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: .4s;
+
+    &:hover{
+        border-color: $defaultBlue;
+        color: $defaultBlue;
+        transform: scale(1.1) rotate(1deg);
+    }
+}
