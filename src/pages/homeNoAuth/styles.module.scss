@@ -23,10 +23,11 @@
 .subTitle{
     display: flex;
     flex-direction: column;
-    justify-content: end;
-    align-items: end;
+    justify-content: center;
+    align-items: center;
     width: 30%;
     font-size: 20px;
+    text-align: center;
 }
 
 .buttons{
@@ -57,5 +58,36 @@
         border-color: $defaultBlue;
         color: $defaultBlue;
         transform: scale(1.1) rotate(1deg);
+    }
+}
+@media(max-width: 1000px){
+    .firstContent{
+        flex-direction: column;
+    }
+    .subTitle{
+        width: 100%;
+    }
+    .registerBtn{
+        width: 150px;
+    }
+}
+@media(max-width: 650px){
+    .title{
+        p{
+            font-size: 55px;
+        }
+    }
+    .subTitle{
+        width: 80%;
+    }
+}
+@media(max-width: 500px){
+    .title{
+        p{
+            font-size: 40px;
+        }
+    }
+    .subTitle{
+        width: 80%;
     }
 }
