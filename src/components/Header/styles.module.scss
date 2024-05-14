@@ -60,11 +60,15 @@
 }
 
 .logoDiv {
-    width: 50px;
     display: flex;
     flex-direction: row;
+    justify-content: center;
+    align-items: center;
     gap: 15px;
     width: 50px;
+    p{
+        margin: 0;
+    }
 }
 
 .logoImg {
