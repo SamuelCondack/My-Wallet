@@ -24,6 +24,7 @@ export default function HomeNoAuth() {
           </Link>
         </div>
       </div>
+      
     </>
   );
 }

@@ -10,7 +10,7 @@
 
 .title{
     p{
-        font-size: 56px;
+        font-size: 70px;
         font-weight: 800;
         &::after{
             content: "best life";
@@ -23,10 +23,16 @@
 .subTitle{
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-    width: 20%;
+    justify-content: end;
+    align-items: end;
+    width: 30%;
     font-size: 20px;
+}
+
+.buttons{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
 }
 
 .buttonLink{
@@ -38,7 +44,8 @@
 }
 
 .registerBtn{
-    width: 50%;
+    width: 40%;
+    padding: 5px;
     background-color: transparent;
     border: 1px solid black;
     font-size: 18px;

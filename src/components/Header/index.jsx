@@ -6,6 +6,7 @@ export default function Header() {
       <div className={styles.header}>
         <ul className={styles.headerContent}>
           <a className={styles.headerLinks} href="">HOME</a>
+          <a className={styles.headerLinks} href="">ABOUT</a>
           <div className={styles.logoDiv}>
             <img
               className={styles.logoImg}
@@ -14,7 +15,10 @@ export default function Header() {
             />
             <p>MyWallet</p>
           </div>
-          <a className={styles.headerLinks} href="">ABOUT</a>
+          <div className={styles.authButtons}>
+            <a className={styles.headerSignIn} href="">Sign In</a>
+            <a className={styles.headerSignUp} href="">Start For Free</a>
+          </div>
         </ul>
       </div>
     </>

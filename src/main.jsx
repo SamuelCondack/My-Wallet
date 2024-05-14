@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-import './Global/reset.css'
+import './Global/reset.scss'
 import './Global/global.scss'
 import NewRegister from './pages/NewRegister/NewRegister.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'

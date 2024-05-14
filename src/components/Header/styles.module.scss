@@ -17,19 +17,46 @@
     background-color: rgba(0, 0, 0, 0.888);
     border-radius: 50px;
     color: #fff;
+}
 
-    a {
-        color: #fff;
-        text-decoration: none;
-        padding: 10px;
-        border-radius: 10px;
-        transition: .4s;
+.headerLinks {
+    color: #fff;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 10px;
+    transition: .4s;
 
-        &:hover {
-            background-color: $defaultBlue;
-            font-weight: 800;
-        }
+    &:hover {
+        background-color: $defaultBlue;
+        font-weight: 800;
     }
+}
+
+.authButtons {
+    display: flex;
+    gap: 10px;
+}
+
+.headerSignIn {
+    border: 1px solid #fff;
+    padding: 5px 20px 5px 20px !important;
+    text-align: center;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: .4s;
+    font-weight: 800;
+
+    &:hover {
+        border-color: $defaultBlue;
+        color: $defaultBlue;
+    }
+}
+
+.headerSignUp {
+    @extend .headerSignIn;
+    background-color: #fff;
+    color: #000;
 }
 
 .logoDiv {
@@ -42,4 +69,29 @@
 
 .logoImg {
     width: 100%;
+}
+
+@media (max-width: 920px) {
+    .headerLinks {
+        display: none;
+    }
+}
+
+@media (max-width: 570px) {
+    .logoDiv {
+        p {
+            display: none;
+        }
+    }
+}
+
+@media (max-width: 390px) {
+    .logoImg{
+        width: 30px;
+        padding-left: 5px;
+    }
+    .headerSignIn {
+        font-size: 13px;
+        padding: 5px 5px 5px 5px !important;
+    }
 }
