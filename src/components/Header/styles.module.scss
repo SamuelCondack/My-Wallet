@@ -29,7 +29,32 @@
     &:hover {
         background-color: $defaultBlue;
         font-weight: 800;
+        transform: scale(1.1);
+        border-radius: 500px;
     }
+}
+
+.logoDiv {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    width: fit-content;
+
+    p {
+        margin: 0;
+        font-weight: 800;
+
+        -webkit-user-select: none!important;
+        -moz-user-select: none!important;
+        -ms-user-select: none!important;
+        user-select: none!important;
+    }
+}
+
+.logoImg {
+    width: 50px;
 }
 
 .authButtons {
@@ -59,22 +84,6 @@
     color: #000;
 }
 
-.logoDiv {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    width: 50px;
-    p{
-        margin: 0;
-    }
-}
-
-.logoImg {
-    width: 100%;
-}
-
 @media (max-width: 920px) {
     .headerLinks {
         display: none;
@@ -90,10 +99,11 @@
 }
 
 @media (max-width: 390px) {
-    .logoImg{
+    .logoImg {
         width: 30px;
         padding-left: 5px;
     }
+
     .headerSignIn {
         font-size: 13px;
         padding: 5px 5px 5px 5px !important;

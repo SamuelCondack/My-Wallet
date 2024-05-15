@@ -9,13 +9,16 @@
 }
 
 .title{
-    p{
+    h1{
         font-size: 70px;
         font-weight: 800;
         &::after{
             content: "best life";
             background-color: $defaultBlue;
             color: white;
+            border-radius: 10px;
+            padding: 0 10px 0 10px;
+            text-wrap: nowrap;
         }
     }
 }
@@ -28,6 +31,8 @@
     width: 30%;
     font-size: 20px;
     text-align: center;
+    align-self: end;
+    padding-bottom: 3%;
 }
 
 .buttons{
@@ -37,15 +42,16 @@
 }
 
 .buttonLink{
-    width: 100%;
+    width: 40%;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
+    border-radius: 50px;
 }
 
 .registerBtn{
-    width: 40%;
+    width: 100%;
     padding: 5px;
     background-color: transparent;
     border: 1px solid black;
@@ -64,8 +70,14 @@
     .firstContent{
         flex-direction: column;
     }
+    .title{
+        h1{
+            text-align: center;
+        }
+    }
     .subTitle{
         width: 100%;
+        align-self: center;
     }
     .registerBtn{
         width: 150px;
@@ -73,7 +85,7 @@
 }
 @media(max-width: 650px){
     .title{
-        p{
+        h1{
             font-size: 55px;
         }
     }
@@ -83,11 +95,45 @@
 }
 @media(max-width: 500px){
     .title{
-        p{
+        h1{
             font-size: 40px;
         }
     }
     .subTitle{
         width: 80%;
     }
+}
+
+.secondContent{
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin: 5%;
+    border-radius: 50px;
+    background-color: rgba(237, 237, 237, 0.934);
+    
+    h1{
+        position: relative;
+        z-index: 1; 
+        text-transform: capitalize;
+        margin-bottom: 15px;
+    }
+}
+
+.notes{
+    background-color: #fff;
+    border-radius: 20px;
+    padding: 10px;
+}
+
+.arrowDiv{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.upRightArrow{
+    width: 50px;
 }
