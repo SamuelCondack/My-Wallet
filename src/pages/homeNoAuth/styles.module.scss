@@ -112,28 +112,150 @@
     flex-direction: column;
     margin: 5%;
     border-radius: 50px;
-    background-color: rgba(237, 237, 237, 0.934);
+    background-color: rgba(250, 250, 250, 0.515);
     
     h1{
-        position: relative;
-        z-index: 1; 
         text-transform: capitalize;
         margin-bottom: 15px;
+        text-align: center;
     }
 }
 
+.firstLine{
+    display: flex;
+    justify-content: center;
+}
+
+.notesDiv{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 .notes{
+    display: flex;
+    
+    
+    p{
+        margin-top: 0;
+    }
+}
+
+.outcome{
+    display: flex;
+    flex-direction: column;
+    width: 150px;
     background-color: #fff;
     border-radius: 20px;
     padding: 10px;
+    justify-content: space-between;
+    margin: 10px;
+    box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.039);
+    transition: .4s;
+
+    &:hover{
+        transform: scale(1.03);
+    }
 }
 
 .arrowDiv{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    margin-bottom: 50px;
 }
 
 .upRightArrow{
-    width: 50px;
+    width: 40px;
+    height: 40px;
+}
+
+.percentage{
+    border: solid 1px #000;
+    border-radius: 50px;
+    padding: 5px;
+    font-size: 14px;
+}
+
+.outcomeParagraph{
+    font-size: 18px;
+    margin-bottom: 0;
+}
+
+.outcomePrice{
+    font-weight: 600;
+    margin-top: 5px!important;
+}
+
+.limitsDiv{
+    @extend .notesDiv;
+}
+
+.spendingLimitsItem{
+    @extend .outcome;
+    width: 350px;
+    background-color: #fff;
+}
+
+.spendingLimitsPrice{
+    @extend .outcomePrice;
+
+    margin-top: 45px!important;
+
+    &::after{
+        content: " used from $4.000.00";
+        font-size: 15px;
+        font-weight: 500;
+        color: gray;
+    }
+}
+
+.spendingLimitsOneLine{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.limitsColor{
+    display: flex;
+}
+
+.purpleLimit{
+    background-color: #A98AF9;
+    height: 10px;
+    width: 45%;
+    border-radius: 50px;
+
+    &::before{
+        content: "";
+    }
+}
+
+.cyanLimit{
+    @extend .purpleLimit;
+    width: 15%;
+    background-color: #E6F6FC;
+}
+.pinkLimit{
+    @extend .purpleLimit;
+    width: 15%;
+    background-color: #F7DAFE;
+}
+.lightPurpleLimit{
+    @extend .purpleLimit;
+    width: 15%;
+    background-color: #EBE2FF;  
+}
+@media (max-width: 690px){
+    .firstLine{
+        flex-direction: column;
+    }
+    .notes{
+        width: 100%;
+    }
+    .outcome{
+        width: 100%;
+    }
 }

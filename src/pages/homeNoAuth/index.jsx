@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import Header from "../../components/Header";
 import styles from "./styles.module.scss";
-import upRight from "../../assets/upRight.png"
-import pink from "../../assets/pink.png"
+import outcomeImg from "../../assets/outcomePinkImg.png";
 
 export default function HomeNoAuth() {
   return (
@@ -28,14 +27,43 @@ export default function HomeNoAuth() {
       </div>
       <div className={styles.secondContent}>
         <h1>Your everyday finance control app</h1>
-          <p>Take notes</p>
-        <div className={styles.notes}>
-          <div>
-            <div className={styles.arrowDiv}>
-              <img className={styles.upRightArrow} src={pink} alt="" />
-              <p>+3.1%</p>
+        <div className={styles.firstLine}>
+          <div className={styles.notesDiv}>
+            <p>Take notes of your</p>
+            <div className={styles.notes}>
+              <div className={styles.outcome}>
+                <div className={styles.arrowDiv}>
+                  <img
+                    className={styles.upRightArrow}
+                    src={outcomeImg}
+                    alt=""
+                  />
+                  <p className={styles.percentage}>+3.1%</p>
+                </div>
+                <p className={styles.outcomeParagraph}>Outcome</p>
+                <p
+                  className={`${styles.outcomeParagraph} ${styles.outcomePrice}`}
+                >
+                  $1.347.00
+                </p>
+              </div>
             </div>
-            <p>Outcome</p>
+          </div>
+          <div className={styles.limitsDiv}>
+            <p>Define your spending limits</p>
+            <div className={styles.spendingLimitsItem}>
+              <p>Spending Limits</p>
+              <div className={styles.spendingLimitsOneLine}>
+                <p className={styles.spendingLimitsPrice}>$1.347.00</p>
+                <p className={styles.percentage}>+3.1%</p>
+              </div>
+              <div className={styles.limitsColor}>
+                <div className={styles.purpleLimit}></div>
+                <div className={styles.cyanLimit}></div>
+                <div className={styles.pinkLimit}></div>
+                <div className={styles.lightPurpleLimit}></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
