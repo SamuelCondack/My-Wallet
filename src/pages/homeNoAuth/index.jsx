@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Header from "../../components/Header";
 import styles from "./styles.module.scss";
 import outcomeImg from "../../assets/outcomePinkImg.png";
+import Footer from "../../components/Footer";
 
 import React from "react";
 
@@ -136,6 +137,7 @@ export default function HomeNoAuth() {
           </div>
         </div>
       </div>
+      <Footer/>
     </>
   );
 }
