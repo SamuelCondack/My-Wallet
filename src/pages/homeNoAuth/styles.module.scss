@@ -1,6 +1,6 @@
 @import '../../Global/variables.scss';
 
-.firstContent{
+.firstContent {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -8,11 +8,12 @@
     margin: 0 5% 0 5%;
 }
 
-.title{
-    h1{
+.title {
+    h1 {
         font-size: 70px;
         font-weight: 800;
-        &::after{
+
+        &::after {
             content: "best life";
             background-color: $defaultBlue;
             color: white;
@@ -23,7 +24,7 @@
     }
 }
 
-.subTitle{
+.subTitle {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -35,13 +36,13 @@
     padding-bottom: 3%;
 }
 
-.buttons{
+.buttons {
     display: flex;
     flex-direction: row;
     width: 100%;
 }
 
-.buttonLink{
+.buttonLink {
     width: 40%;
     display: flex;
     align-items: center;
@@ -50,7 +51,7 @@
     border-radius: 50px;
 }
 
-.registerBtn{
+.registerBtn {
     width: 100%;
     padding: 5px;
     background-color: transparent;
@@ -60,51 +61,59 @@
     cursor: pointer;
     transition: .4s;
 
-    &:hover{
+    &:hover {
         border-color: $defaultBlue;
         color: $defaultBlue;
         transform: scale(1.1) rotate(1deg);
     }
 }
-@media(max-width: 1000px){
-    .firstContent{
+
+@media(max-width: 1000px) {
+    .firstContent {
         flex-direction: column;
     }
-    .title{
-        h1{
+
+    .title {
+        h1 {
             text-align: center;
         }
     }
-    .subTitle{
+
+    .subTitle {
         width: 100%;
         align-self: center;
     }
-    .registerBtn{
+
+    .registerBtn {
         width: 150px;
     }
 }
-@media(max-width: 650px){
-    .title{
-        h1{
+
+@media(max-width: 650px) {
+    .title {
+        h1 {
             font-size: 55px;
         }
     }
-    .subTitle{
-        width: 80%;
-    }
-}
-@media(max-width: 500px){
-    .title{
-        h1{
-            font-size: 40px;
-        }
-    }
-    .subTitle{
+
+    .subTitle {
         width: 80%;
     }
 }
 
-.secondContent{
+@media(max-width: 500px) {
+    .title {
+        h1 {
+            font-size: 40px;
+        }
+    }
+
+    .subTitle {
+        width: 80%;
+    }
+}
+
+.secondContent {
     margin-top: 20px;
     display: flex;
     justify-content: center;
@@ -112,37 +121,40 @@
     flex-direction: column;
     margin: 5%;
     border-radius: 50px;
+    background-position: center;
+    background-size: cover;
+    background-repeat: space;
     background-color: rgba(250, 250, 250, 0.515);
-    
-    h1{
+
+    h1 {
         text-transform: capitalize;
         margin-bottom: 15px;
         text-align: center;
     }
 }
 
-.firstLine{
+.firstLine {
     display: flex;
     justify-content: center;
 }
 
-.notesDiv{
+.notesDiv {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-.notes{
+.notes {
     display: flex;
-    
-    
-    p{
+
+
+    p {
         margin-top: 0;
     }
 }
 
-.outcome{
+.outcome {
     display: flex;
     flex-direction: column;
     width: 150px;
@@ -154,56 +166,56 @@
     box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.039);
     transition: .4s;
 
-    &:hover{
+    &:hover {
         transform: scale(1.03);
     }
 }
 
-.arrowDiv{
+.arrowDiv {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     margin-bottom: 50px;
 }
 
-.upRightArrow{
+.upRightArrow {
     width: 40px;
     height: 40px;
 }
 
-.percentage{
+.percentage {
     border: solid 1px #000;
     border-radius: 50px;
     padding: 5px;
     font-size: 14px;
 }
 
-.outcomeParagraph{
+.outcomeParagraph {
     font-size: 18px;
     margin-bottom: 0;
 }
 
-.outcomePrice{
+.outcomePrice {
     font-weight: 600;
-    margin-top: 5px!important;
+    margin-top: 5px !important;
 }
 
-.limitsDiv{
+.limitsDiv {
     @extend .notesDiv;
 }
 
-.spendingLimitsItem{
+.spendingLimitsItem {
     @extend .outcome;
     width: 350px;
     background-color: #fff;
 }
 
-.spendingLimitsPrice{
+.spendingLimitsPrice {
     @extend .outcomePrice;
 
-    margin-top: 45px!important;
+    margin-top: 45px !important;
 
-    &::after{
+    &::after {
         content: " used from $4.000.00";
         font-size: 15px;
         font-weight: 500;
@@ -211,51 +223,185 @@
     }
 }
 
-.spendingLimitsOneLine{
+.spendingLimitsOneLine {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
 }
 
-.limitsColor{
+.limitsColor {
     display: flex;
 }
 
-.purpleLimit{
-    background-color: #A98AF9;
+.firstLimit {
+    background-color: $defaultBlue;
     height: 10px;
     width: 45%;
     border-radius: 50px;
 
-    &::before{
+    &::before {
         content: "";
     }
 }
 
-.cyanLimit{
-    @extend .purpleLimit;
+.secondLimit {
+    @extend .firstLimit;
     width: 15%;
-    background-color: #E6F6FC;
+    background-color: $lightCyan;
 }
-.pinkLimit{
-    @extend .purpleLimit;
+
+.thirdLimit {
+    @extend .firstLimit;
     width: 15%;
-    background-color: #F7DAFE;
+    background-color: $mediumBlue;
 }
-.lightPurpleLimit{
-    @extend .purpleLimit;
+
+.fourthLimit {
+    @extend .firstLimit;
     width: 15%;
-    background-color: #EBE2FF;  
+    background-color: $lightYellow;
 }
-@media (max-width: 690px){
-    .firstLine{
+
+
+.dailyTransaction {
+    @extend .notesDiv;
+}
+
+.dailyTransactionsItem {
+    @extend .outcome;
+    width: 550px;
+    gap: 3px;
+}
+
+.dailyTransactionsHeader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.paymentsDiv {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 200px;
+
+    p {
+        margin: 0;
+    }
+}
+
+.cashPayment {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cashIcon {
+    &::before {
+        content: "---";
+        color: transparent;
+        font-size: 10px;
+        padding-top: 1px;
+        padding-left: 2px;
+        border-radius: 50%;
+        background-color: $mediumBlue;
+        text-align: center;
+        margin-right: 5px;
+    }
+}
+
+.digitalIcon {
+    @extend .cashIcon;
+
+    &::before {
+        background-color: $lightYellow;
+    }
+}
+
+.creditIcon {
+    @extend .cashIcon;
+
+    &::before {
+        background-color: $defaultBlue;
+    }
+}
+
+.digitalGraph {
+    &::before {
+        background-color: $lightYellow !important;
+    }
+}
+
+.creditGraph{
+    &::before{
+        background-color: $defaultBlue !important;
+    }
+}
+
+.blankGraph{
+    &::before{
+        background-color: transparent !important;
+    }
+}
+
+.dailyTransactionsGraphLine {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px 0 10px;
+    gap: 5px;
+
+    p {
+        margin: 0;
+        color: transparent !important;
+        text-align: center;
+        width: 30.23px;
+
+        &::before {
+            content: "Aaa";
+            background-color: $mediumBlue;
+            border-radius: 5px;
+        }
+    }
+}
+
+.weekDays {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin: 0 10px 0 10px;
+    gap: 5px;
+
+    p {
+        margin: 0;
+        width: 30.23px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 690px) {
+    .firstLine {
         flex-direction: column;
     }
-    .notes{
+
+    .notes {
         width: 100%;
     }
-    .outcome{
+
+    .outcome {
         width: 100%;
+    }
+}
+
+@media (max-width: 460px) {
+    .dailyTransactionsHeader {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+        gap: 10px;
     }
 }

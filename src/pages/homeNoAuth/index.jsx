@@ -3,6 +3,8 @@ import Header from "../../components/Header";
 import styles from "./styles.module.scss";
 import outcomeImg from "../../assets/outcomePinkImg.png";
 
+import React from "react";
+
 export default function HomeNoAuth() {
   return (
     <>
@@ -50,7 +52,7 @@ export default function HomeNoAuth() {
             </div>
           </div>
           <div className={styles.limitsDiv}>
-            <p>Define your spending limits</p>
+            <p>Define your limits</p>
             <div className={styles.spendingLimitsItem}>
               <p>Spending Limits</p>
               <div className={styles.spendingLimitsOneLine}>
@@ -58,10 +60,77 @@ export default function HomeNoAuth() {
                 <p className={styles.percentage}>+3.1%</p>
               </div>
               <div className={styles.limitsColor}>
-                <div className={styles.purpleLimit}></div>
-                <div className={styles.cyanLimit}></div>
-                <div className={styles.pinkLimit}></div>
-                <div className={styles.lightPurpleLimit}></div>
+                <div className={styles.firstLimit}></div>
+                <div className={styles.secondLimit}></div>
+                <div className={styles.thirdLimit}></div>
+                <div className={styles.fourthLimit}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className={styles.secondLine}>
+          <div className={styles.dailyTransaction}>
+            <p>Overview your transactions</p>
+            <div className={styles.dailyTransactionsItem}>
+              <div className={styles.dailyTransactionsHeader}>
+                Daily Transaction
+                <div className={styles.paymentsDiv}>
+                  <div className={styles.cashPayment}>
+                    <p className={styles.cashIcon}>Cash</p>
+                  </div>
+                  <div className={styles.digitalPayment}>
+                    <p className={styles.digitalIcon}>Digital</p>
+                  </div>
+                  <div className={styles.creditPayment}>
+                    <div className=""></div>{" "}
+                    <p className={styles.creditIcon}>Credit</p>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.dailyTransactionsGraphLine}>
+                <p className={styles.blankGraph}></p>
+                <p className={styles.blankGraph}></p>
+                <p className={styles.blankGraph}></p>
+                <p className={styles.creditGraph}></p>
+                <p className={styles.blankGraph}></p>
+                <p className={styles.blankGraph}></p>
+                <p className={styles.blankGraph}></p>
+              </div>
+              <div className={styles.dailyTransactionsGraphLine}>
+                <p className={styles.blankGraph}></p>
+                <p className={styles.digitalGraph}></p>
+                <p className={styles.blankGraph}></p>
+                <p className={styles.digitalGraph}></p>
+                <p className={styles.digitalGraph}></p>
+                <p className={styles.digitalGraph}></p>
+                <p className={styles.blankGraph}></p>
+              </div>
+              <div className={styles.dailyTransactionsGraphLine}>
+                <p className={styles.digitalGraph}></p>
+                <p></p>
+                <p className={styles.digitalGraph}></p>
+                <p></p>
+                <p></p>
+                <p></p>
+                <p className={styles.digitalGraph}></p>
+              </div>
+              <div className={styles.dailyTransactionsGraphLine}>
+                <p></p>
+                <p></p>
+                <p></p>
+                <p></p>
+                <p></p>
+                <p></p>
+                <p></p>
+              </div>
+              <div className={styles.weekDays}>
+                <p>Sun</p>
+                <p>Mon</p>
+                <p>Tue</p>
+                <p>Wed</p>
+                <p>Thu</p>
+                <p>Fri</p>
+                <p>Sat</p>
               </div>
             </div>
           </div>
