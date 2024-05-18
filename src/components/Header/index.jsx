@@ -1,4 +1,5 @@
 import styles from "./styles.module.scss";
+import logo from "../../assets/WalletIcon.png"
 
 export default function Header() {
   return (
@@ -10,7 +11,7 @@ export default function Header() {
           <div className={styles.logoDiv}>
             <img
               className={styles.logoImg}
-              src="./src/assets/WalletIcon.png"
+              src={logo}
               alt="logo"
             />
             <p>MyWallet</p>
