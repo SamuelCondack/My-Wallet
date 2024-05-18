@@ -1,9 +1,9 @@
-import HomeNoAuth from "./pages/homeNoAuth/"
+import HomeNoAuth from "./pages/homeNoAuth/";
 
-export default function App(){
-  return(
+export default function App() {
+  return (
     <>
-    <HomeNoAuth/>
+      <HomeNoAuth />
     </>
-  )
+  );
 }

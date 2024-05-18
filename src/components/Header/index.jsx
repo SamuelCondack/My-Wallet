@@ -1,10 +1,15 @@
 import styles from "./styles.module.scss";
 import logo from "../../assets/WalletIcon.png"
 
+import AOS from 'aos';
+import "aos/dist/aos.css"
+
+AOS.init()
+
 export default function Header() {
   return (
     <>
-      <div className={styles.header}>
+      <div className={styles.header} data-aos="zoom-in" data-aos-duration="1000">
         <ul className={styles.headerContent}>
           <a className={styles.headerLinks} href="">HOME</a>
           <a className={styles.headerLinks} href="">ABOUT</a>
