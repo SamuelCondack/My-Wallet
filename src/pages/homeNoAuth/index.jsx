@@ -3,18 +3,23 @@ import Header from "../../components/Header";
 import styles from "./styles.module.scss";
 import outcomeImg from "../../assets/outcomePinkImg.png";
 import Footer from "../../components/Footer";
-import AOS from 'aos';
-import "aos/dist/aos.css"
+import AOS from "aos";
+import Register from "../Register"
+import "aos/dist/aos.css";
 
-AOS.init()
+AOS.init();
 
 import React from "react";
 
 export default function HomeNoAuth() {
   return (
     <>
-      <Header/>
-      <div className={styles.firstContent} data-aos="flip-left" data-aos-duration="1600">
+      <Header />
+      <div
+        className={styles.firstContent}
+        data-aos="flip-left"
+        data-aos-duration="1600"
+      >
         <div className={styles.title}>
           <h1>
             Take charge of <br /> your money and <br />
@@ -27,7 +32,7 @@ export default function HomeNoAuth() {
             security, and endless possibilities. Take control of your finance
             and watch your life flourish
           </p>
-          <Link className={styles.buttonLink} to="/">
+          <Link to="signup" className={styles.buttonLink}>
             <button className={styles.registerBtn}>Try it now!</button>
           </Link>
         </div>
@@ -35,7 +40,11 @@ export default function HomeNoAuth() {
       <div className={styles.secondContent}>
         <h1>Your everyday finance control app</h1>
         <div className={styles.firstLine}>
-          <div className={styles.notesDiv} data-aos="fade-right" data-aos-duration="1600">
+          <div
+            className={styles.notesDiv}
+            data-aos="fade-right"
+            data-aos-duration="1600"
+          >
             <p>Take notes of your</p>
             <div className={styles.notes}>
               <div className={styles.outcome}>
@@ -56,7 +65,11 @@ export default function HomeNoAuth() {
               </div>
             </div>
           </div>
-          <div className={styles.limitsDiv} data-aos="fade-right" data-aos-duration="1600">
+          <div
+            className={styles.limitsDiv}
+            data-aos="fade-right"
+            data-aos-duration="1600"
+          >
             <p>Define your limits</p>
             <div className={styles.spendingLimitsItem}>
               <p>Spending Limits</p>
@@ -74,7 +87,11 @@ export default function HomeNoAuth() {
           </div>
         </div>
         <div className={styles.secondLine}>
-          <div className={styles.dailyTransaction} data-aos="fade-right" data-aos-duration="1600">
+          <div
+            className={styles.dailyTransaction}
+            data-aos="fade-right"
+            data-aos-duration="1600"
+          >
             <p>Overview your transactions</p>
             <div className={styles.dailyTransactionsItem}>
               <div className={styles.dailyTransactionsHeader}>
@@ -141,7 +158,7 @@ export default function HomeNoAuth() {
           </div>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </>
   );
 }

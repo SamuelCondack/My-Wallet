@@ -1,4 +1,4 @@
-import styles from "./Expenses.module.css"
+import styles from "./Expenses.module.scss"
 
 export default function Expenses({ location }) {
     const newRegisterData = location.state.newRegisterData;

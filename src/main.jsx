@@ -6,6 +6,9 @@ import './Global/global.scss'
 import NewRegister from './pages/NewRegister/NewRegister.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Expenses from './pages/Expenses/Expenses.jsx'
+import HomeNoAuth from './pages/homeNoAuth'
+import Register from './pages/Register'
+import SignIn from './pages/SignIn'
 
 const router = createBrowserRouter([
   {
@@ -25,7 +28,15 @@ const router = createBrowserRouter([
       element: <Expenses/>
       }
     ]
-  }
+  },
+  {
+    path: '/signup',
+    element: <Register/>
+  },
+  {
+    path: '/signin',
+    element: <SignIn />
+  },
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(

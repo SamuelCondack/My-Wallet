@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import styles from './NewRegister.module.css';
+import styles from './NewRegister.module.scss';
 
 export default function NewRegister() {
     const [name, setName] = useState('');

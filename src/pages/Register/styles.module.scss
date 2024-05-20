@@ -1,0 +1,85 @@
+@import "../../Global/variables.scss";
+
+.formContainer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.form{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #000;
+    border-radius: 10px;
+    padding: 36px;
+}
+.formLabel{
+    align-self: start;
+}
+.formInput{
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 2px solid #72727265;
+    padding: 5px 10px;
+    margin-top: 5px;
+    width: 280px;
+    transition:ease-in-out .3s;
+
+    &:focus{
+        outline: 0;
+        border-bottom: 2px solid $defaultBlue;
+        transform: scale(1.05);
+    }
+}
+
+.buttons{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+.signUpBtn{
+    background-color: transparent;
+    border: 1px solid #000;
+    border-radius: 10px;
+    padding: 5px;
+    font-weight: 800;
+    color: $defaultBlue;
+    transition: .4s;
+
+    &:hover{
+        cursor: pointer;
+        transform: scale(1.05);
+        box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.144);
+        border-color: $defaultBlue;
+    }
+}
+
+.continueWithGoogle{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    gap: 10px;
+    background-color: transparent;
+    border: 1px solid #000;
+    border-radius: 10px;
+    color: $defaultBlue;
+    font-weight: 800;
+    transition: .4s;
+
+    &:hover{
+        cursor: pointer;
+        transform: scale(1.05);
+        box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.144);
+        border-color: $defaultBlue;
+    }
+}
+
+.googleIcon{
+    width: 15px;
+}
