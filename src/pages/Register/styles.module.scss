@@ -1,10 +1,45 @@
 @import "../../Global/variables.scss";
 
+.backButton{
+    position: fixed;
+    top: 0;
+    left: 10px;
+    text-decoration: none;
+    color: #000;
+
+    p{
+        &::before{
+            content: "<  ";
+            font-weight: 800;
+            color: $defaultBlue;
+        }
+
+        &:hover{
+            cursor: pointer;
+        }
+    }
+}
+
+.brand{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo{
+    width: 30px;
+    height: 30px;
+}
+
 .formContainer{
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 100%;
+    padding-top: 40px;
 }
 .form{
     display: flex;
@@ -15,6 +50,7 @@
     border-radius: 10px;
     padding: 36px;
 }
+
 .formLabel{
     align-self: start;
 }
