@@ -1,23 +1,23 @@
-import walletIcon from "./assets/walletIcon.png";
+import walletIcon from "../../assets/WalletIcon.png";
 import styles from "./styles.module.scss";
-import NewRegister from "./pages/NewRegister/NewRegister";
+import NewRegister from "../NewRegister/NewRegister";
 import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 
-function homeAuth() {
+function HomeAuth() {
   return (
     <>
       <main className={styles.mainContainer}>
         <aside className={styles.asideMenu}>
-          <Link to="/" className={styles.iconDiv}>
+          <Link to="expenses" className={styles.iconDiv}>
             <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
             <p className={styles.namep}>MyWallet</p>
           </Link>
           <ul className={styles.options}>
-            <Link to="/" className={styles.menuLinks}>
+            <Link to="expenses" className={styles.menuLinks}>
               Expenses
             </Link>
-            <Link to="novoregistro" className={styles.menuLinks}>
+            <Link to="newregister" className={styles.menuLinks}>
               New Register
             </Link>
           </ul>
@@ -28,4 +28,4 @@ function homeAuth() {
   );
 }
 
-export default homeAuth;
+export default HomeAuth;

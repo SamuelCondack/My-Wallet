@@ -9,25 +9,12 @@ import Expenses from './pages/Expenses/Expenses.jsx'
 import HomeNoAuth from './pages/homeNoAuth'
 import Register from './pages/Register'
 import SignIn from './pages/SignIn'
+import HomeAuth from './pages/homeAuth/index.jsx'
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <App/>,
-    children: [
-      {
-        path: '/',
-        element: ""
-      },
-      {
-        path: '/novoregistro',
-        element: <NewRegister/>
-      },
-      {
-      path: '/expenses',
-      element: <Expenses/>
-      }
-    ]
   },
   {
     path: '/signup',
@@ -37,6 +24,20 @@ const router = createBrowserRouter([
     path: '/signin',
     element: <SignIn />
   },
+  {
+    path: '/home',
+    element: <HomeAuth />,
+    children: [
+      {
+        path: 'newregister',
+        element: <NewRegister/>
+      },
+      {
+      path: 'expenses',
+      element: <Expenses/>
+      },
+    ]
+  }
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(

@@ -23,7 +23,7 @@ export default function Header() {
             <p>MyWallet</p>
           </div>
           <div className={styles.authButtons}>
-            <Link to="/signin" className={styles.headerSignIn}>Sign In</Link>
+            <Link to="signin"  className={styles.headerSignIn}>Sign In</Link>
             <Link to="signup" className={styles.headerSignUp}>Start For Free</Link>
           </div>
         </ul>

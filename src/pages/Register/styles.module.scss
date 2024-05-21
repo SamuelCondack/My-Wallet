@@ -95,6 +95,31 @@
     }
 }
 
+.authOptionsSeparator{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    p{
+        &::before{
+            display: inline-flex;
+            flex-direction: row;
+            content: "-";
+            color: transparent;
+            height: 10px;
+            width: 100px;
+            margin-right: 10px;
+            border-bottom: 1px solid #00000038;
+        }
+        &::after{
+            @extend ::before;
+            margin-right: 0;
+            margin-left: 10px;
+        }
+
+    }
+}
+
 .continueWithGoogle{
     display: flex;
     justify-content: center;
