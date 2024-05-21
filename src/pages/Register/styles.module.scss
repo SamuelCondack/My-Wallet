@@ -1,7 +1,7 @@
 @import "../../Global/variables.scss";
 
 .backButton {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 10px;
     text-decoration: none;
@@ -40,6 +40,7 @@
     align-items: center;
     width: 100%;
     padding-top: 40px;
+    padding-bottom: 20px;
 }
 
 .form {
