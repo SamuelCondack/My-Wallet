@@ -1,26 +1,37 @@
 import styles from "./styles.module.scss";
 import { auth, googleProvider } from "../../../config/firebase";
 import logo from "../../assets/WalletIcon.png";
-
+import { useNavigate } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
   signInWithPopup,
-  signOut,
 } from "firebase/auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, redirect } from "react-router-dom";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    auth.onAuthStateChanged(function (user) {
+      if (user) {
+        navigate('/home/expenses')
+      }
+    });
+  }, [navigate]);
 
   const signUp = async (e) => {
     e.preventDefault();
 
     if (confirmPassword === password) {
       try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await createUserWithEmailAndPassword(auth, email, password).then(()=>{
+          navigate("/home/expenses")
+        })
+
       } catch (err) {
         console.error(err.message);
       }
@@ -32,16 +43,8 @@ export default function Register() {
   const continueWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider).then(() => {
-        redirect("/home");
+        navigate("/home/expenses")
       });
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await signOut(auth);
     } catch (err) {
       console.error(err);
     }
@@ -69,6 +72,7 @@ export default function Register() {
             placeholder="Insert your best email"
             type="email"
             id="email"
+            autoComplete="email"
             required
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -81,6 +85,7 @@ export default function Register() {
             placeholder="Insert your password"
             type="password"
             id="password"
+            autoComplete="password"
             required
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -93,6 +98,7 @@ export default function Register() {
             placeholder="Confirm your password"
             type="password"
             id="confirmPassword"
+            autoComplete="confirm-password"
             required
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
@@ -109,7 +115,7 @@ export default function Register() {
                 version="1.1"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 48 48"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
+                xmlnsXlink="http://www.w3.org/1999/xlink"
               >
                 <path
                   fill="#EA4335"

@@ -1,15 +1,27 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import styles from "./styles.module.scss";
 import outcomeImg from "../../assets/outcomePinkImg.png";
 import Footer from "../../components/Footer";
 import AOS from "aos";
+import { auth } from "../../../config/firebase";
 import "aos/dist/aos.css";
 
 AOS.init();
 
 import React from "react";
 
+function checkAuth() {
+  auth.onAuthStateChanged(function (user) {
+    if (user) {
+      useNavigate('/home/expenses')
+      console.log('signed in');
+    } else {
+      console.log("signed out");
+      return false
+    }
+  });
+}
 export default function HomeNoAuth() {
   return (
     <>

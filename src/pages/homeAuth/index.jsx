@@ -1,10 +1,24 @@
 import walletIcon from "../../assets/WalletIcon.png";
 import styles from "./styles.module.scss";
-import NewRegister from "../NewRegister/NewRegister";
+import { auth } from "../../../config/firebase";
 import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 function HomeAuth() {
+  const navigate = useNavigate();
+
+  const logout = async () => {
+    try {
+      await signOut(auth).then(() => {
+        navigate("/");
+      });
+    } catch (err) {
+      console.log(err.message);
+    }
+  };
+
   return (
     <>
       <main className={styles.mainContainer}>
@@ -21,6 +35,10 @@ function HomeAuth() {
               New Register
             </Link>
           </ul>
+
+          <button onClick={logout} className={styles.logoutBtn}>
+            logout
+          </button>
         </aside>
         <Outlet />
       </main>

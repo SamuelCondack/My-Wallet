@@ -1,20 +1,39 @@
 import { Link } from "react-router-dom";
 import styles from "../Register/styles.module.scss";
 import logo from "../../assets/WalletIcon.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { auth, googleProvider } from "../../../config/firebase";
 import { useNavigate } from "react-router-dom";
-
 import {
+  signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
 
-
 export default function SignIn() {
+  const navigate = useNavigate("")
+
+  useEffect(() => {
+    auth.onAuthStateChanged(function (user) {
+      if (user) {
+        navigate('/home/expenses')
+      }
+    });
+  }, [navigate]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const navigate = useNavigate()
+  const signIn = async (e) =>{
+    e.preventDefault()
+
+    try{
+      await signInWithEmailAndPassword(auth, email, password).then(()=>{
+        navigate("/home/expenses")
+      })
+    } catch(error){
+      console.log(error.message);
+    }
+  }
   
   const continueWithGoogle = async () => {
     try {
@@ -38,7 +57,7 @@ export default function SignIn() {
         </div>
       </div>
       <div className={styles.formContainer}>
-        <form className={styles.form}>
+        <form onSubmit={signIn} className={styles.form}>
           <h2 className={styles.title}>Welcome back</h2>
           <label className={styles.formLabel} htmlFor="email">
             Email
@@ -48,6 +67,7 @@ export default function SignIn() {
             placeholder="email"
             type="email"
             id="email"
+            autoComplete="email"
             required
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -60,6 +80,7 @@ export default function SignIn() {
             placeholder="password"
             type="password"
             id="password"
+            autoComplete="password"
             required
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -80,7 +101,7 @@ export default function SignIn() {
                 version="1.1"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 48 48"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
+                xmlnsXlink="http://www.w3.org/1999/xlink"
               >
                 <path
                   fill="#EA4335"
