@@ -11,17 +11,6 @@ AOS.init();
 
 import React from "react";
 
-function checkAuth() {
-  auth.onAuthStateChanged(function (user) {
-    if (user) {
-      useNavigate('/home/expenses')
-      console.log('signed in');
-    } else {
-      console.log("signed out");
-      return false
-    }
-  });
-}
 export default function HomeNoAuth() {
   return (
     <>

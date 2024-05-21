@@ -2,36 +2,38 @@ import styles from "./styles.module.scss";
 import { auth, googleProvider } from "../../../config/firebase";
 import logo from "../../assets/WalletIcon.png";
 import { useNavigate } from "react-router-dom";
-import {
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { Link, redirect } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     auth.onAuthStateChanged(function (user) {
       if (user) {
-        navigate('/home/expenses')
+        navigate("/home/expenses");
       }
     });
   }, [navigate]);
+
+  const toggleShowPassword = () => {
+    setShowPassword((prevShowPassword) => !prevShowPassword);
+  };
 
   const signUp = async (e) => {
     e.preventDefault();
 
     if (confirmPassword === password) {
       try {
-        await createUserWithEmailAndPassword(auth, email, password).then(()=>{
-          navigate("/home/expenses")
-        })
-
+        await createUserWithEmailAndPassword(auth, email, password).then(() => {
+          navigate("/home/expenses");
+        });
       } catch (err) {
         console.error(err.message);
       }
@@ -43,7 +45,7 @@ export default function Register() {
   const continueWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider).then(() => {
-        navigate("/home/expenses")
+        navigate("/home/expenses");
       });
     } catch (err) {
       console.error(err);
@@ -83,12 +85,18 @@ export default function Register() {
           <input
             className={styles.formInput}
             placeholder="Insert your password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             id="password"
             autoComplete="password"
             required
             onChange={(e) => setPassword(e.target.value)}
           />
+
+          <button
+            type="button"
+            className={styles.showPasswordButton}
+            onClick={toggleShowPassword}
+          > {showPassword ? <FaEyeSlash /> : <FaEye />} </button>
 
           <label className={styles.formLabel} htmlFor="confirmPassword">
             Confirm Password
@@ -96,7 +104,7 @@ export default function Register() {
           <input
             className={styles.formInput}
             placeholder="Confirm your password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             id="confirmPassword"
             autoComplete="confirm-password"
             required

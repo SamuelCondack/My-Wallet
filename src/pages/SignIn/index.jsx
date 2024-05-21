@@ -4,41 +4,43 @@ import logo from "../../assets/WalletIcon.png";
 import { useEffect, useState } from "react";
 import { auth, googleProvider } from "../../../config/firebase";
 import { useNavigate } from "react-router-dom";
-import {
-  signInWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function SignIn() {
-  const navigate = useNavigate("")
+  const navigate = useNavigate("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     auth.onAuthStateChanged(function (user) {
       if (user) {
-        navigate('/home/expenses')
+        navigate("/home/expenses");
       }
     });
   }, [navigate]);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const toggleShowPassword = () => {
+    setShowPassword((prevShowPassword) => !prevShowPassword);
+  };
 
-  const signIn = async (e) =>{
-    e.preventDefault()
+  const signIn = async (e) => {
+    e.preventDefault();
 
-    try{
-      await signInWithEmailAndPassword(auth, email, password).then(()=>{
-        navigate("/home/expenses")
-      })
-    } catch(error){
+    try {
+      await signInWithEmailAndPassword(auth, email, password).then(() => {
+        navigate("/home/expenses");
+      });
+    } catch (error) {
       console.log(error.message);
     }
-  }
-  
+  };
+
   const continueWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider).then(() => {
-        navigate("/home/expenses")
+        navigate("/home/expenses");
       });
     } catch (err) {
       console.error(err);
@@ -78,20 +80,22 @@ export default function SignIn() {
           <input
             className={styles.formInput}
             placeholder="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             id="password"
             autoComplete="password"
             required
             onChange={(e) => setPassword(e.target.value)}
           />
+          <button
+            type="button"
+            className={styles.showPasswordButtonSignIn}
+            onClick={toggleShowPassword}
+          > {showPassword ? <FaEyeSlash /> : <FaEye />} </button>
 
           <div className={styles.buttons}>
             <button className={styles.signUpBtn} type="submit">
               Sign In
             </button>
-            <div className={styles.authOptionsSeparator}>
-              <p>or</p>
-            </div>
             <button
               className={styles.continueWithGoogle}
               onClick={continueWithGoogle}
@@ -123,6 +127,18 @@ export default function SignIn() {
               </svg>{" "}
               Continue with Google
             </button>
+            <div className={styles.authOptionsSeparator}>
+              <p>or</p>
+            </div>
+            <div className={styles.createAccountDiv}>
+              <p>Don't have an account?</p>
+              <Link
+                to="/signup"
+                className={`${styles.signUpBtn} ${styles.createAccountBtn}`}
+              >
+                Create free account
+              </Link>
+            </div>
           </div>
         </form>
       </div>
