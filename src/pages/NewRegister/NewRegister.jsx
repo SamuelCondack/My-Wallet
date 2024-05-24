@@ -14,13 +14,7 @@ export default function NewRegister() {
   const [installments, setInstallments] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("money");
 
-  //trocar o acesso de expensesCollectionRef, ele está passando expenses, mas na verdade deve passar algum identificador do usuário, então cada usuário vai ter um identificador único e o banco de dados terá esse identificador como uma tabela, dentro da tabela tera os expenses. então o expenses deve ser o auth.identificadorUnicoDoUsuário
-
   const auth = getAuth()
-
-  useEffect(()=>{
-    console.log(auth?.currentUser?.uid);
-  }, [])
  
   const expensesCollectionRef = collection(db, auth?.currentUser?.uid);
 
@@ -35,6 +29,14 @@ export default function NewRegister() {
         value: value,
         installments: installments,
         method: paymentMethod,
+      }).then(()=>{
+        setName("")
+        setDescription("")
+        setInclusionDate("")
+        setExpireDate("")
+        setValue("")
+        setInstallments("")
+        setPaymentMethod("")
       });
     } catch (err) {
       console.error(err);
@@ -137,10 +139,10 @@ export default function NewRegister() {
           value={paymentMethod}
           onChange={(e) => setPaymentMethod(e.target.value)}
         >
-          <option value="money">Money</option>
-          <option value="pix">Pix</option>
-          <option value="creditCard">Credit Card</option>
-          <option value="debitCard">Debit Card</option>
+          <option value="Money">Money</option>
+          <option value="Pix">Pix</option>
+          <option value="Credit Card">Credit Card</option>
+          <option value="Debit Card">Debit Card</option>
         </select>
 
         <button className={styles.registerButton} type="submit">
