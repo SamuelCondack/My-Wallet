@@ -7,6 +7,24 @@
     align-items: center;
     align-self: center;
 }
+.menuDiv{
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 10px 0 0 10px;
+}
+.menuImg{
+    width: 30px;
+    height: 30px;
+}
+.expensesSection{
+    display: flex;
+    flex-direction: column;
+
+    h2{
+        text-align: center;
+    }
+}
 .expensesContainer{
     display: flex;
     gap: 20px;
@@ -26,4 +44,10 @@
         border: 1px solid $defaultBlue;
         transform: scale(1.05);
     }
+}
+@media (max-width: 768px){
+    .expensesContainer{
+        justify-content: center;
+    }
+
 }

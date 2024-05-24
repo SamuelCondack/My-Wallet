@@ -1,8 +1,10 @@
 import styles from "./Expenses.module.scss";
 import { db } from "../../../config/firebase";
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { getDocs, collection } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import menu from "../../assets/menu.svg"
+import { BsDisplay } from "react-icons/bs";
 
 export default function Expenses() {
   const [expensesList, setExpensesList] = useState([]);
@@ -11,7 +13,7 @@ export default function Expenses() {
 
   useEffect(() => {
     const auth = getAuth();
-    
+
     // Adiciona um ouvinte de estado de autenticação
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -51,18 +53,27 @@ export default function Expenses() {
     return <div className={styles.loading}>Loading...</div>;
   }
 
+  function toggleMenu(){
+    let menu = document.getElementById("menu")
+    menu.classList.toggle("displayNone")
+  }
+
   return (
-    <div>
-      <h2 style={{ color: "#000" }}>Expenses</h2>
-      <div className={styles.expensesContainer}>
-        {expensesList.map((expense) => (
-          <div key={expense.id} className={styles.expense}>
-            <p>Name: {expense.name}</p>
-            <p>Value: ${expense.value}</p>
-            <p>Method: {expense.method}</p>
-          </div>
-        ))}
+    <>
+      <div onClick={toggleMenu} className={styles.menuDiv}><img src={menu} alt="menu icon" className={styles.menuImg}/></div>
+
+      <div className={styles.expensesSection}>
+        <h2 style={{ color: "#000" }}>Expenses</h2>
+        <div className={styles.expensesContainer}>
+          {expensesList.map((expense) => (
+            <div key={expense.id} className={styles.expense}>
+              <p>Name: {expense.name}</p>
+              <p>Value: ${expense.value}</p>
+              <p>Method: {expense.method}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

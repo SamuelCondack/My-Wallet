@@ -22,7 +22,7 @@ function HomeAuth() {
   return (
     <>
       <main className={styles.mainContainer}>
-        <aside className={styles.asideMenu}>
+        <aside id="menu" className={styles.asideMenu}>
           <Link to="expenses" className={styles.iconDiv}>
             <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
             <p className={styles.namep}>MyWallet</p>

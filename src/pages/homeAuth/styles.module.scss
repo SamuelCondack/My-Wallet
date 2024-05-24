@@ -10,7 +10,6 @@
     flex-direction: row;
     gap: 10%;
     background-color: #fff;
-    // background-color: #171717;
 }
 
 .asideMenu {
@@ -81,5 +80,19 @@
         color: #fff;
         transform: scale(1.05);
         cursor: pointer;
+    }
+}
+
+.displayNone{
+    display: none;
+}
+
+@media (max-width: 768px){
+    .asideMenu{
+        display: none;
+    }
+    .mainContainer{
+        justify-content: center;
+        align-items: center;
     }
 }
