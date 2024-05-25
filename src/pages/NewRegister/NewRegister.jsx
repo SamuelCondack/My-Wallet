@@ -15,8 +15,9 @@ export default function NewRegister() {
   const [paymentMethod, setPaymentMethod] = useState("money");
 
   const auth = getAuth()
- 
-  const expensesCollectionRef = collection(db, auth?.currentUser?.uid);
+  const user = auth?.currentUser
+  
+  const expensesCollectionRef = user ? collection(db, user?.uid) : null;
 
   const registerExpense = async (e) => {
     e.preventDefault();

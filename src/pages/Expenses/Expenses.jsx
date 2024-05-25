@@ -3,8 +3,6 @@ import { db } from "../../../config/firebase";
 import { useState, useEffect } from "react";
 import { getDocs, collection } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import menu from "../../assets/menu.svg"
-import { BsDisplay } from "react-icons/bs";
 
 export default function Expenses() {
   const [expensesList, setExpensesList] = useState([]);
@@ -53,17 +51,8 @@ export default function Expenses() {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  function addMenu(){
-    const menu = document.getElementById("menu")
-    const img = document.getElementById("openMenu")
-    menu.classList.remove("displayNone")
-    img.classList.add("displayNone")
-  }
-
   return (
     <>
-      <div onClick={addMenu} id="openMenu" className={styles.menuDiv}><img src={menu} alt="menu icon" className={styles.menuImg}/></div>
-
       <div className={styles.expensesSection}>
         <h2 style={{ color: "#000" }}>Expenses</h2>
         <div className={styles.expensesContainer}>
