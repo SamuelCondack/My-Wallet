@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import "./displayNone.css";
+import x from "../../assets/x.svg"
 
 function HomeAuth() {
   const navigate = useNavigate();
@@ -19,10 +21,18 @@ function HomeAuth() {
     }
   };
 
+  function removeMenu(){
+    const menu = document.getElementById("menu")
+    const img = document.getElementById("openMenu")
+    menu.classList.add("displayNone")
+    img.classList.remove("displayNone")
+  }
+
   return (
     <>
       <main className={styles.mainContainer}>
-        <aside id="menu" className={styles.asideMenu}>
+        <aside id="menu" className={`${styles.asideMenu} ${window.innerWidth <= 768 ? 'displayNone' : ''}`}>
+          <img id="closeMenu" onClick={removeMenu} src={x} alt="close menu" className={styles.closeMenu}/>
           <Link to="expenses" className={styles.iconDiv}>
             <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
             <p className={styles.namep}>MyWallet</p>

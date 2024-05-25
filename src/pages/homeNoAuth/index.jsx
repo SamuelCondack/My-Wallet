@@ -4,7 +4,6 @@ import styles from "./styles.module.scss";
 import outcomeImg from "../../assets/outcomePinkImg.png";
 import Footer from "../../components/Footer";
 import AOS from "aos";
-import { auth } from "../../../config/firebase";
 import "aos/dist/aos.css";
 
 AOS.init();

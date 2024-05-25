@@ -53,14 +53,16 @@ export default function Expenses() {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  function toggleMenu(){
-    let menu = document.getElementById("menu")
-    menu.classList.toggle("displayNone")
+  function addMenu(){
+    const menu = document.getElementById("menu")
+    const img = document.getElementById("openMenu")
+    menu.classList.remove("displayNone")
+    img.classList.add("displayNone")
   }
 
   return (
     <>
-      <div onClick={toggleMenu} className={styles.menuDiv}><img src={menu} alt="menu icon" className={styles.menuImg}/></div>
+      <div onClick={addMenu} id="openMenu" className={styles.menuDiv}><img src={menu} alt="menu icon" className={styles.menuImg}/></div>
 
       <div className={styles.expensesSection}>
         <h2 style={{ color: "#000" }}>Expenses</h2>

@@ -16,13 +16,23 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 250px;
-    min-height: 100vh;
-    max-height: none;
+    width: 290px;
+    height: 100%;
     gap: 10px;
     background-color: rgba(0, 0, 0, 0.888);
     border-top-right-radius: 50px;
     border-bottom-right-radius: 50px;
+}
+
+.closeMenu{
+    position: fixed;
+    top: 0;
+    left: 0;
+    margin: 10px 0 0 10px;
+
+    width: 30px;
+    height: 30px;
+    z-index: 1;
 }
 
 .iconDiv {
@@ -89,10 +99,15 @@
 
 @media (max-width: 768px){
     .asideMenu{
-        display: none;
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        transition: .4s;
+        background-color: #000;
     }
     .mainContainer{
         justify-content: center;
         align-items: center;
+        gap: 0;
     }
 }
