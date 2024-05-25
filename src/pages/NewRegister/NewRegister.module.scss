@@ -2,7 +2,7 @@
 
 .newRegister {
     width: 100%;
-    margin-right: 10%;
+    margin: 10px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -16,18 +16,24 @@
 .inputsContainer {
     display: flex;
     flex-direction: column;
-    width: 500px;
+    width: 100%;
+    justify-content: center;
 }
 
 .newRegisterLabels {
     color: #000;
+    margin-left: 20px;
 }
 
 .newRegisterInputs {
-    width: 100%;
+    width: 90%;
+    align-self: center;
+    background-color: #fff;
     border: none;
     border-bottom: 1px solid #000;
     transition: .4s;
+    outline: none;
+    font-size: 16px;
     &:focus{
         border-bottom: 1px solid $defaultBlue;
         outline: none;
@@ -39,7 +45,7 @@ label {
 }
 
 .inclusionDate {
-    height: 200px;
+    height: 100%;
     text-align: unset !important;
 }
 
@@ -49,13 +55,15 @@ label {
     border: none;
     margin-top: 20px;
     padding: 10px;
+    align-self: center;
     text-transform: uppercase;
     font-size: 14px;
     font-weight: 800;
     letter-spacing: 3px;
     border-radius: 10px;
-    width: 100%;
+    width: 90%;
     transition: .4s;
+    font-size: 16px;
 
     &:hover{
         transform: scale(1.05);

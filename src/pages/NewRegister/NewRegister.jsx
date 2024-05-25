@@ -10,8 +10,8 @@ export default function NewRegister() {
   const [description, setDescription] = useState("");
   const [inclusionDate, setInclusionDate] = useState("");
   const [expireDate, setExpireDate] = useState("");
-  const [value, setValue] = useState(0);
-  const [installments, setInstallments] = useState(0);
+  const [value, setValue] = useState();
+  const [installments, setInstallments] = useState();
   const [paymentMethod, setPaymentMethod] = useState("money");
 
   const auth = getAuth()
@@ -55,6 +55,8 @@ export default function NewRegister() {
           id="nameRegister"
           className={styles.newRegisterInputs}
           type="text"
+          required
+          placeholder="name your registry"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -70,6 +72,7 @@ export default function NewRegister() {
           className={styles.newRegisterInputs}
           cols="30"
           rows="10"
+          placeholder="just put any example that decripts well..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         ></textarea>
@@ -84,6 +87,7 @@ export default function NewRegister() {
           id="inclusionDateRegister"
           className={styles.newRegisterInputs}
           type="date"
+          placeholder="mm/dd/yyyy"
           value={inclusionDate}
           onChange={(e) => setInclusionDate(e.target.value)}
         />
@@ -98,6 +102,7 @@ export default function NewRegister() {
           id="expireDateRegister"
           className={styles.newRegisterInputs}
           type="date"
+          placeholder="mm/dd/yyyy"
           value={expireDate}
           onChange={(e) => setExpireDate(e.target.value)}
         />
@@ -109,9 +114,10 @@ export default function NewRegister() {
           id="valueRegister"
           className={styles.newRegisterInputs}
           type="number"
-          step="any"
+          placeholder="how much did it cost?"
           value={value}
-          onChange={(e) => setValue(Number(e.target.value))}
+          required
+          onChange={(e) => setValue(e.target.value)}
         />
 
         <label
@@ -124,8 +130,10 @@ export default function NewRegister() {
           id="installmentsRegister"
           className={styles.newRegisterInputs}
           type="number"
+          placeholder="how many installments?
+          "
           value={installments}
-          onChange={(e) => setInstallments(Number(e.target.value))}
+          onChange={(e) => setInstallments(e.target.value)}
         />
 
         <label
