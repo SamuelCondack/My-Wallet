@@ -46,9 +46,12 @@ export default function Expenses() {
 
     getExpensesList();
   }, [userId]);
-  
-  const totalValue = expensesList.reduce((acc, expense) => acc + expense.value, 0);
 
+  const totalValue = expensesList.reduce(
+    (acc, expense) => acc + Number(expense.value),
+    0
+  );
+  const formattedTotalValue = totalValue.toFixed(2);
 
   if (loading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -58,7 +61,9 @@ export default function Expenses() {
     <>
       <div className={styles.expensesSection}>
         <h2 style={{ color: "#000" }}>Expenses</h2>
-        <p className={styles.totalSpendings}>Your Spendings: ${totalValue.toFixed(2)}</p>
+        <p className={styles.totalSpendings}>
+          Your Spendings: ${formattedTotalValue}
+        </p>
         <div className={styles.expensesContainer}>
           {expensesList.map((expense) => (
             <div key={expense.id} className={styles.expense}>
