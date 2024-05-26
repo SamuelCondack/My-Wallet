@@ -23,6 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
+/dist/
+/public
+
+public
+
 package-lock.json
 
 .env
