@@ -34,14 +34,38 @@
     border: 1px solid #000;
     border-radius: 20px;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
     transition: .4s;
 
     p{
         text-transform: capitalize;
+        margin: 0;
+        margin-bottom: 10px;
     }
 
     &:hover{
         border: 1px solid $defaultBlue;
         transform: scale(1.05);
     }
+}
+.deleteButton{
+    border-radius: 20px;
+    background-color: transparent;
+    align-self: flex-end;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border: 1px solid #000;
+    transition: all .4s;
+
+    &:hover{
+        cursor: pointer;
+        border-color: $defaultBlue;
+        transform: scale(1.1);
+    }
+}
+.binImg{
+    width: 20px;
 }

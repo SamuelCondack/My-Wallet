@@ -1,17 +1,18 @@
 import walletIcon from "../../assets/WalletIcon.png";
 import styles from "./styles.module.scss";
-import { auth } from "../../../config/firebase";
+import { auth, db } from "../../../config/firebase";
 import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
-import { signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import "./displayNone.css";
 import x from "../../assets/x.svg";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import menu from "../../assets/menu.svg";
 
 function HomeAuth() {
   const navigate = useNavigate();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const logout = async () => {
     try {
@@ -32,15 +33,28 @@ function HomeAuth() {
 
   useEffect(() => {
     const handleLoad = () => {
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          setIsCheckingAuth(false);
+          navigate("/signin");
+        }
+      });
+
       if (window.innerWidth > 768) {
         document.getElementById("openMenu")?.classList.add("displayNone");
-        document.getElementById("closeMenu")?.classList.add("displayNone")
+        document.getElementById("closeMenu")?.classList.add("displayNone");
         document.getElementById("menu")?.classList.remove("displayNone");
       }
     };
 
     window.addEventListener("load", handleLoad);
-  }, []);
+  }, [auth, navigate]);
+
+  useEffect(() => {
+    if (!isCheckingAuth) {
+      useNavigate("/signin");
+    }
+  }, [isCheckingAuth, navigate]);
 
   function addMenu() {
     const menu = document.getElementById("menu");
@@ -69,15 +83,27 @@ function HomeAuth() {
             className={styles.closeMenu}
           />
 
-          <Link to="expenses" onClick={window.innerWidth <= 768 ? removeMenu : null} className={styles.iconDiv}>
+          <Link
+            to="expenses"
+            onClick={window.innerWidth <= 768 ? removeMenu : null}
+            className={styles.iconDiv}
+          >
             <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
             <p className={styles.namep}>MyWallet</p>
           </Link>
           <ul className={styles.options}>
-            <Link to="expenses" onClick={window.innerWidth <= 768 ? removeMenu : null} className={styles.menuLinks}>
+            <Link
+              to="expenses"
+              onClick={window.innerWidth <= 768 ? removeMenu : null}
+              className={styles.menuLinks}
+            >
               Expenses
             </Link>
-            <Link to="newregister" onClick={window.innerWidth <= 768 ? removeMenu : null} className={styles.menuLinks}>
+            <Link
+              to="newregister"
+              onClick={window.innerWidth <= 768 ? removeMenu : null}
+              className={styles.menuLinks}
+            >
               New Register
             </Link>
           </ul>

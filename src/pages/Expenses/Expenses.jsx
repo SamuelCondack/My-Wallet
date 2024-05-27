@@ -1,8 +1,9 @@
 import styles from "./Expenses.module.scss";
-import { db } from "../../../config/firebase";
+import { auth, db } from "../../../config/firebase";
 import { useState, useEffect } from "react";
-import { getDocs, collection } from "firebase/firestore";
+import { getDocs, collection, doc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import bin from "../../assets/bin.png"
 
 export default function Expenses() {
   const [expensesList, setExpensesList] = useState([]);
@@ -57,6 +58,13 @@ export default function Expenses() {
     return <div className={styles.loading}>Loading...</div>;
   }
 
+  const deleteExpense = async (id) => {
+    const expenseDoc = doc(db, auth?.currentUser?.uid, id)
+    await deleteDoc(expenseDoc).then(()=>{
+      window.location.reload()
+    });
+  };
+
   return (
     <>
       <div className={styles.expensesSection}>
@@ -66,11 +74,17 @@ export default function Expenses() {
         </p>
         <div className={styles.expensesContainer}>
           {expensesList.map((expense) => (
+            <>
             <div key={expense.id} className={styles.expense}>
               <p>Name: {expense.name}</p>
               <p>Value: ${expense.value}</p>
               <p>Method: {expense.method}</p>
+              <p>Date: {expense.inclusionDate}</p>
+            <button className={styles.deleteButton} onClick={()=>deleteExpense(expense.id)}>
+              <img className={styles.binImg} src={bin} alt="delete button" />
+            </button>
             </div>
+            </>
           ))}
         </div>
       </div>
