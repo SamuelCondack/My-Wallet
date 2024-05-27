@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styles from "./NewRegister.module.scss";
 import { db } from "../../../config/firebase";
 import { addDoc, collection } from "firebase/firestore";
 import { getAuth } from 'firebase/auth';
-
 
 export default function NewRegister() {
   const [name, setName] = useState("");
@@ -12,7 +11,7 @@ export default function NewRegister() {
   const [expireDate, setExpireDate] = useState("");
   const [value, setValue] = useState("");
   const [installments, setInstallments] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("money");
+  const [paymentMethod, setPaymentMethod] = useState("Money");
 
   const auth = getAuth();
   const user = auth?.currentUser;
@@ -37,7 +36,7 @@ export default function NewRegister() {
         // setExpireDate("");
         setValue("");
         // setInstallments("");
-        setPaymentMethod("money");
+        setPaymentMethod("Money");
       });
     } catch (err) {
       console.error(err);

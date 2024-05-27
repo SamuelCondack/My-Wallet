@@ -55,6 +55,21 @@ export default function Expenses() {
     });
   };
 
+  function getBorderStyle(paymentMethod) {
+    switch (paymentMethod) {
+      case "Money":
+        return styles.money;
+      case "Pix":
+        return styles.pix;
+      case "Credit Card":
+        return styles.creditCard;
+      case "Debit Card":
+        return styles.debitCard;
+      default:
+        return "";
+    }
+  }
+
   function convertDateFormat(dateString) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const [year, month, day] = dateString.split("-");
@@ -68,24 +83,20 @@ export default function Expenses() {
     return Number(value).toFixed(2).replace(".", ",");
   }
 
-  // Função de comparação para ordenar as despesas por data
-  function compareDates(a, b) {
-    return new Date(b.inclusionDate) - new Date(a.inclusionDate);
-  }
-
   // Agrupar despesas por mês
   const expensesByMonth = {};
   expensesList.forEach((expense) => {
-    const [year, month] = expense.inclusionDate.split("-");
-    if (!expensesByMonth[month]) {
-      expensesByMonth[month] = [];
+    const [year, month, day] = expense.inclusionDate.split("-");
+    const monthKey = `${year}-${month}`;
+    if (!expensesByMonth[monthKey]) {
+      expensesByMonth[monthKey] = [];
     }
-    expensesByMonth[month].push(expense);
+    expensesByMonth[monthKey].push(expense);
   });
 
-  // Ordenar a lista de despesas por mês
+  // Ordenar a lista de despesas por mês e dentro de cada mês por dia
   const sortedExpensesByMonth = Object.entries(expensesByMonth).sort(
-    (a, b) => parseInt(b[0]) - parseInt(a[0])
+    ([a], [b]) => new Date(b) - new Date(a)
   );
 
   if (loading) {
@@ -96,28 +107,57 @@ export default function Expenses() {
     <>
       <div className={styles.expensesSection}>
         <h2 style={{ color: "#000" }}>Expenses</h2>
-        {sortedExpensesByMonth.map(([month, expenses]) => (
-          <div key={month}>
-            <h3>{new Date(2022, month - 1, 1).toLocaleString("default", { month: "long" })}</h3>
-            <p>Total: ${expenses.reduce((acc, cur) => acc + Number(cur.value), 0)}</p>
-            <div className={styles.expensesContainer}>
-              {expenses.map((expense) => (
-                <div key={expense.id} className={styles.expense}>
-                  <p>Name: {expense.name}</p>
-                  <p>Value: ${formatValue(expense.value)}</p>
-                  <p>Method: {expense.method}</p>
-                  <p>Date: {convertDateFormat(expense.inclusionDate)}</p>
-                  <button
-                    className={styles.deleteButton}
-                    onClick={() => deleteExpense(expense.id)}
-                  >
-                    <img className={styles.binImg} src={bin} alt="delete button" />
-                  </button>
-                </div>
-              ))}
+        {sortedExpensesByMonth.map(([monthKey, expenses]) => {
+          const [year, month] = monthKey.split("-");
+          return (
+            <div key={monthKey}>
+              <h3 className={styles.month}>
+                {new Date(year, month - 1, 1).toLocaleString("default", {
+                  month: "long",
+                })}
+              </h3>
+              <p className={styles.totalSpendings}>
+                Your Spendings: <b>$
+                {expenses
+                  .reduce((acc, cur) => acc + Number(cur.value), 0)
+                  .toFixed(2)}
+                  </b>
+              </p>
+              <div className={styles.expensesContainer}>
+                {expenses
+                  .sort(
+                    (a, b) =>
+                      new Date(b.inclusionDate) - new Date(a.inclusionDate)
+                  )
+                  .map((expense) => (
+                    <div
+                      key={expense.id}
+                      className={`${styles.expense} ${getBorderStyle(
+                        expense.method
+                      )}`}
+                    >
+                      <p className={styles.expenseName}>{expense.name}</p>
+                      <p className={styles.expenseValue}>
+                        ${formatValue(expense.value)}
+                      </p>
+                      <p className={styles.expenseMethod}>{expense.method}</p>
+                      <p>{convertDateFormat(expense.inclusionDate)}</p>
+                      <button
+                        className={styles.deleteButton}
+                        onClick={() => deleteExpense(expense.id)}
+                      >
+                        <img
+                          className={styles.binImg}
+                          src={bin}
+                          alt="delete button"
+                        />
+                      </button>
+                    </div>
+                  ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );

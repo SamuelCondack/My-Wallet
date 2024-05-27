@@ -1,6 +1,46 @@
 @import '../../Global/variables.scss';
 
-.loading{
+.pix {
+    border: 1px solid $lightYellow;
+
+    .expenseMethod {
+        background: $lightYellow;
+        letter-spacing: 3px;
+    }
+}
+
+.money {
+    border: 1px solid $mediumBlue;
+
+    .expenseMethod {
+        background: $mediumBlue;
+        letter-spacing: 3px;
+    }
+}
+
+.creditCard {
+    border: 1px solid $defaultBlue;
+
+    .expenseMethod {
+        background: $defaultBlue;
+        padding: 0 3px;
+    }
+}
+
+.debitCard {
+    border: 1px solid #c385d4;
+
+    .expenseMethod {
+        background: #c385d4;
+        color: #fff;
+        text-align: center;
+        border-radius: 20px;
+        font-weight: 700;
+        padding: 0 3px;
+    }
+}
+
+.loading {
     display: flex;
     text-align: center;
     justify-content: center;
@@ -8,49 +48,60 @@
     align-self: center;
 }
 
-.expensesSection{
+.expensesSection {
     display: flex;
     flex-direction: column;
 
-    h2{
+    h2 {
         text-align: center;
     }
 }
 
-.totalSpendings{
-    text-align: center;
-    font-weight: 800;
-    margin-top: 0;
-    margin-bottom: 30px;
-}
-
-.expensesContainer{
+.expensesContainer {
     display: flex;
     gap: 20px;
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 20px;
 }
-.expense{
-    border: 1px solid #000;
+
+.expense {
     border-radius: 20px;
-    padding: 10px;
+    padding: 10px 40px;
     display: flex;
     flex-direction: column;
     transition: .4s;
+    align-items: center;
 
-    p{
+    p {
         text-transform: capitalize;
         margin: 0;
         margin-bottom: 10px;
     }
 
-    &:hover{
-        border: 1px solid $defaultBlue;
+    &:hover {
         transform: scale(1.05);
     }
 }
-.deleteButton{
+
+.expenseName {
+    text-align: center;
+    font-weight: 500;
+}
+
+.expenseValue {
+    text-align: center;
+}
+
+.expenseMethod{
+    width: 100%;
+    color: #fff;
+    text-align: center;
+    border-radius: 20px;
+    font-weight: 700;
+}
+
+.deleteButton {
     border-radius: 20px;
     background-color: transparent;
     align-self: flex-end;
@@ -58,15 +109,30 @@
     display: flex;
     align-items: center;
     padding: 5px;
-    border: 1px solid #000;
+    border: 1px solid $defaultBlue;
     transition: all .4s;
+    position: relative;
+    left: 35px;
 
-    &:hover{
+    &:hover {
         cursor: pointer;
         border-color: $defaultBlue;
         transform: scale(1.1);
     }
 }
-.binImg{
+
+.binImg {
     width: 20px;
+}
+
+@media (max-width: 768px) {
+    .month {
+        margin-left: 10%;
+    }
+
+    .totalSpendings {
+        @extend .month;
+        margin-top: 0;
+        margin-bottom: 30px;
+    }
 }
