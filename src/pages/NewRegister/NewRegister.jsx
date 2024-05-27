@@ -92,7 +92,7 @@ export default function NewRegister() {
           onChange={(e) => setInclusionDate(e.target.value)}
         />
 
-        <label
+        {/* <label
           htmlFor="expireDateRegister"
           className={styles.newRegisterLabels}
         >
@@ -105,7 +105,7 @@ export default function NewRegister() {
           placeholder="mm/dd/yyyy"
           value={expireDate}
           onChange={(e) => setExpireDate(e.target.value)}
-        />
+        /> */}
 
         <label htmlFor="valueRegister" className={styles.newRegisterLabels}>
           Value
@@ -120,7 +120,7 @@ export default function NewRegister() {
           onChange={(e) => setValue(e.target.value)}
         />
 
-        <label
+        {/* <label
           htmlFor="installmentsRegister"
           className={styles.newRegisterLabels}
         >
@@ -134,7 +134,7 @@ export default function NewRegister() {
           "
           value={installments}
           onChange={(e) => setInstallments(e.target.value)}
-        />
+        /> */}
 
         <label
           htmlFor="paymentMethodRegister"

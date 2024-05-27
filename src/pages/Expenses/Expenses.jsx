@@ -54,16 +54,33 @@ export default function Expenses() {
   );
   const formattedTotalValue = totalValue.toFixed(2);
 
-  if (loading) {
-    return <div className={styles.loading}>Loading...</div>;
-  }
-
   const deleteExpense = async (id) => {
     const expenseDoc = doc(db, auth?.currentUser?.uid, id)
     await deleteDoc(expenseDoc).then(()=>{
       window.location.reload()
     });
   };
+
+  function convertDateFormat(dateString) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-');
+      return `${month}/${day}/${year}`;
+    } else {
+      return dateString;
+    }
+  }
+
+  // Função de comparação para ordenar as despesas por data
+  function compareDates(a, b) {
+    return new Date(b.inclusionDate) - new Date(a.inclusionDate);
+  }
+
+  // Ordenar a lista de despesas antes de renderizar
+  const sortedExpensesList = [...expensesList].sort(compareDates);
+
+  if (loading) {
+    return <div className={styles.loading}>Loading...</div>;
+  }
 
   return (
     <>
@@ -73,18 +90,16 @@ export default function Expenses() {
           Your Spendings: ${formattedTotalValue}
         </p>
         <div className={styles.expensesContainer}>
-          {expensesList.map((expense) => (
-            <>
+          {sortedExpensesList.map((expense) => (
             <div key={expense.id} className={styles.expense}>
               <p>Name: {expense.name}</p>
               <p>Value: ${expense.value}</p>
               <p>Method: {expense.method}</p>
-              <p>Date: {expense.inclusionDate}</p>
-            <button className={styles.deleteButton} onClick={()=>deleteExpense(expense.id)}>
-              <img className={styles.binImg} src={bin} alt="delete button" />
-            </button>
+              <p>Date: {convertDateFormat(expense.inclusionDate)}</p>
+              <button className={styles.deleteButton} onClick={() => deleteExpense(expense.id)}>
+                <img className={styles.binImg} src={bin} alt="delete button" />
+              </button>
             </div>
-            </>
           ))}
         </div>
       </div>

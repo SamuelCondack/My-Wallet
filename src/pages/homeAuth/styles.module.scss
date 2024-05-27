@@ -70,9 +70,12 @@
 .options {
     display: flex;
     flex-direction: column;
+    align-items: center;
     padding: 0;
     margin: 15px 0 0 0;
     gap: 15px;
+    height: 100%;
+    
 }
 
 .menuLinks {
@@ -96,6 +99,9 @@
     border-radius: 15px;
     padding: 5px 15px;
     transition: .4s;
+    margin-top: auto;
+    margin-bottom: 50px;
+    font-size: 14px;
 
     &:hover{
         color: #fff;

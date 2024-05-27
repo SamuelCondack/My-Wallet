@@ -106,11 +106,11 @@ function HomeAuth() {
             >
               New Register
             </Link>
-          </ul>
-
           <button onClick={logout} className={styles.logoutBtn}>
             logout
           </button>
+          </ul>
+
         </aside>
         <Outlet />
       </main>
