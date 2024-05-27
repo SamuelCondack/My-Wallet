@@ -10,13 +10,13 @@ export default function NewRegister() {
   const [description, setDescription] = useState("");
   const [inclusionDate, setInclusionDate] = useState("");
   const [expireDate, setExpireDate] = useState("");
-  const [value, setValue] = useState();
-  const [installments, setInstallments] = useState();
+  const [value, setValue] = useState("");
+  const [installments, setInstallments] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("money");
 
-  const auth = getAuth()
-  const user = auth?.currentUser
-  
+  const auth = getAuth();
+  const user = auth?.currentUser;
+
   const expensesCollectionRef = user ? collection(db, user?.uid) : null;
 
   const registerExpense = async (e) => {
@@ -26,18 +26,18 @@ export default function NewRegister() {
         name: name,
         description: description,
         inclusionDate: inclusionDate,
-        expireDate: expireDate,
-        value: value,
-        installments: installments,
+        // expireDate: expireDate,
+        value: parseFloat(value.replace(/,/g, '.')),  // Convertendo para número antes de armazenar
+        // installments: installments,
         method: paymentMethod,
-      }).then(()=>{
-        setName("")
-        setDescription("")
-        setInclusionDate("")
-        setExpireDate("")
-        setValue("")
-        setInstallments("")
-        setPaymentMethod("")
+      }).then(() => {
+        setName("");
+        setDescription("");
+        setInclusionDate("");
+        // setExpireDate("");
+        setValue("");
+        // setInstallments("");
+        setPaymentMethod("money");
       });
     } catch (err) {
       console.error(err);
@@ -113,7 +113,7 @@ export default function NewRegister() {
         <input
           id="valueRegister"
           className={styles.newRegisterInputs}
-          type="number"
+          type="text"
           placeholder="how much did it cost?"
           value={value}
           required
