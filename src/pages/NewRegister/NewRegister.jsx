@@ -81,7 +81,7 @@ export default function NewRegister() {
           htmlFor="inclusionDateRegister"
           className={styles.newRegisterLabels}
         >
-          Inclusion Date
+          Date
         </label>
         <input
           id="inclusionDateRegister"
@@ -89,6 +89,7 @@ export default function NewRegister() {
           type="date"
           placeholder="mm/dd/yyyy"
           value={inclusionDate}
+          required
           onChange={(e) => setInclusionDate(e.target.value)}
         />
 
@@ -146,6 +147,7 @@ export default function NewRegister() {
           id="paymentMethodRegister"
           className={styles.newRegisterInputs}
           value={paymentMethod}
+          required
           onChange={(e) => setPaymentMethod(e.target.value)}
         >
           <option value="Money">Money</option>

@@ -3,7 +3,7 @@ import { auth, db } from "../../../config/firebase";
 import { useState, useEffect } from "react";
 import { getDocs, collection, doc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import bin from "../../assets/bin.png"
+import bin from "../../assets/bin.png";
 
 export default function Expenses() {
   const [expensesList, setExpensesList] = useState([]);
@@ -48,26 +48,24 @@ export default function Expenses() {
     getExpensesList();
   }, [userId]);
 
-  const totalValue = expensesList.reduce(
-    (acc, expense) => acc + Number(expense.value),
-    0
-  );
-  const formattedTotalValue = totalValue.toFixed(2);
-
   const deleteExpense = async (id) => {
-    const expenseDoc = doc(db, auth?.currentUser?.uid, id)
-    await deleteDoc(expenseDoc).then(()=>{
-      window.location.reload()
+    const expenseDoc = doc(db, auth?.currentUser?.uid, id);
+    await deleteDoc(expenseDoc).then(() => {
+      window.location.reload();
     });
   };
 
   function convertDateFormat(dateString) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      const [year, month, day] = dateString.split('-');
+      const [year, month, day] = dateString.split("-");
       return `${month}/${day}/${year}`;
     } else {
       return dateString;
     }
+  }
+
+  function formatValue(value) {
+    return Number(value).toFixed(2).replace(".", ",");
   }
 
   // Função de comparação para ordenar as despesas por data
@@ -75,8 +73,20 @@ export default function Expenses() {
     return new Date(b.inclusionDate) - new Date(a.inclusionDate);
   }
 
-  // Ordenar a lista de despesas antes de renderizar
-  const sortedExpensesList = [...expensesList].sort(compareDates);
+  // Agrupar despesas por mês
+  const expensesByMonth = {};
+  expensesList.forEach((expense) => {
+    const [year, month] = expense.inclusionDate.split("-");
+    if (!expensesByMonth[month]) {
+      expensesByMonth[month] = [];
+    }
+    expensesByMonth[month].push(expense);
+  });
+
+  // Ordenar a lista de despesas por mês
+  const sortedExpensesByMonth = Object.entries(expensesByMonth).sort(
+    (a, b) => parseInt(b[0]) - parseInt(a[0])
+  );
 
   if (loading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -86,22 +96,28 @@ export default function Expenses() {
     <>
       <div className={styles.expensesSection}>
         <h2 style={{ color: "#000" }}>Expenses</h2>
-        <p className={styles.totalSpendings}>
-          Your Spendings: ${formattedTotalValue}
-        </p>
-        <div className={styles.expensesContainer}>
-          {sortedExpensesList.map((expense) => (
-            <div key={expense.id} className={styles.expense}>
-              <p>Name: {expense.name}</p>
-              <p>Value: ${expense.value}</p>
-              <p>Method: {expense.method}</p>
-              <p>Date: {convertDateFormat(expense.inclusionDate)}</p>
-              <button className={styles.deleteButton} onClick={() => deleteExpense(expense.id)}>
-                <img className={styles.binImg} src={bin} alt="delete button" />
-              </button>
+        {sortedExpensesByMonth.map(([month, expenses]) => (
+          <div key={month}>
+            <h3>{new Date(2022, month - 1, 1).toLocaleString("default", { month: "long" })}</h3>
+            <p>Total: ${expenses.reduce((acc, cur) => acc + Number(cur.value), 0)}</p>
+            <div className={styles.expensesContainer}>
+              {expenses.map((expense) => (
+                <div key={expense.id} className={styles.expense}>
+                  <p>Name: {expense.name}</p>
+                  <p>Value: ${formatValue(expense.value)}</p>
+                  <p>Method: {expense.method}</p>
+                  <p>Date: {convertDateFormat(expense.inclusionDate)}</p>
+                  <button
+                    className={styles.deleteButton}
+                    onClick={() => deleteExpense(expense.id)}
+                  >
+                    <img className={styles.binImg} src={bin} alt="delete button" />
+                  </button>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </>
   );
