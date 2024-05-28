@@ -6,10 +6,12 @@ import './Global/global.scss'
 import NewRegister from './pages/NewRegister/NewRegister.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Expenses from './pages/Expenses/Expenses.jsx'
-import HomeNoAuth from './pages/homeNoAuth'
 import Register from './pages/Register'
 import SignIn from './pages/SignIn'
 import HomeAuth from './pages/homeAuth/index.jsx'
+import Modal from 'react-modal';
+
+Modal.setAppElement('#root');
 
 const router = createBrowserRouter([
   {

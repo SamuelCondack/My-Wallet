@@ -4,11 +4,15 @@ import { useState, useEffect } from "react";
 import { getDocs, collection, doc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import bin from "../../assets/bin.png";
+import Modal from "react-modal";
+import ConfirmationModal from "../../modals/Confirmation";
 
 export default function Expenses() {
   const [expensesList, setExpensesList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -48,11 +52,39 @@ export default function Expenses() {
     getExpensesList();
   }, [userId]);
 
+  const handleDeleteButtonClick = (id) => {
+    setExpenseToDelete(id);
+    setShowModal(true);
+  };
+
+  const handleCancelDelete = () => {
+    setShowModal(false);
+    setExpenseToDelete(null);
+    console.log(showModal);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (expenseToDelete) {
+      try {
+        await deleteExpense(expenseToDelete);
+        setShowModal(false);
+        setExpenseToDelete(null);
+      } catch (error) {
+        console.log(error.message);
+        console.log("Deletion Returned Error.");
+      }
+    }
+  };
+
   const deleteExpense = async (id) => {
-    const expenseDoc = doc(db, auth?.currentUser?.uid, id);
-    await deleteDoc(expenseDoc).then(() => {
-      window.location.reload();
-    });
+    try {
+      const expenseDoc = doc(db, auth?.currentUser?.uid, id);
+      await deleteDoc(expenseDoc).then(() => {
+        window.location.reload();
+      });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   function getBorderStyle(paymentMethod) {
@@ -117,11 +149,13 @@ export default function Expenses() {
                 })}
               </h3>
               <p className={styles.totalSpendings}>
-                Your Spendings: <b>$
-                {expenses
-                  .reduce((acc, cur) => acc + Number(cur.value), 0)
-                  .toFixed(2)}
-                  </b>
+                Your Spendings:{" "}
+                <b>
+                  $
+                  {expenses
+                    .reduce((acc, cur) => acc + Number(cur.value), 0)
+                    .toFixed(2)}
+                </b>
               </p>
               <div className={styles.expensesContainer}>
                 {expenses
@@ -144,7 +178,7 @@ export default function Expenses() {
                       <p>{convertDateFormat(expense.inclusionDate)}</p>
                       <button
                         className={styles.deleteButton}
-                        onClick={() => deleteExpense(expense.id)}
+                        onClick={() => handleDeleteButtonClick(expense.id)}
                       >
                         <img
                           className={styles.binImg}
@@ -154,6 +188,11 @@ export default function Expenses() {
                       </button>
                     </div>
                   ))}
+                <ConfirmationModal
+                  isOpen={showModal}
+                  onRequestClose={handleCancelDelete}
+                  onConfirmDelete={handleConfirmDelete}
+                />
               </div>
             </div>
           );
