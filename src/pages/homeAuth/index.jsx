@@ -33,13 +33,6 @@ function HomeAuth() {
 
   useEffect(() => {
     const handleLoad = () => {
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          setIsCheckingAuth(false);
-          navigate("/signin");
-        }
-      });
-
       if (window.innerWidth > 768) {
         document.getElementById("openMenu")?.classList.add("displayNone");
         document.getElementById("closeMenu")?.classList.add("displayNone");
@@ -47,12 +40,24 @@ function HomeAuth() {
       }
     };
 
-    window.addEventListener("load", handleLoad);
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setIsCheckingAuth(false);
+        navigate("/signin");
+      }
+    });
+
+    handleLoad();
+    window.addEventListener("resize", handleLoad);
+
+    return () => {
+      window.removeEventListener("resize", handleLoad);
+    };
   }, [auth, navigate]);
 
   useEffect(() => {
     if (!isCheckingAuth) {
-      useNavigate("/signin");
+      navigate("/signin");
     }
   }, [isCheckingAuth, navigate]);
 
@@ -106,11 +111,10 @@ function HomeAuth() {
             >
               New Register
             </Link>
-          <button onClick={logout} className={styles.logoutBtn}>
-            logout
-          </button>
+            <button onClick={logout} className={styles.logoutBtn}>
+              logout
+            </button>
           </ul>
-
         </aside>
         <Outlet />
       </main>
