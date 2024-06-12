@@ -48,6 +48,30 @@
     align-self: center;
 }
 
+.expensesSectionWrapper {
+    overflow: scroll;
+    height: 100vh;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+        width: 5px;
+        margin-right: 20px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #b0b0b0;
+        border-radius: 100px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: #b0b0b0;
+    }
+}
+
 .expensesSection {
     display: flex;
     flex-direction: column;
@@ -93,7 +117,7 @@
     text-align: center;
 }
 
-.expenseMethod{
+.expenseMethod {
     width: 100%;
     color: #fff;
     text-align: center;

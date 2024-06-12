@@ -137,66 +137,68 @@ export default function Expenses() {
 
   return (
     <>
-      <div className={styles.expensesSection}>
-        <h2 style={{ color: "#000" }}>Expenses</h2>
-        {sortedExpensesByMonth.map(([monthKey, expenses]) => {
-          const [year, month] = monthKey.split("-");
-          return (
-            <div key={monthKey}>
-              <h3 className={styles.month}>
-                {new Date(year, month - 1, 1).toLocaleString("default", {
-                  month: "long",
-                })}
-              </h3>
-              <p className={styles.totalSpendings}>
-                Your Spendings:{" "}
-                <b>
-                  $
+      <div className={styles.expensesSectionWrapper}>
+        <div className={styles.expensesSection}>
+          <h2 style={{ color: "#000" }}>Expenses</h2>
+          {sortedExpensesByMonth.map(([monthKey, expenses]) => {
+            const [year, month] = monthKey.split("-");
+            return (
+              <div key={monthKey}>
+                <h3 className={styles.month}>
+                  {new Date(year, month - 1, 1).toLocaleString("default", {
+                    month: "long",
+                  })}
+                </h3>
+                <p className={styles.totalSpendings}>
+                  Your Spendings:{" "}
+                  <b>
+                    $
+                    {expenses
+                      .reduce((acc, cur) => acc + Number(cur.value), 0)
+                      .toFixed(2)}
+                  </b>
+                </p>
+                <div className={styles.expensesContainer}>
                   {expenses
-                    .reduce((acc, cur) => acc + Number(cur.value), 0)
-                    .toFixed(2)}
-                </b>
-              </p>
-              <div className={styles.expensesContainer}>
-                {expenses
-                  .sort(
-                    (a, b) =>
-                      new Date(b.inclusionDate) - new Date(a.inclusionDate)
-                  )
-                  .map((expense) => (
-                    <div
-                      key={expense.id}
-                      className={`${styles.expense} ${getBorderStyle(
-                        expense.method
-                      )}`}
-                    >
-                      <p className={styles.expenseName}>{expense.name}</p>
-                      <p className={styles.expenseValue}>
-                        ${formatValue(expense.value)}
-                      </p>
-                      <p className={styles.expenseMethod}>{expense.method}</p>
-                      <p>{convertDateFormat(expense.inclusionDate)}</p>
-                      <button
-                        className={styles.deleteButton}
-                        onClick={() => handleDeleteButtonClick(expense.id)}
+                    .sort(
+                      (a, b) =>
+                        new Date(b.inclusionDate) - new Date(a.inclusionDate)
+                    )
+                    .map((expense) => (
+                      <div
+                        key={expense.id}
+                        className={`${styles.expense} ${getBorderStyle(
+                          expense.method
+                        )}`}
                       >
-                        <img
-                          className={styles.binImg}
-                          src={bin}
-                          alt="delete button"
-                        />
-                      </button>
-                    </div>
-                  ))}
-                <ConfirmationModal
-                  isOpen={showModal}
-                  onRequestClose={handleCancelDelete}
-                  onConfirmDelete={handleConfirmDelete}
-                />
+                        <p className={styles.expenseName}>{expense.name}</p>
+                        <p className={styles.expenseValue}>
+                          ${formatValue(expense.value)}
+                        </p>
+                        <p className={styles.expenseMethod}>{expense.method}</p>
+                        <p>{convertDateFormat(expense.inclusionDate)}</p>
+                        <button
+                          className={styles.deleteButton}
+                          onClick={() => handleDeleteButtonClick(expense.id)}
+                        >
+                          <img
+                            className={styles.binImg}
+                            src={bin}
+                            alt="delete button"
+                          />
+                        </button>
+                      </div>
+                    ))}
+                  <ConfirmationModal
+                    isOpen={showModal}
+                    onRequestClose={handleCancelDelete}
+                    onConfirmDelete={handleConfirmDelete}
+                  />
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </>
   );
