@@ -1,5 +1,12 @@
 @import '../../Global/variables.scss';
 
+body{
+    &::-webkit-scrollbar{
+        display: none;
+        width: 0;
+    }
+}
+
 .pix {
     border: 1px solid $lightYellow;
 
