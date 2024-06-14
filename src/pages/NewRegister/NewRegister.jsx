@@ -27,7 +27,7 @@ export default function NewRegister() {
         inclusionDate: inclusionDate,
         // expireDate: expireDate,
         value: parseFloat(value.replace(/,/g, '.')),  // Convertendo para número antes de armazenar
-        // installments: installments,
+        installments: installments,
         method: paymentMethod,
       }).then(() => {
         setName("");
@@ -35,7 +35,7 @@ export default function NewRegister() {
         setInclusionDate("");
         // setExpireDate("");
         setValue("");
-        // setInstallments("");
+        setInstallments("");
         setPaymentMethod("Money");
       });
     } catch (err) {
@@ -120,7 +120,7 @@ export default function NewRegister() {
           onChange={(e) => setValue(e.target.value)}
         />
 
-        {/* <label
+       <label
           htmlFor="installmentsRegister"
           className={styles.newRegisterLabels}
         >
@@ -134,7 +134,7 @@ export default function NewRegister() {
           "
           value={installments}
           onChange={(e) => setInstallments(e.target.value)}
-        /> */}
+        />
 
         <label
           htmlFor="paymentMethodRegister"

@@ -6,6 +6,18 @@ body{
         width: 0;
     }
 }
+.filterContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.selectFilters{
+    border-radius: 20px;
+    text-align: center;
+    padding: 2px;
+}
 
 .pix {
     border: 1px solid $lightYellow;
@@ -58,6 +70,7 @@ body{
 .expensesSectionWrapper {
     overflow: scroll;
     height: 100vh;
+    width: 100%;
     overflow-x: hidden;
 
     &::-webkit-scrollbar {
@@ -165,5 +178,9 @@ body{
         @extend .month;
         margin-top: 0;
         margin-bottom: 30px;
+    }
+
+    .filterContainer{
+        flex-direction: column;
     }
 }
