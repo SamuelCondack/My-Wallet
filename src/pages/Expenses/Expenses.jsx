@@ -132,13 +132,19 @@ export default function Expenses() {
   expensesList.forEach((expense) => {
     const [year, month, day] = expense.inclusionDate.split("-");
     const monthKey = `${year}-${month}`;
-    
-    const installments = expense.installments ? parseInt(expense.installments, 10) : 1;
+
+    const installments = expense.installments
+      ? parseInt(expense.installments, 10)
+      : 1;
     const installmentValue = expense.value / installments;
 
     for (let i = 0; i < installments; i++) {
       const installmentMonth = new Date(year, month - 1 + i, 1);
-      const installmentMonthKey = `${installmentMonth.getFullYear()}-${(installmentMonth.getMonth() + 1).toString().padStart(2, "0")}`;
+      const installmentMonthKey = `${installmentMonth.getFullYear()}-${(
+        installmentMonth.getMonth() + 1
+      )
+        .toString()
+        .padStart(2, "0")}`;
 
       if (!expensesByMonth[installmentMonthKey]) {
         expensesByMonth[installmentMonthKey] = [];
@@ -149,7 +155,7 @@ export default function Expenses() {
         value: installmentValue,
         installmentNumber: i + 1,
         totalValue: expense.value,
-        installments: installments
+        installments: installments,
       });
     }
   });
@@ -160,27 +166,45 @@ export default function Expenses() {
   );
 
   // Gerar lista de anos únicos com base nas despesas
-  const uniqueYears = [...new Set(expensesList.flatMap(expense => {
-    const [year, month, day] = expense.inclusionDate.split("-");
-    const installments = expense.installments ? parseInt(expense.installments, 10) : 1;
-    return Array.from({ length: installments }, (_, i) => new Date(year, month - 1 + i, 1).getFullYear());
-  }))];
+  const uniqueYears = [
+    ...new Set(
+      expensesList.flatMap((expense) => {
+        const [year, month, day] = expense.inclusionDate.split("-");
+        const installments = expense.installments
+          ? parseInt(expense.installments, 10)
+          : 1;
+        return Array.from({ length: installments }, (_, i) =>
+          new Date(year, month - 1 + i, 1).getFullYear()
+        );
+      })
+    ),
+  ];
 
   // Gerar lista de meses únicos com base nas despesas e no ano selecionado
-  const uniqueMonths = [...new Set(expensesList.flatMap(expense => {
-    const [year, month, day] = expense.inclusionDate.split("-");
-    const installments = expense.installments ? parseInt(expense.installments, 10) : 1;
-    return Array.from({ length: installments }, (_, i) => {
-      const installmentMonth = new Date(year, month - 1 + i, 1);
-      return installmentMonth.getFullYear().toString() === selectedYear ? installmentMonth.getMonth() + 1 : null;
-    }).filter(month => month !== null);
-  }))];
+  const uniqueMonths = [
+    ...new Set(
+      expensesList.flatMap((expense) => {
+        const [year, month, day] = expense.inclusionDate.split("-");
+        const installments = expense.installments
+          ? parseInt(expense.installments, 10)
+          : 1;
+        return Array.from({ length: installments }, (_, i) => {
+          const installmentMonth = new Date(year, month - 1 + i, 1);
+          return installmentMonth.getFullYear().toString() === selectedYear
+            ? installmentMonth.getMonth() + 1
+            : null;
+        }).filter((month) => month !== null);
+      })
+    ),
+  ];
 
   // Ordem dos meses do ano
   const monthOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   // Ordenar a lista de meses únicos de acordo com a ordem do calendário
-  const sortedUniqueMonths = uniqueMonths.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+  const sortedUniqueMonths = uniqueMonths.sort(
+    (a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b)
+  );
 
   if (loading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -200,12 +224,14 @@ export default function Expenses() {
                 onChange={(e) => {
                   setSelectedYear(e.target.value);
                   setSelectedMonth("All");
-                }}
+                }} 
                 className={styles.selectFilters}
               >
                 <option value="All">All</option>
-                {uniqueYears.map(year => (
-                  <option key={year} value={year}>{year}</option>
+                {uniqueYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
                 ))}
               </select>
             </div>
@@ -219,9 +245,11 @@ export default function Expenses() {
                 className={styles.selectFilters}
               >
                 <option value="All">All</option>
-                {sortedUniqueMonths.map(month => (
+                {sortedUniqueMonths.map((month) => (
                   <option key={month} value={month}>
-                    {new Date(0, month - 1).toLocaleString("default", { month: "long" })}
+                    {new Date(0, month - 1).toLocaleString("default", {
+                      month: "long",
+                    })}
                   </option>
                 ))}
               </select>
@@ -230,77 +258,85 @@ export default function Expenses() {
           {sortedExpensesByMonth
             .filter(([monthKey, _]) => {
               const [year, month] = monthKey.split("-");
-              return (selectedYear === "All" || year === selectedYear) &&
-                     (selectedMonth === "All" || month === selectedMonth.padStart(2, "0"));
+              return (
+                (selectedYear === "All" || year === selectedYear) &&
+                (selectedMonth === "All" ||
+                  month === selectedMonth.padStart(2, "0"))
+              );
             })
             .map(([monthKey, expenses]) => {
-            const [year, month] = monthKey.split("-");
-            return (
-              <div key={monthKey}>
-                <h3 className={styles.month}>
-                  {new Date(year, month - 1, 1).toLocaleString("default", {
-                    month: "long",
-                  })} {year}
-                </h3>
-                <p className={styles.totalSpendings}>
-                  Your Spendings:{" "}
-                  <b>
-                    $
+              const [year, month] = monthKey.split("-");
+              return (
+                <div key={monthKey}>
+                  <h3 className={styles.month}>
+                    {new Date(year, month - 1, 1).toLocaleString("default", {
+                      month: "long",
+                    })}{" "}
+                    {year}
+                  </h3>
+                  <p className={styles.totalSpendings}>
+                    Your Spendings:{" "}
+                    <b>
+                      $
+                      {expenses
+                        .reduce((acc, cur) => acc + Number(cur.value), 0)
+                        .toFixed(2)}
+                    </b>
+                  </p>
+                  <div className={styles.expensesContainer}>
                     {expenses
-                      .reduce((acc, cur) => acc + Number(cur.value), 0)
-                      .toFixed(2)}
-                  </b>
-                </p>
-                <div className={styles.expensesContainer}>
-                  {expenses
-                    .sort(
-                      (a, b) =>
-                        new Date(b.inclusionDate) - new Date(a.inclusionDate)
-                    )
-                    .map((expense) => (
-                      <div
-                        key={expense.id + '-' + expense.installmentNumber}
-                        className={`${styles.expense} ${getBorderStyle(
-                          expense.method
-                        )}`}
-                      >
-                        <p className={styles.expenseName}>{expense.name}</p>
-                        <p className={styles.expenseValue}>
-                          {expense.installments > 1 ? (
-                            <>
-                              ${formatValue(expense.value)} {expense.installmentNumber}/{expense.installments}
-                              <br />
-                              <span className={styles.expenseTotal}>
-                                Total: ${formatValue(expense.totalValue)}
-                              </span>
-                            </>
-                          ) : (
-                            `$${formatValue(expense.value)}`
-                          )}
-                        </p>
-                        <p className={styles.expenseMethod}>{expense.method}</p>
-                        <p>{convertDateFormat(expense.inclusionDate)}</p>
-                        <button
-                          className={styles.deleteButton}
-                          onClick={() => handleDeleteButtonClick(expense.id)}
+                      .sort(
+                        (a, b) =>
+                          new Date(b.inclusionDate) - new Date(a.inclusionDate)
+                      )
+                      .map((expense) => (
+                        <div
+                          key={expense.id + "-" + expense.installmentNumber}
+                          className={`${styles.expense} ${getBorderStyle(
+                            expense.method
+                          )}`}
                         >
-                          <img
-                            className={styles.binImg}
-                            src={bin}
-                            alt="delete button"
-                          />
-                        </button>
-                      </div>
-                    ))}
-                  <ConfirmationModal
-                    isOpen={showModal}
-                    onRequestClose={handleCancelDelete}
-                    onConfirmDelete={handleConfirmDelete}
-                  />
+                          <p className={styles.expenseName}>{expense.name}</p>
+                          <p className={styles.expenseValue}>
+                            {expense.installments > 1 ? (
+                              <>
+                                ${formatValue(expense.value)}{" "}
+                                {expense.installmentNumber}/
+                                {expense.installments}
+                                <br />
+                                <span className={styles.expenseTotal}>
+                                  Total: ${formatValue(expense.totalValue)}
+                                </span>
+                              </>
+                            ) : (
+                              `$${formatValue(expense.value)}`
+                            )}
+                          </p>
+                          <p className={styles.expenseMethod}>
+                            {expense.method}
+                          </p>
+                          <p>{convertDateFormat(expense.inclusionDate)}</p>
+                          <button
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteButtonClick(expense.id)}
+                          >
+                            <img
+                              className={styles.binImg}
+                              src={bin}
+                              alt="delete button"
+                            />
+                          </button>
+                        </div>
+                      ))}
+                    <ConfirmationModal
+                      isOpen={showModal}
+                      onRequestClose={handleCancelDelete}
+                      onConfirmDelete={handleConfirmDelete}
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
     </>
