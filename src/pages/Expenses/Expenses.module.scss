@@ -27,6 +27,18 @@ body {
     -webkit-appearance: none;
     font-size: 12px;
     background-color: #fff;
+    transition: .4s;
+    outline: none;
+
+    &:hover{
+        cursor: pointer;
+        transform: scale(1.05);
+        border-color: $defaultBlue;
+    }
+    &:focus{
+        border-color: $defaultBlue;
+        transform: scale(1.05);
+    }
 }
 
 option {
