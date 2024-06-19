@@ -7,6 +7,13 @@ import { Link } from "react-router-dom";
 
 AOS.init();
 
+function scrollBottom(){
+  window.scroll({
+    top: 50000,
+    behavior: "smooth",
+  });
+}
+
 export default function Header() {
   return (
     <>
@@ -19,7 +26,7 @@ export default function Header() {
           <a className={styles.headerLinks} href="">
             HOME
           </a>
-          <a className={styles.headerLinks} href="">
+          <a className={styles.headerLinks} onClick={scrollBottom}>
             ABOUT
           </a>
           <div className={styles.logoDiv}>
