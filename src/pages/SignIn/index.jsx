@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import styles from "../Register/styles.module.scss";
-import logo from "../../assets/WalletIcon.png";
+import styles from "../Register/styles.module.scss"; // Certifique-se de que os estilos estão corretos
+import logo from "../../assets/WalletIcon.png"; // Caminho para o logo
 import { useEffect, useState } from "react";
 import { auth, googleProvider } from "../../../config/firebase";
 import { useNavigate } from "react-router-dom";
@@ -8,42 +8,43 @@ import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function SignIn() {
-  const navigate = useNavigate("");
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // Adicionado para mensagens de erro
 
   useEffect(() => {
-    auth.onAuthStateChanged(function (user) {
+    const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
         navigate("/home/expenses");
       }
     });
+    return () => unsubscribe(); // Limpeza do listener
   }, [navigate]);
 
   const toggleShowPassword = () => {
-    setShowPassword((prevShowPassword) => !prevShowPassword);
+    setShowPassword(prevShowPassword => !prevShowPassword);
   };
 
   const signIn = async (e) => {
     e.preventDefault();
-
     try {
-      await signInWithEmailAndPassword(auth, email, password).then(() => {
-        navigate("/home/expenses");
-      });
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/home/expenses");
+      setErrorMessage(""); // Limpa a mensagem de erro ao fazer login com sucesso
     } catch (error) {
-      console.log(error.message);
+      setErrorMessage("Incorrect password. Please check your password and try again.");
     }
   };
 
   const continueWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider).then(() => {
-        navigate("/home/expenses");
-      });
+      await signInWithPopup(auth, googleProvider);
+      navigate("/home/expenses");
+      setErrorMessage(""); // Limpa a mensagem de erro ao fazer login com sucesso
     } catch (err) {
-      console.error(err);
+      console.error("Error with Google sign-in:", err.message);
     }
   };
 
@@ -60,13 +61,13 @@ export default function SignIn() {
       </div>
       <div className={styles.formContainer}>
         <form onSubmit={signIn} className={styles.form}>
-          <h2 className={styles.title}>Welcome back</h2>
+          <h2 className={styles.title}>Welcome Back</h2>
           <label className={styles.formLabel} htmlFor="email">
             Email
           </label>
           <input
             className={styles.formInput}
-            placeholder="email"
+            placeholder="Enter your email"
             type="email"
             id="email"
             autoComplete="email"
@@ -79,18 +80,21 @@ export default function SignIn() {
           </label>
           <input
             className={styles.formInput}
-            placeholder="password"
+            placeholder="Enter your password"
             type={showPassword ? "text" : "password"}
             id="password"
             autoComplete="password"
             required
             onChange={(e) => setPassword(e.target.value)}
           />
+          {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
           <button
             type="button"
             className={styles.showPasswordButtonSignIn}
             onClick={toggleShowPassword}
-          > {showPassword ? <FaEyeSlash /> : <FaEye />} </button>
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </button>
 
           <div className={styles.buttons}>
             <button className={styles.signUpBtn} type="submit">
