@@ -12,6 +12,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,16 +30,23 @@ export default function Register() {
   const signUp = async (e) => {
     e.preventDefault();
 
+    const passwordRegex = /^(?=.*[!@#$]).{6,}$/;
+
+    if (!passwordRegex.test(password)) {
+      setErrorMessage(`Password must be at least 6 characters long\nand include a special character (!@#$).`);
+      return;
+    }
+
     if (confirmPassword === password) {
       try {
         await createUserWithEmailAndPassword(auth, email, password).then(() => {
           navigate("/home/expenses");
         });
       } catch (err) {
-        console.error(err.message);
+        setErrorMessage(err.message);
       }
     } else {
-      console.log("Password and confirm password doesn't match");
+      setErrorMessage("Password and confirm password don't match.");
     }
   };
 
@@ -96,7 +104,9 @@ export default function Register() {
             type="button"
             className={styles.showPasswordButton}
             onClick={toggleShowPassword}
-          > {showPassword ? <FaEyeSlash /> : <FaEye />} </button>
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </button>
 
           <label className={styles.formLabel} htmlFor="confirmPassword">
             Confirm Password
@@ -110,6 +120,11 @@ export default function Register() {
             required
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
+
+          {errorMessage && (
+            <p className={styles.errorMessage}>{errorMessage}</p>
+          )}
+
           <div className={styles.buttons}>
             <button className={styles.signUpBtn} type="submit">
               Sign Up

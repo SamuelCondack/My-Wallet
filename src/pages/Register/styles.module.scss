@@ -80,7 +80,8 @@
     border: none;
     position: absolute;
     margin-left: 250px;
-    margin-bottom: 10px;
+    // margin-bottom: 10px;
+    top: 353px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -120,6 +121,15 @@
         box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.144);
         border-color: $defaultBlue;
     }
+}
+
+.errorMessage{
+    color: red;
+    border: 1px solid red;
+    border-radius: 20px;
+    padding: 10px 10px;
+    word-wrap: break-word;
+    white-space: pre-line;
 }
 
 .authOptionsSeparator {
