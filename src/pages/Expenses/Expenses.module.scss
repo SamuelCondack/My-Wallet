@@ -30,14 +30,23 @@ body {
     transition: .4s;
     outline: none;
 
-    &:hover{
+    &:hover {
         cursor: pointer;
         transform: scale(1.05);
         border-color: $defaultBlue;
     }
-    &:focus{
+
+    &:focus {
         border-color: $defaultBlue;
         transform: scale(1.05);
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        background-color: #f0f0f0;
+        color: #a0a0a0;
+        border-color: #d0d0d0;
+        transform: none;
     }
 }
 
@@ -121,6 +130,8 @@ option {
 .expensesSection {
     display: flex;
     flex-direction: column;
+    // overflow: visible;
+    // height: auto;
 
     h2 {
         text-align: center;
@@ -147,6 +158,7 @@ option {
         text-transform: capitalize;
         margin: 0;
         margin-bottom: 10px;
+        overflow-wrap: anywhere;
     }
 
     &:hover {
@@ -208,5 +220,45 @@ option {
 
     .filterContainer {
         flex-direction: column;
+    }
+
+    .expensesSection {
+        overflow: visible;
+        height: auto;
+    }
+
+    .expensesSectionWrapper {
+        overflow: visible;
+        height: auto;
+        min-height: 100vh;
+    }
+}
+
+.scrollToTopButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    position: fixed;
+    bottom: 20px;
+    left: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+    transition: opacity 0.3s, transform 0.3s;
+
+    &:hover {
+        background-color: #0056b3;
+    }
+
+    &:active {
+        transform: scale(0.9);
     }
 }

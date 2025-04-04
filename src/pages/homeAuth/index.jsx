@@ -1,6 +1,6 @@
 import walletIcon from "../../assets/WalletIcon.png";
 import styles from "./styles.module.scss";
-import { auth, db } from "../../../config/firebase";
+import { auth } from "../../../config/firebase";
 import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -9,10 +9,13 @@ import "./displayNone.css";
 import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
 import menu from "../../assets/menu.svg";
+import { motion, AnimatePresence } from "framer-motion";
 
 function HomeAuth() {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [menuHidden, setMenuHidden] = useState(true); // Controla a visibilidade do menu
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768); // Verifica se é uma tela menor
 
   const logout = async () => {
     try {
@@ -25,18 +28,20 @@ function HomeAuth() {
   };
 
   function removeMenu() {
-    const menu = document.getElementById("menu");
-    const img = document.getElementById("openMenu");
-    menu.classList.add("displayNone");
-    img.classList.remove("displayNone");
+    setMenuHidden(true); // Esconde o menu
+  }
+
+  function addMenu() {
+    setMenuHidden(false); // Mostra o menu
   }
 
   useEffect(() => {
-    const handleLoad = () => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768); // Atualiza se é uma tela menor
       if (window.innerWidth > 768) {
-        document.getElementById("openMenu")?.classList.add("displayNone");
-        document.getElementById("closeMenu")?.classList.add("displayNone");
-        document.getElementById("menu")?.classList.remove("displayNone");
+        setMenuHidden(false); // Mostra o menu em telas maiores
+      } else {
+        setMenuHidden(true); // Esconde o menu em telas menores
       }
     };
 
@@ -47,13 +52,13 @@ function HomeAuth() {
       }
     });
 
-    handleLoad();
-    window.addEventListener("resize", handleLoad);
+    handleResize();
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", handleLoad);
+      window.removeEventListener("resize", handleResize);
     };
-  }, [auth, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     if (!isCheckingAuth) {
@@ -61,61 +66,71 @@ function HomeAuth() {
     }
   }, [isCheckingAuth, navigate]);
 
-  function addMenu() {
-    const menu = document.getElementById("menu");
-    const img = document.getElementById("openMenu");
-    menu.classList.remove("displayNone");
-    img.classList.add("displayNone");
-  }
-
   return (
     <>
       <main className={styles.mainContainer}>
-        <div onClick={addMenu} id="openMenu" className={styles.menuDiv}>
-          <img src={menu} alt="menu icon" className={styles.menuImg} />
-        </div>
-        <aside
-          id="menu"
-          className={`${styles.asideMenu} ${
-            window.innerWidth <= 768 ? "displayNone" : ""
-          }`}
-        >
-          <img
-            id="closeMenu"
-            onClick={removeMenu}
-            src={x}
-            alt="close menu"
-            className={styles.closeMenu}
-          />
+        {/* Botão de abrir menu (aparece apenas em telas menores) */}
+        {isMobile && menuHidden && (
+          <div onClick={addMenu} id="openMenu" className={styles.menuDiv}>
+            <img src={menu} alt="menu icon" className={styles.menuImg} />
+          </div>
+        )}
 
-          <Link
-            to="expenses"
-            onClick={window.innerWidth <= 768 ? removeMenu : null}
-            className={styles.iconDiv}
-          >
-            <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
-            <p className={styles.namep}>MyWallet</p>
-          </Link>
-          <ul className={styles.options}>
-            <Link
-              to="expenses"
-              onClick={window.innerWidth <= 768 ? removeMenu : null}
-              className={styles.menuLinks}
+        <AnimatePresence>
+          {!menuHidden && (
+            <motion.aside
+              id="menu"
+              className={styles.asideMenu}
+              initial={{ x: "-100%" }} // Começa fora da tela e menor
+              animate={{ x: 0 }} // Anima para a posição original e tamanho normal
+              exit={{ x: "-1000%" }} // Sai para fora da tela e encolhe
+              transition={{ duration: 0.3, ease: "linear" }} // Duração e suavidade da animação
             >
-              Expenses
-            </Link>
-            <Link
-              to="newregister"
-              onClick={window.innerWidth <= 768 ? removeMenu : null}
-              className={styles.menuLinks}
-            >
-              New Register
-            </Link>
-            <button onClick={logout} className={styles.logoutBtn}>
-              logout
-            </button>
-          </ul>
-        </aside>
+              {/* Botão de fechar menu (aparece apenas em telas menores) */}
+              {isMobile && (
+                <img
+                  id="closeMenu"
+                  onClick={removeMenu}
+                  src={x}
+                  alt="close menu"
+                  className={styles.closeMenu}
+                />
+              )}
+
+              <Link
+                to="expenses"
+                onClick={isMobile ? removeMenu : null}
+                className={styles.iconDiv}
+              >
+                <img
+                  src={walletIcon}
+                  alt="Wallet Icon"
+                  className={styles.icon}
+                />
+                <p className={styles.namep}>MyWallet</p>
+              </Link>
+              <ul className={styles.options}>
+                <Link
+                  to="expenses"
+                  onClick={isMobile ? removeMenu : null}
+                  className={styles.menuLinks}
+                >
+                  Expenses
+                </Link>
+                <Link
+                  to="newregister"
+                  onClick={isMobile ? removeMenu : null}
+                  className={styles.menuLinks}
+                >
+                  New Register
+                </Link>
+                <button onClick={logout} className={styles.logoutBtn}>
+                  logout
+                </button>
+              </ul>
+            </motion.aside>
+          )}
+        </AnimatePresence>
         <Outlet />
       </main>
     </>
