@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import { getDocs, collection, doc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import bin from "../../assets/bin.png";
-import Modal from "react-modal";
 import ConfirmationModal from "../../modals/Confirmation";
+import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
+import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "react-toastify";
+import ToastComponent from "../../components/Toast/ToastComponent";
 
 export default function Expenses() {
   const currentDate = new Date();
@@ -13,12 +16,13 @@ export default function Expenses() {
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
 
   const [expensesList, setExpensesList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -48,11 +52,11 @@ export default function Expenses() {
             id: doc.id,
           }));
           setExpensesList(filteredData);
+          setIsLoading(false);
         } catch (err) {
           console.error(err);
         }
       }
-      setLoading(false);
     };
 
     getExpensesList();
@@ -64,6 +68,33 @@ export default function Expenses() {
       setSelectedMonth(currentMonth);
     }
   }, [userId, currentYear, currentMonth]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollToTop(true);
+      } else {
+        setShowScrollToTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  if (isLoading) {
+    return <LoadingComponent />;
+  }
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   const handleDeleteButtonClick = (id) => {
     setExpenseToDelete(id);
@@ -78,8 +109,8 @@ export default function Expenses() {
   const handleConfirmDelete = async () => {
     if (expenseToDelete) {
       try {
-        await deleteExpense(expenseToDelete);
         setShowModal(false);
+        await deleteExpense(expenseToDelete);
         setExpenseToDelete(null);
       } catch (error) {
         console.log(error.message);
@@ -91,9 +122,11 @@ export default function Expenses() {
   const deleteExpense = async (id) => {
     try {
       const expenseDoc = doc(db, auth?.currentUser?.uid, id);
-      await deleteDoc(expenseDoc).then(() => {
-        window.location.reload();
-      });
+      await deleteDoc(expenseDoc);
+      setExpensesList((prevExpenses) =>
+        prevExpenses.filter((expense) => expense.id !== id)
+      );
+      toast.success("Expense deleted!");
     } catch (error) {
       console.log(error);
     }
@@ -130,9 +163,7 @@ export default function Expenses() {
   // Agrupar despesas por mês
   const expensesByMonth = {};
   expensesList.forEach((expense) => {
-    const [year, month, day] = expense.inclusionDate.split("-");
-    const monthKey = `${year}-${month}`;
-
+    const [year, month] = expense.inclusionDate.split("-");
     const installments = expense.installments
       ? parseInt(expense.installments, 10)
       : 1;
@@ -169,7 +200,7 @@ export default function Expenses() {
   const uniqueYears = [
     ...new Set(
       expensesList.flatMap((expense) => {
-        const [year, month, day] = expense.inclusionDate.split("-");
+        const [year, month] = expense.inclusionDate.split("-");
         const installments = expense.installments
           ? parseInt(expense.installments, 10)
           : 1;
@@ -184,7 +215,7 @@ export default function Expenses() {
   const uniqueMonths = [
     ...new Set(
       expensesList.flatMap((expense) => {
-        const [year, month, day] = expense.inclusionDate.split("-");
+        const [year, month] = expense.inclusionDate.split("-");
         const installments = expense.installments
           ? parseInt(expense.installments, 10)
           : 1;
@@ -198,21 +229,19 @@ export default function Expenses() {
     ),
   ];
 
-  // Ordem dos meses do ano
   const monthOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-  // Ordenar a lista de meses únicos de acordo com a ordem do calendário
-  const sortedUniqueMonths = uniqueMonths.sort(
-    (a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b)
-  );
-
-  if (loading) {
-    return <div className={styles.loading}>Loading...</div>;
-  }
+  const sortedUniqueMonths = uniqueMonths
+    .map((month) => month.toString().padStart(2, "0"))
+    .sort(
+      (a, b) =>
+        monthOrder.indexOf(parseInt(a)) - monthOrder.indexOf(parseInt(b))
+    );
 
   return (
     <>
       <div className={styles.expensesSectionWrapper}>
+        <ToastComponent />
         <div className={styles.expensesSection}>
           <h2 style={{ color: "#000" }}>Expenses</h2>
           <div className={styles.filterContainer}>
@@ -224,7 +253,7 @@ export default function Expenses() {
                 onChange={(e) => {
                   setSelectedYear(e.target.value);
                   setSelectedMonth("All");
-                }} 
+                }}
                 className={styles.selectFilters}
               >
                 <option value="All">All</option>
@@ -256,7 +285,7 @@ export default function Expenses() {
             </div>
           </div>
           {sortedExpensesByMonth
-            .filter(([monthKey, _]) => {
+            .filter(([monthKey]) => {
               const [year, month] = monthKey.split("-");
               return (
                 (selectedYear === "All" || year === selectedYear) &&
@@ -284,50 +313,62 @@ export default function Expenses() {
                     </b>
                   </p>
                   <div className={styles.expensesContainer}>
-                    {expenses
-                      .sort(
-                        (a, b) =>
-                          new Date(b.inclusionDate) - new Date(a.inclusionDate)
-                      )
-                      .map((expense) => (
-                        <div
-                          key={expense.id + "-" + expense.installmentNumber}
-                          className={`${styles.expense} ${getBorderStyle(
-                            expense.method
-                          )}`}
-                        >
-                          <p className={styles.expenseName}>{expense.name}</p>
-                          <p className={styles.expenseValue}>
-                            {expense.installments > 1 ? (
-                              <>
-                                ${formatValue(expense.value)}{" "}
-                                {expense.installmentNumber}/
-                                {expense.installments}
-                                <br />
-                                <span className={styles.expenseTotal}>
-                                  Total: ${formatValue(expense.totalValue)}
-                                </span>
-                              </>
-                            ) : (
-                              `$${formatValue(expense.value)}`
-                            )}
-                          </p>
-                          <p className={styles.expenseMethod}>
-                            {expense.method}
-                          </p>
-                          <p>{convertDateFormat(expense.inclusionDate)}</p>
-                          <button
-                            className={styles.deleteButton}
-                            onClick={() => handleDeleteButtonClick(expense.id)}
+                    <AnimatePresence>
+                      {expenses
+                        .sort(
+                          (a, b) =>
+                            new Date(b.inclusionDate) -
+                            new Date(a.inclusionDate)
+                        )
+                        .map((expense) => (
+                          <motion.div
+                            key={expense.id + "-" + expense.installmentNumber}
+                            className={`${styles.expense} ${getBorderStyle(
+                              expense.method
+                            )}`}
+                            exit={{ opacity: 0, scale: -1 }}
+                            transition={{ duration: 0.4, ease: "linear" }}
+                            onAnimationComplete={() => {
+                              setExpensesList((prevExpenses) =>
+                                prevExpenses.filter((e) => e.id !== expense.id)
+                              );
+                            }}
                           >
-                            <img
-                              className={styles.binImg}
-                              src={bin}
-                              alt="delete button"
-                            />
-                          </button>
-                        </div>
-                      ))}
+                            <p className={styles.expenseName}>{expense.name}</p>
+                            <p className={styles.expenseValue}>
+                              {expense.installments > 1 ? (
+                                <>
+                                  ${formatValue(expense.value)}{" "}
+                                  {expense.installmentNumber}/
+                                  {expense.installments}
+                                  <br />
+                                  <span className={styles.expenseTotal}>
+                                    Total: ${formatValue(expense.totalValue)}
+                                  </span>
+                                </>
+                              ) : (
+                                `$${formatValue(expense.value)}`
+                              )}
+                            </p>
+                            <p className={styles.expenseMethod}>
+                              {expense.method}
+                            </p>
+                            <p>{convertDateFormat(expense.inclusionDate)}</p>
+                            <button
+                              className={styles.deleteButton}
+                              onClick={() =>
+                                handleDeleteButtonClick(expense.id)
+                              }
+                            >
+                              <img
+                                className={styles.binImg}
+                                src={bin}
+                                alt="delete button"
+                              />
+                            </button>
+                          </motion.div>
+                        ))}
+                    </AnimatePresence>
                     <ConfirmationModal
                       isOpen={showModal}
                       onRequestClose={handleCancelDelete}
@@ -338,6 +379,20 @@ export default function Expenses() {
               );
             })}
         </div>
+        <AnimatePresence>
+          {showScrollToTop && (
+            <motion.button
+              className={styles.scrollToTopButton}
+              onClick={scrollToTop}
+              initial={{ y: 50 }} // Começa invisível e deslocado para baixo
+              animate={{ y: 0, scale: 1 }} // Anima para visível e na posição original
+              exit={{ y: 50, scale: -1 }} // Desaparece com escala e rotação
+              transition={{ duration: 0.4, ease: "easeInOut" }} // Duração e suavidade da animação
+            >
+              ↑
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

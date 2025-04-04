@@ -2,16 +2,18 @@ import { useState } from "react";
 import styles from "./NewRegister.module.scss";
 import { db } from "../../../config/firebase";
 import { addDoc, collection } from "firebase/firestore";
-import { getAuth } from 'firebase/auth';
+import { getAuth } from "firebase/auth";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import ToastComponent from "../../components/Toast/ToastComponent";
 
 export default function NewRegister() {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [inclusionDate, setInclusionDate] = useState("");
-  const [expireDate, setExpireDate] = useState("");
   const [value, setValue] = useState("");
   const [installments, setInstallments] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Money");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const auth = getAuth();
   const user = auth?.currentUser;
@@ -20,31 +22,33 @@ export default function NewRegister() {
 
   const registerExpense = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       await addDoc(expensesCollectionRef, {
         name: name,
-        description: description,
         inclusionDate: inclusionDate,
-        // expireDate: expireDate,
-        value: parseFloat(value.replace(/,/g, '.')),  // Convertendo para número antes de armazenar
+        value: parseFloat(value.replace(/,/g, ".")),
         installments: installments,
         method: paymentMethod,
       }).then(() => {
         setName("");
-        setDescription("");
         setInclusionDate("");
-        // setExpireDate("");
         setValue("");
         setInstallments("");
         setPaymentMethod("Money");
+        toast.success("Item registered!");
       });
     } catch (err) {
       console.error(err);
+      toast.error("Error registering item!");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className={styles.newRegister}>
+      <ToastComponent />
       <h1 className={styles.newRegisterTitle}>NEW REGISTER</h1>
       <form onSubmit={registerExpense} className={styles.inputsContainer}>
         <label htmlFor="nameRegister" className={styles.newRegisterLabels}>
@@ -59,22 +63,6 @@ export default function NewRegister() {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-
-        <label
-          htmlFor="descriptionRegister"
-          className={styles.newRegisterLabels}
-        >
-          Description
-        </label>
-        <textarea
-          id="descriptionRegister"
-          className={styles.newRegisterInputs}
-          cols="30"
-          rows="10"
-          placeholder="just put any example that decripts well..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        ></textarea>
 
         <label
           htmlFor="inclusionDateRegister"
@@ -92,21 +80,6 @@ export default function NewRegister() {
           onChange={(e) => setInclusionDate(e.target.value)}
         />
 
-        {/* <label
-          htmlFor="expireDateRegister"
-          className={styles.newRegisterLabels}
-        >
-          Expire Date
-        </label>
-        <input
-          id="expireDateRegister"
-          className={styles.newRegisterInputs}
-          type="date"
-          placeholder="mm/dd/yyyy"
-          value={expireDate}
-          onChange={(e) => setExpireDate(e.target.value)}
-        /> */}
-
         <label htmlFor="valueRegister" className={styles.newRegisterLabels}>
           Value
         </label>
@@ -120,7 +93,7 @@ export default function NewRegister() {
           onChange={(e) => setValue(e.target.value)}
         />
 
-       <label
+        <label
           htmlFor="installmentsRegister"
           className={styles.newRegisterLabels}
         >
@@ -130,8 +103,7 @@ export default function NewRegister() {
           id="installmentsRegister"
           className={styles.newRegisterInputs}
           type="number"
-          placeholder="how many installments?
-          "
+          placeholder="how many installments?"
           value={installments}
           onChange={(e) => setInstallments(e.target.value)}
         />
@@ -155,8 +127,16 @@ export default function NewRegister() {
           <option value="Debit Card">Debit Card</option>
         </select>
 
-        <button className={styles.registerButton} type="submit">
-          Register
+        <button
+          className={styles.registerButton}
+          type="submit"
+          disabled={isSubmitting} // Desativa o botão enquanto está carregando
+        >
+          {isSubmitting ? (
+            <div className={styles.spinner}></div> // Mostra o spinner enquanto carrega
+          ) : (
+            "Register"
+          )}
         </button>
       </form>
     </div>

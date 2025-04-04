@@ -1,4 +1,3 @@
-import React from "react";
 import Modal from "react-modal";
 import styles from "./styles.module.scss";
 
@@ -11,10 +10,14 @@ const ConfirmationModal = ({ isOpen, onRequestClose, onConfirmDelete }) => {
       contentLabel="Confirm Delete"
     >
       <h2>Confirm Delete</h2>
-      <p>Are you sure you want to delete this expense?</p>
+      <p>Are you sure you want to delete the expense?</p>
       <div className={styles.buttons}>
-          <button className={styles.confirmButton} onClick={onConfirmDelete}>Yes</button>
-          <button className={styles.cancelButton} onClick={onRequestClose}>No</button>
+        <button className={styles.confirmButton} onClick={onConfirmDelete}>
+          Yes
+        </button>
+        <button className={styles.cancelButton} onClick={onRequestClose}>
+          No
+        </button>
       </div>
     </Modal>
   );
