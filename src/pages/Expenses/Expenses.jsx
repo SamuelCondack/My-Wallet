@@ -1,7 +1,13 @@
 import styles from "./Expenses.module.scss";
 import { auth, db } from "../../../config/firebase";
 import { useState, useEffect } from "react";
-import { getDocs, collection, doc, deleteDoc } from "firebase/firestore";
+import {
+  getDocs,
+  collection,
+  doc,
+  deleteDoc,
+  setDoc,
+} from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import bin from "../../assets/bin.png";
 import ConfirmationModal from "../../modals/Confirmation";
@@ -9,6 +15,8 @@ import LoadingComponent from "../../components/LoadingComponent/LoadingComponent
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
 import ToastComponent from "../../components/Toast/ToastComponent";
+import ConfirmChangeEarningsModal from "../../modals/Earnings/confirmChangeEarningsModal";
+import { FaPencilAlt } from "react-icons/fa";
 
 export default function Expenses() {
   const currentDate = new Date();
@@ -23,11 +31,15 @@ export default function Expenses() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [earnings, setEarnings] = useState({});
+  const [showEarningsModal, setShowEarningsModal] = useState(false);
+  const [currentMonthKey, setCurrentMonthKey] = useState(null);
+  const [isEditingEarnings, setIsEditingEarnings] = useState({});
+  const [expenseToDeleteName, setExpenseToDeleteName] = useState("");
 
   useEffect(() => {
     const auth = getAuth();
 
-    // Adiciona um ouvinte de estado de autenticação
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
@@ -36,7 +48,6 @@ export default function Expenses() {
       }
     });
 
-    // Limpa o ouvinte quando o componente for desmontado
     return () => unsubscribe();
   }, []);
 
@@ -47,10 +58,13 @@ export default function Expenses() {
         try {
           const data = await getDocs(expensesCollectionRef);
 
-          const filteredData = data.docs.map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
-          }));
+          const filteredData = data.docs
+            .filter((doc) => !doc.id.startsWith("earnings-")) // Exclui os documentos de Earnings
+            .map((doc) => ({
+              ...doc.data(),
+              id: doc.id,
+            }));
+
           setExpensesList(filteredData);
           setIsLoading(false);
         } catch (err) {
@@ -85,6 +99,29 @@ export default function Expenses() {
     };
   }, []);
 
+  useEffect(() => {
+    const loadEarningsFromFirestore = async () => {
+      if (userId) {
+        try {
+          const earningsCollectionRef = collection(
+            db,
+            `users/${userId}/earnings`
+          );
+          const earningsSnapshot = await getDocs(earningsCollectionRef);
+          const earningsData = {};
+          earningsSnapshot.forEach((doc) => {
+            earningsData[doc.id] = doc.data().value.toFixed(2);
+          });
+          setEarnings(earningsData);
+        } catch (error) {
+          console.error("Error loading earnings:", error);
+        }
+      }
+    };
+
+    loadEarningsFromFirestore();
+  }, [userId]);
+
   if (isLoading) {
     return <LoadingComponent />;
   }
@@ -96,8 +133,9 @@ export default function Expenses() {
     });
   };
 
-  const handleDeleteButtonClick = (id) => {
+  const handleDeleteButtonClick = (id, name) => {
     setExpenseToDelete(id);
+    setExpenseToDeleteName(name);
     setShowModal(true);
   };
 
@@ -132,6 +170,18 @@ export default function Expenses() {
     }
   };
 
+  const saveEarningsToFirestore = async (monthKey, value) => {
+    try {
+      const numericValue = isNaN(parseFloat(value)) ? 0 : parseFloat(value);
+
+      const earningsDoc = doc(db, `users/${userId}/earnings`, monthKey);
+      await setDoc(earningsDoc, { value: numericValue });
+    } catch (error) {
+      console.error("Error saving earnings:", error);
+      toast.error("Failed to save earnings.");
+    }
+  };
+
   function getBorderStyle(paymentMethod) {
     switch (paymentMethod) {
       case "Money":
@@ -163,6 +213,10 @@ export default function Expenses() {
   // Agrupar despesas por mês
   const expensesByMonth = {};
   expensesList.forEach((expense) => {
+    if (!expense.inclusionDate) {
+      return;
+    }
+
     const [year, month] = expense.inclusionDate.split("-");
     const installments = expense.installments
       ? parseInt(expense.installments, 10)
@@ -295,6 +349,10 @@ export default function Expenses() {
             })
             .map(([monthKey, expenses]) => {
               const [year, month] = monthKey.split("-");
+              const totalSpendings = expenses
+                .reduce((acc, cur) => acc + Number(cur.value), 0)
+                .toFixed(2);
+
               return (
                 <div key={monthKey}>
                   <h3 className={styles.month}>
@@ -303,15 +361,97 @@ export default function Expenses() {
                     })}{" "}
                     {year}
                   </h3>
+
+                  <div className={styles.earningContainer}>
+                    <label
+                      htmlFor={`earning-${monthKey}`}
+                      className={styles.earningLabel}
+                    >
+                      Earnings:
+                    </label>
+                    <div className={styles.earningInputWrapper}>
+                      <input
+                        id={`earning-${monthKey}`}
+                        type="text"
+                        className={
+                          isEditingEarnings[monthKey]
+                            ? `${styles.earningInput} ${styles.editing}`
+                            : `${styles.earningInput} ${styles.readOnly}`
+                        }
+                        placeholder="Enter your earnings"
+                        value={
+                          isEditingEarnings[monthKey]
+                            ? earnings[monthKey] || ""
+                            : earnings[monthKey]
+                            ? `$${earnings[monthKey]}`
+                            : "$0.00"
+                        }
+                        readOnly={!isEditingEarnings[monthKey]} // Torna o campo somente leitura se não estiver editando
+                        disabled={!isEditingEarnings[monthKey]} // Desabilita o campo se não estiver editando
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9.]/g, "");
+                          setEarnings((prev) => ({
+                            ...prev,
+                            [monthKey]: value,
+                          }));
+                        }}
+                        onBlur={() => {
+                          setIsEditingEarnings((prev) => ({
+                            ...prev,
+                            [monthKey]: false,
+                          }));
+                          saveEarningsToFirestore(
+                            currentMonthKey,
+                            earnings[currentMonthKey]
+                          );
+                        }}
+                      />
+                      <button
+                        className={styles.editButton}
+                        onClick={() => {
+                          setCurrentMonthKey(monthKey);
+                          setShowEarningsModal(true);
+                        }}
+                      >
+                        <FaPencilAlt className={styles.pencilIcon} />{" "}
+                      </button>
+                    </div>
+                    {showEarningsModal && (
+                      <ConfirmChangeEarningsModal
+                        isOpen={showEarningsModal}
+                        onRequestClose={() => setShowEarningsModal(false)}
+                        onConfirm={() => {
+                          setEarnings((prev) => ({
+                            ...prev,
+                            [currentMonthKey]: "", // Apaga o valor do mês atual
+                          }));
+                          setIsEditingEarnings((prev) => ({
+                            ...prev,
+                            [currentMonthKey]: true, // Libera o campo para edição
+                          }));
+                          setShowEarningsModal(false); // Fecha o modal
+                        }}
+                      />
+                    )}
+                  </div>
+
                   <p className={styles.totalSpendings}>
-                    Your Spendings:{" "}
+                    Your Spendings: <b>${totalSpendings}</b>
+                  </p>
+
+                  <p
+                    className={`${styles.netEarnings} ${
+                      (earnings[monthKey] || 0) - totalSpendings < 0
+                        ? styles.netEarningsNegative
+                        : ""
+                    }`}
+                  >
+                    Net Earnings:{" "}
                     <b>
-                      $
-                      {expenses
-                        .reduce((acc, cur) => acc + Number(cur.value), 0)
-                        .toFixed(2)}
+                      ${((earnings[monthKey] || 0) - totalSpendings).toFixed(2)}
                     </b>
                   </p>
+
                   <div className={styles.expensesContainer}>
                     <AnimatePresence>
                       {expenses
@@ -357,7 +497,10 @@ export default function Expenses() {
                             <button
                               className={styles.deleteButton}
                               onClick={() =>
-                                handleDeleteButtonClick(expense.id)
+                                handleDeleteButtonClick(
+                                  expense.id,
+                                  expense.name
+                                )
                               }
                             >
                               <img
@@ -369,11 +512,14 @@ export default function Expenses() {
                           </motion.div>
                         ))}
                     </AnimatePresence>
-                    <ConfirmationModal
-                      isOpen={showModal}
-                      onRequestClose={handleCancelDelete}
-                      onConfirmDelete={handleConfirmDelete}
-                    />
+                    <AnimatePresence>
+                      <ConfirmationModal
+                        isOpen={showModal}
+                        onRequestClose={handleCancelDelete}
+                        onConfirmDelete={handleConfirmDelete}
+                        expenseName={expenseToDeleteName}
+                      />
+                    </AnimatePresence>
                   </div>
                 </div>
               );
