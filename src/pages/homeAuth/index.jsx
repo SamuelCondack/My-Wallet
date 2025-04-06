@@ -14,8 +14,8 @@ import { motion, AnimatePresence } from "framer-motion";
 function HomeAuth() {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [menuHidden, setMenuHidden] = useState(true); // Controla a visibilidade do menu
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768); // Verifica se é uma tela menor
+  const [menuHidden, setMenuHidden] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const logout = async () => {
     try {
@@ -28,20 +28,20 @@ function HomeAuth() {
   };
 
   function removeMenu() {
-    setMenuHidden(true); // Esconde o menu
+    setMenuHidden(true);
   }
 
   function addMenu() {
-    setMenuHidden(false); // Mostra o menu
+    setMenuHidden(false);
   }
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768); // Atualiza se é uma tela menor
+      setIsMobile(window.innerWidth <= 768);
       if (window.innerWidth > 768) {
-        setMenuHidden(false); // Mostra o menu em telas maiores
+        setMenuHidden(false);
       } else {
-        setMenuHidden(true); // Esconde o menu em telas menores
+        setMenuHidden(true);
       }
     };
 
@@ -69,7 +69,6 @@ function HomeAuth() {
   return (
     <>
       <main className={styles.mainContainer}>
-        {/* Botão de abrir menu (aparece apenas em telas menores) */}
         {isMobile && menuHidden && (
           <div onClick={addMenu} id="openMenu" className={styles.menuDiv}>
             <img src={menu} alt="menu icon" className={styles.menuImg} />
@@ -86,7 +85,6 @@ function HomeAuth() {
               exit={{ x: "-1000%" }} // Sai para fora da tela e encolhe
               transition={{ duration: 0.3, ease: "linear" }} // Duração e suavidade da animação
             >
-              {/* Botão de fechar menu (aparece apenas em telas menores) */}
               {isMobile && (
                 <img
                   id="closeMenu"

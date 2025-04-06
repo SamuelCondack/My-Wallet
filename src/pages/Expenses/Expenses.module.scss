@@ -130,8 +130,6 @@ option {
 .expensesSection {
     display: flex;
     flex-direction: column;
-    // overflow: visible;
-    // height: auto;
 
     h2 {
         text-align: center;
@@ -214,8 +212,6 @@ option {
 
     .totalSpendings {
         @extend .month;
-        margin-top: 0;
-        margin-bottom: 30px;
     }
 
     .filterContainer {
@@ -231,6 +227,14 @@ option {
         overflow: visible;
         height: auto;
         min-height: 100vh;
+    }
+
+    .earningContainer {
+        margin-left: 10%;
+    }
+
+    .netEarnings {
+        margin-left: 10%;
     }
 }
 
@@ -260,5 +264,88 @@ option {
 
     &:active {
         transform: scale(0.9);
+    }
+}
+
+.earningContainer {
+    display: flex;
+    align-items: center;
+}
+
+.earningLabel {
+    display: block;
+    margin: 0;
+}
+
+.earningInput {
+    padding: 5px;
+    font-weight: bold;
+    border: 1px solid #c4c4c4;
+    border-radius: 5px;
+    font-size: 16px;
+    width: 100px;
+    outline: none;
+
+    &:disabled {
+        color: #000;
+        background-color: rgba(216, 215, 215, 0.199);
+    }
+
+    &::placeholder {
+        font-size: 10px;
+    }
+}
+
+.editing {
+    border: 2px solid $defaultBlue;
+    box-shadow: 0 0 10px $defaultBlue;
+    transition: box-shadow 0.6s ease;
+}
+
+.readOnly {
+    border: none;
+
+    ::placeholder {
+        color: #fff;
+    }
+}
+
+.netEarnings {
+    font-size: 14px;
+    font-weight: bold;
+    color: #007b00;
+    margin-top: 5px;
+    margin-bottom: 30px;
+}
+
+.netEarningsNegative {
+    color: red;
+}
+
+.earningInputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.editButton {
+    background: none;
+    border: none;
+    padding: 5px;
+
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pencilIcon {
+    font-size: 20px;
+    color: #000;
+    transition: transform 0.2s;
+    color: #888888;
+    cursor: pointer;
+
+    &:hover {
+        transform: scale(1.1);
+        color: #007bff;
     }
 }
