@@ -5,8 +5,11 @@ import PropTypes from "prop-types";
 const ConfirmationModal = ({
   isOpen,
   onRequestClose,
-  onConfirmDelete,
-  expenseName,
+  onConfirm,
+  title,
+  message,
+  identifier,
+  afterMessage,
 }) => {
   if (!isOpen) return null;
 
@@ -15,19 +18,24 @@ const ConfirmationModal = ({
       <div className={styles.overlay} onClick={onRequestClose}></div>
       <motion.div
         className={styles.modal}
-        initial={{ scale: 0.1, opacity: 0 }} // Começa super pequeno e invisível
-        animate={{ scale: 1, opacity: 1 }} // Cresce até o tamanho normal e fica visível
-        exit={{ scale: 0.1 }} // Encolhe novamente ao sair
+        initial={{ scale: 0.1, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.1 }}
         transition={{ duration: 0.3, ease: "linear" }}
       >
-        <h2>Confirm Delete</h2>
+        <h2>{title}</h2>
         <p className={styles.message}>
-          Are you sure you want to delete the expense &rdquo;
-          <b>{expenseName}</b>
-          &rdquo;?
+          {message}
+          {identifier && (
+            <>
+              {` `}
+              <b>&rdquo;{identifier}&rdquo;</b>
+            </>
+          )}
+          {afterMessage}
         </p>
         <div className={styles.buttons}>
-          <button className={styles.confirmButton} onClick={onConfirmDelete}>
+          <button className={styles.confirmButton} onClick={onConfirm}>
             Yes
           </button>
           <button className={styles.cancelButton} onClick={onRequestClose}>
@@ -41,8 +49,12 @@ const ConfirmationModal = ({
 ConfirmationModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onRequestClose: PropTypes.func.isRequired,
-  onConfirmDelete: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  message: PropTypes.string.isRequired,
   expenseName: PropTypes.string.isRequired,
+  identifier: PropTypes.string,
+  afterMessage: PropTypes.string,
 };
 
 export default ConfirmationModal;

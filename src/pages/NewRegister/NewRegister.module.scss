@@ -23,7 +23,7 @@
 .newRegisterLabels {
     color: #000;
     margin-left: 20px;
-    align-self: left;
+    align-self: flex-start;
 }
 
 .newRegisterInputs {
@@ -39,6 +39,13 @@
     &:focus {
         border-bottom: 1px solid $defaultBlue;
         outline: none;
+    }
+
+    &:disabled {
+        background-color: #f0f0f0;
+        color: #000;
+        cursor: not-allowed;
+        border-bottom-color: rgb(167, 167, 167);
     }
 }
 
