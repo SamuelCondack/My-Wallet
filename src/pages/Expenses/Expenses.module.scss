@@ -30,6 +30,16 @@ body {
     transition: .4s;
     outline: none;
 
+    option {
+        color: $defaultBlue;
+        font-size: 12px;
+
+        &[data-current="true"] {
+            // color: #006eff;
+            font-weight: bold;
+        }
+    }
+
     &:hover {
         cursor: pointer;
         transform: scale(1.05);
@@ -48,10 +58,6 @@ body {
         border-color: #d0d0d0;
         transform: none;
     }
-}
-
-option {
-    color: $defaultBlue;
 }
 
 .pix {
@@ -151,6 +157,7 @@ option {
     flex-direction: column;
     transition: .4s;
     align-items: center;
+    position: relative;
 
     p {
         text-transform: capitalize;
@@ -181,18 +188,70 @@ option {
     font-weight: 700;
 }
 
+.expenseEditButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.4s ease;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+
+    .expensePencilIcon {
+        font-size: 20px;
+        color: #3e92ebba;
+        cursor: pointer;
+    }
+}
+
+.calendarIcon {
+    color: #3e92ebba;
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.4s ease;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
+
+.disabledCalendar {
+    color: #cccccc;
+    cursor: not-allowed;
+
+    &:hover {
+        transform: none;
+    }
+}
+
+.playPauseIcon {
+    color: #3e92ebba;
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.4s ease;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
+
 .deleteButton {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
     border-radius: 20px;
     background-color: transparent;
-    align-self: flex-end;
-    justify-content: center;
     display: flex;
     align-items: center;
     padding: 5px;
     border: 1px solid $defaultBlue;
-    transition: all .4s;
-    position: relative;
-    left: 35px;
+    transition: all 0.4s ease;
 
     &:hover {
         cursor: pointer;
@@ -332,8 +391,6 @@ option {
     background: none;
     border: none;
     padding: 5px;
-
-
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -347,5 +404,109 @@ option {
     &:hover {
         transform: scale(1.1);
         color: #007bff;
+    }
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.editModal {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+
+    h2 {
+        margin-bottom: 20px;
+        color: #000;
+    }
+
+    .formGroup {
+        margin-bottom: 15px;
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #000;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+    }
+
+    .modalButtons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+
+            &:first-child {
+                background-color: #ccc;
+                color: #000;
+            }
+
+            &:last-child {
+                background-color: #3e92ebba;
+                color: white;
+            }
+        }
+    }
+}
+
+.editForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px 0;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    label {
+        color: #000;
+        font-weight: 500;
+    }
+
+    input,
+    select {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+
+        &:focus {
+            border-color: $defaultBlue;
+            outline: none;
+        }
     }
 }

@@ -9,33 +9,53 @@ import ToastComponent from "../../components/Toast/ToastComponent";
 
 export default function NewRegister() {
   const [name, setName] = useState("");
-  const [inclusionDate, setInclusionDate] = useState("");
+  const [inclusionDate, setInclusionDate] = useState(
+    new Date().toLocaleDateString("en-CA")
+  );
   const [value, setValue] = useState("");
   const [installments, setInstallments] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Money");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMonthly, setIsMonthly] = useState(false);
 
   const auth = getAuth();
   const user = auth?.currentUser;
-
   const expensesCollectionRef = user ? collection(db, user?.uid) : null;
 
   const registerExpense = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+
     try {
-      await addDoc(expensesCollectionRef, {
+      // Objeto base da despesa (campos comuns a todas)
+      const expenseBase = {
         name: name,
         inclusionDate: inclusionDate,
         value: parseFloat(value.replace(/,/g, ".")),
-        installments: installments,
+        installments: installments > 0 ? installments : "",
         method: paymentMethod,
-      }).then(() => {
+        isMonthly: isMonthly,
+      };
+
+      // Campos adicionais APENAS para despesas mensais
+      const monthlyExpenseFields = isMonthly
+        ? {
+            status: "active",
+          }
+        : {};
+
+      // Combina os campos (base + extras se mensal)
+      const newExpense = { ...expenseBase, ...monthlyExpenseFields };
+
+      // Adiciona ao Firestore
+      await addDoc(expensesCollectionRef, newExpense).then(() => {
+        // Reseta o formulário
         setName("");
-        setInclusionDate("");
+        setInclusionDate(new Date().toLocaleDateString("en-CA"));
         setValue("");
         setInstallments("");
         setPaymentMethod("Money");
+        setIsMonthly(false);
         toast.success("Item registered!");
       });
     } catch (err) {
@@ -93,6 +113,28 @@ export default function NewRegister() {
           onChange={(e) => setValue(e.target.value)}
         />
 
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            width: "300px",
+          }}
+        >
+          <label
+            htmlFor="isMonthlyRegister"
+            className={styles.newRegisterLabels}
+          >
+            Monthly Expense
+          </label>
+          <input
+            id="isMonthlyRegister"
+            type="checkbox"
+            checked={isMonthly}
+            onChange={(e) => setIsMonthly(e.target.checked)}
+            style={{ marginTop: "18px" }}
+          />
+        </div>
+
         <label
           htmlFor="installmentsRegister"
           className={styles.newRegisterLabels}
@@ -104,6 +146,7 @@ export default function NewRegister() {
           className={styles.newRegisterInputs}
           type="number"
           placeholder="how many installments?"
+          disabled={isMonthly}
           value={installments}
           onChange={(e) => setInstallments(e.target.value)}
         />
@@ -130,13 +173,9 @@ export default function NewRegister() {
         <button
           className={styles.registerButton}
           type="submit"
-          disabled={isSubmitting} // Desativa o botão enquanto está carregando
+          disabled={isSubmitting}
         >
-          {isSubmitting ? (
-            <div className={styles.spinner}></div> // Mostra o spinner enquanto carrega
-          ) : (
-            "Register"
-          )}
+          {isSubmitting ? <div className={styles.spinner}></div> : "Register"}
         </button>
       </form>
     </div>
