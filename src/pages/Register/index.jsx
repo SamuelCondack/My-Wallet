@@ -1,11 +1,12 @@
 import styles from "./styles.module.scss";
-import { auth, googleProvider } from "../../../config/firebase";
+import { auth } from "../../../config/firebase";
 import logo from "../../assets/WalletIcon.png";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { signInWithGoogle } from "../../utils/googleAuth";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -53,8 +54,10 @@ export default function Register() {
 
   const continueWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      navigate("/home/expenses");
+      const result = await signInWithGoogle();
+      if (result?.user) {
+        navigate("/home/expenses");
+      }
     } catch (err) {
       console.error(err);
     }

@@ -2,10 +2,11 @@ import { Link } from "react-router-dom";
 import styles from "../Register/styles.module.scss";
 import logo from "../../assets/WalletIcon.png";
 import { useEffect, useState } from "react";
-import { auth, googleProvider } from "../../../config/firebase";
+import { auth } from "../../../config/firebase";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { signInWithGoogle } from "../../utils/googleAuth";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -40,8 +41,10 @@ export default function SignIn() {
 
   const continueWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      navigate("/home/expenses");
+      const result = await signInWithGoogle();
+      if (result?.user) {
+        navigate("/home/expenses");
+      }
       setErrorMessage("");
     } catch (err) {
       console.error("Error with Google sign-in:", err.message);

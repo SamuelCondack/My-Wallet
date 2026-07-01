@@ -11,6 +11,7 @@ import SignIn from "./pages/SignIn";
 import HomeAuth from "./pages/homeAuth/index.jsx";
 import Modal from "react-modal";
 import PwaShell from "./components/PwaShell/PwaShell.jsx";
+import { resolveGoogleRedirect } from "./utils/googleAuth.js";
 
 Modal.setAppElement("#root");
 
@@ -43,10 +44,20 @@ const router = createBrowserRouter([
   },
 ]);
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <PwaShell>
-      <RouterProvider router={router} />
-    </PwaShell>
-  </React.StrictMode>
-);
+async function startApp() {
+  try {
+    await resolveGoogleRedirect();
+  } catch (error) {
+    console.error("Google redirect sign-in failed:", error);
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+      <PwaShell>
+        <RouterProvider router={router} />
+      </PwaShell>
+    </React.StrictMode>
+  );
+}
+
+startApp();

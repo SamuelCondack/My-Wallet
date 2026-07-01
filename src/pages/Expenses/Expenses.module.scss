@@ -19,7 +19,6 @@ body {
     text-align: center !important;
     border: 1px #000 solid;
     padding: 8px 16px;
-    min-height: 44px;
     color: $defaultBlue;
     appearance: none;
     text-align-last: center;
@@ -192,23 +191,18 @@ body {
 
 .expenseEditButton {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 10px;
+    right: 10px;
     background: none;
     border: none;
-    min-width: 44px;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     padding: 5px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    transition: transform 0.2s ease;
+    transition: transform 0.4s ease;
 
     @media (hover: hover) {
         &:hover {
-            transform: scale(1.08);
+            transform: scale(1.1);
         }
     }
 
@@ -238,12 +232,12 @@ body {
 .playPauseIcon {
     color: #3e92ebba;
     font-size: 20px;
+    cursor: pointer;
     pointer-events: none;
+    transition: transform 0.4s ease;
 }
 
 .iconActionBtn {
-    min-width: 44px;
-    min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -256,7 +250,7 @@ body {
     @media (hover: hover) {
         &:hover .playPauseIcon,
         &:hover .calendarIcon {
-            transform: scale(1.08);
+            transform: scale(1.1);
         }
     }
 
@@ -273,18 +267,15 @@ body {
     background-color: transparent;
     display: flex;
     align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
     padding: 5px;
     border: 1px solid $defaultBlue;
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    transition: all 0.4s ease;
 
     @media (hover: hover) {
         &:hover {
             cursor: pointer;
             border-color: $defaultBlue;
-            transform: scale(1.05);
+            transform: scale(1.1);
         }
     }
 }
@@ -335,8 +326,6 @@ body {
     bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     left: calc(10px + env(safe-area-inset-left, 0px));
     background-color: #007bff;
-    min-width: 44px;
-    min-height: 44px;
     color: white;
     border: none;
     border-radius: 50%;
