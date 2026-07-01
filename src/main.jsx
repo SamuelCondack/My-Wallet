@@ -10,6 +10,7 @@ import Register from './pages/Register'
 import SignIn from './pages/SignIn'
 import HomeAuth from './pages/homeAuth/index.jsx'
 import Modal from 'react-modal';
+import PwaShell from './components/PwaShell/PwaShell.jsx'
 
 Modal.setAppElement('#root');
 
@@ -44,6 +45,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <PwaShell>
+      <RouterProvider router={router} />
+    </PwaShell>
   </React.StrictMode>,
 )

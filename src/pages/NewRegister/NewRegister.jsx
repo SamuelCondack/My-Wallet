@@ -5,7 +5,6 @@ import { addDoc, collection } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import ToastComponent from "../../components/Toast/ToastComponent";
 
 export default function NewRegister() {
   const [name, setName] = useState("");
@@ -68,7 +67,6 @@ export default function NewRegister() {
 
   return (
     <div className={styles.newRegister}>
-      <ToastComponent />
       <h1 className={styles.newRegisterTitle}>NEW REGISTER</h1>
       <form onSubmit={registerExpense} className={styles.inputsContainer}>
         <label htmlFor="nameRegister" className={styles.newRegisterLabels}>

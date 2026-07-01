@@ -1,10 +1,51 @@
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 
-* {
-    font-family: "Quicksand", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --brand-blue: #3e92eb;
+}
 
-    -webkit-tap-highlight-color: transparent;
-    /* Remove o efeito de clique no Safari */
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  padding:
+    var(--safe-top)
+    var(--safe-right)
+    var(--safe-bottom)
+    var(--safe-left);
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+}
+
+* {
+  font-family: "Quicksand", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.scrollable {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (display-mode: standalone) {
+  body {
+    background-color: #fff;
+  }
 }

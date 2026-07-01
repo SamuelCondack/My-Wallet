@@ -15,7 +15,6 @@ import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal"
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import ToastComponent from "../../components/Toast/ToastComponent";
 import { FaPencilAlt, FaPause, FaPlay } from "react-icons/fa";
 import { FaRegCalendar } from "react-icons/fa6";
 import EditModal from "../../modals/EditModal/EditModal";
@@ -740,7 +739,6 @@ export default function Expenses() {
   return (
     <>
       <div className={styles.expensesSectionWrapper}>
-        <ToastComponent />
         <div className={styles.expensesSection}>
           <h2 style={{ color: "#000" }}>Expenses</h2>
           <div className={styles.filterContainer}>
