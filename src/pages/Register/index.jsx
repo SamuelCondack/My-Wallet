@@ -19,7 +19,7 @@ export default function Register() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        navigate("/home/dashboard");
+        navigate("/home/expenses");
       }
     });
     return () => unsubscribe();
@@ -42,7 +42,7 @@ export default function Register() {
     if (confirmPassword === password) {
       try {
         await createUserWithEmailAndPassword(auth, email, password).then(() => {
-          navigate("/home/dashboard");
+          navigate("/home/expenses");
         });
       } catch (err) {
         setErrorMessage(err.message);
@@ -56,7 +56,7 @@ export default function Register() {
     try {
       const result = await signInWithGoogle();
       if (result?.user) {
-        navigate("/home/dashboard");
+        navigate("/home/expenses");
       }
     } catch (err) {
       console.error(err);

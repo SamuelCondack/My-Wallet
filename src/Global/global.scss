@@ -7,21 +7,6 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --brand-blue: #3e92eb;
   --touch-target: 44px;
-  --text-primary: #111111;
-  --text-muted: #666666;
-  --surface-card: #ffffff;
-  --surface-muted: #f3f4f6;
-  --border-color: #e5e7eb;
-  --page-bg: #ffffff;
-}
-
-[data-theme="dark"] {
-  --text-primary: #f5f5f5;
-  --text-muted: #b0b0b0;
-  --surface-card: #1c1c1e;
-  --surface-muted: #2c2c2e;
-  --border-color: #3a3a3c;
-  --page-bg: #000000;
 }
 
 html {
@@ -32,8 +17,6 @@ html {
 
 body {
   min-height: 100%;
-  background: var(--page-bg);
-  color: var(--text-primary);
   padding:
     var(--safe-top)
     var(--safe-right)
@@ -83,7 +66,7 @@ textarea {
 
 @media (display-mode: standalone) {
   body {
-    background-color: var(--page-bg);
+    background-color: #fff;
   }
 }
 

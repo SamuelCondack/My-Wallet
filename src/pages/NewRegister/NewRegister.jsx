@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styles from "./NewRegister.module.scss";
-import { auth, db } from "../../../config/firebase";
+import { db } from "../../../config/firebase";
 import { addDoc, collection } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useCategories } from "../../hooks/useCategories";
-import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 
 export default function NewRegister() {
   const [name, setName] = useState("");
@@ -15,45 +14,46 @@ export default function NewRegister() {
   const [value, setValue] = useState("");
   const [installments, setInstallments] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Money");
-  const [categoryId, setCategoryId] = useState(DEFAULT_CATEGORY_ID);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMonthly, setIsMonthly] = useState(false);
 
-  const userId = auth?.currentUser?.uid;
-  const { categories } = useCategories(userId);
-  const expensesCollectionRef = userId ? collection(db, userId) : null;
-
-  useEffect(() => {
-    if (categories.length > 0 && !categories.some((item) => item.id === categoryId)) {
-      setCategoryId(categories[0].id);
-    }
-  }, [categories, categoryId]);
+  const auth = getAuth();
+  const user = auth?.currentUser;
+  const expensesCollectionRef = user ? collection(db, user?.uid) : null;
 
   const registerExpense = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      // Objeto base da despesa (campos comuns a todas)
       const expenseBase = {
-        name,
-        inclusionDate,
+        name: name,
+        inclusionDate: inclusionDate,
         value: parseFloat(value.replace(/,/g, ".")),
         installments: installments > 0 ? installments : "",
         method: paymentMethod,
-        isMonthly,
-        categoryId,
+        isMonthly: isMonthly,
       };
 
-      const monthlyExpenseFields = isMonthly ? { status: "active" } : {};
+      // Campos adicionais APENAS para despesas mensais
+      const monthlyExpenseFields = isMonthly
+        ? {
+            status: "active",
+          }
+        : {};
+
+      // Combina os campos (base + extras se mensal)
       const newExpense = { ...expenseBase, ...monthlyExpenseFields };
 
+      // Adiciona ao Firestore
       await addDoc(expensesCollectionRef, newExpense).then(() => {
+        // Reseta o formulário
         setName("");
         setInclusionDate(new Date().toLocaleDateString("en-CA"));
         setValue("");
         setInstallments("");
         setPaymentMethod("Money");
-        setCategoryId(DEFAULT_CATEGORY_ID);
         setIsMonthly(false);
         toast.success("Item registered!");
       });
@@ -82,23 +82,10 @@ export default function NewRegister() {
           onChange={(e) => setName(e.target.value)}
         />
 
-        <label htmlFor="categoryRegister" className={styles.newRegisterLabels}>
-          Category
-        </label>
-        <select
-          id="categoryRegister"
-          className={styles.newRegisterInputs}
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
+        <label
+          htmlFor="inclusionDateRegister"
+          className={styles.newRegisterLabels}
         >
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.icon} {category.name}
-            </option>
-          ))}
-        </select>
-
-        <label htmlFor="inclusionDateRegister" className={styles.newRegisterLabels}>
           Date
         </label>
         <input
@@ -135,7 +122,10 @@ export default function NewRegister() {
           />
         </label>
 
-        <label htmlFor="installmentsRegister" className={styles.newRegisterLabels}>
+        <label
+          htmlFor="installmentsRegister"
+          className={styles.newRegisterLabels}
+        >
           Installments
         </label>
         <input
@@ -149,7 +139,10 @@ export default function NewRegister() {
           onChange={(e) => setInstallments(e.target.value)}
         />
 
-        <label htmlFor="paymentMethodRegister" className={styles.newRegisterLabels}>
+        <label
+          htmlFor="paymentMethodRegister"
+          className={styles.newRegisterLabels}
+        >
           Payment Method
         </label>
         <select
@@ -165,7 +158,11 @@ export default function NewRegister() {
           <option value="Debit Card">Debit Card</option>
         </select>
 
-        <button className={styles.registerButton} type="submit" disabled={isSubmitting}>
+        <button
+          className={styles.registerButton}
+          type="submit"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? <div className={styles.spinner}></div> : "Register"}
         </button>
       </form>
