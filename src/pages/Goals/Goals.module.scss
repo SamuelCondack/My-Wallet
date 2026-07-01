@@ -1,0 +1,98 @@
+.page {
+  padding: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin-top: -8px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+
+  input,
+  button {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: var(--surface-card);
+    color: var(--text-primary);
+  }
+
+  button {
+    grid-column: 1 / -1;
+    background: var(--brand-blue);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--surface-card);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+
+  button {
+    border: 1px solid var(--border-color);
+    background: transparent;
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: var(--text-primary);
+  }
+}
+
+.track {
+  height: 10px;
+  background: var(--surface-muted);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 12px 0 8px;
+}
+
+.fill {
+  height: 100%;
+  background: var(--brand-blue);
+}
+
+.card p,
+.card span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+}

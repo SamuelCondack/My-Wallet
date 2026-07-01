@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Legacy expenses collection: /{uid}/{expenseId}
+    match /{uid}/{document=**} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // User profile data: categories, budgets, goals, earnings, settings
+    match /users/{uid}/{document=**} {
+      allow read, write: if isOwner(uid);
+    }
+  }
+}
