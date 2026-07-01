@@ -2,7 +2,11 @@
 
 .newRegister {
     width: 100%;
-    margin: 10px;
+    max-width: 100%;
+    margin: 0;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -17,6 +21,8 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     justify-content: center;
 }
 
@@ -25,8 +31,8 @@
     align-items: center;
     justify-content: space-between;
     width: 90%;
+    max-width: 100%;
     align-self: center;
-    min-height: 44px;
     gap: 12px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
