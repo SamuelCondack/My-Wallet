@@ -1,0 +1,36 @@
+{
+  "id": "/",
+  "name": "MyWallet",
+  "short_name": "MyWallet",
+  "description": "Controle financeiro pessoal e gestão de despesas",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "orientation": "portrait",
+  "theme_color": "#3e92eb",
+  "background_color": "#ffffff",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    {
+      "src": "apple-touch-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

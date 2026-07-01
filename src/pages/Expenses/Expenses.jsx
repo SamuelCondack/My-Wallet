@@ -9,16 +9,17 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import bin from "../../assets/bin.png";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import ToastComponent from "../../components/Toast/ToastComponent";
 import { FaPencilAlt, FaPause, FaPlay } from "react-icons/fa";
 import { FaRegCalendar } from "react-icons/fa6";
 import EditModal from "../../modals/EditModal/EditModal";
+import { getCategoryMap } from "../../services/categoriesService";
+import { useCategories } from "../../hooks/useCategories";
+import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 
 export default function Expenses() {
   const currentDate = new Date();
@@ -52,46 +53,66 @@ export default function Expenses() {
     installments: "",
     paymentMethod: "Money",
     pauseDate: "",
+    categoryId: DEFAULT_CATEGORY_ID,
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const { categories } = useCategories(userId);
+  const categoriesMap = getCategoryMap(categories);
 
   useEffect(() => {
-    const auth = getAuth();
+    let cancelled = false;
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.uid);
-      } else {
-        setUserId(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const getExpensesList = async () => {
-      if (userId) {
-        const expensesCollectionRef = collection(db, userId);
-        try {
-          const data = await getDocs(expensesCollectionRef);
-
-          const filteredData = data.docs
-            .filter((doc) => !doc.id.startsWith("earnings-")) // Exclui os documentos de Earnings
-            .map((doc) => ({
-              ...doc.data(),
-              id: doc.id,
-            }));
-
-          setExpensesList(filteredData);
+    const loadExpenses = async () => {
+      await auth.authStateReady();
+      const user = auth.currentUser;
+      if (!user || cancelled) {
+        if (!cancelled) {
           setIsLoading(false);
-        } catch (err) {
-          console.error(err);
+        }
+        return;
+      }
+
+      setUserId(user.uid);
+      const expensesCollectionRef = collection(db, user.uid);
+
+      try {
+        const data = await getDocs(expensesCollectionRef);
+        if (cancelled) {
+          return;
+        }
+
+        const filteredData = data.docs
+          .filter((doc) => !doc.id.startsWith("earnings-"))
+          .map((doc) => ({
+            ...doc.data(),
+            id: doc.id,
+          }));
+
+        setExpensesList(filteredData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
         }
       }
     };
 
-    getExpensesList();
-  }, [userId]);
+    loadExpenses();
+
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        setUserId(null);
+        setExpensesList([]);
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (userId) {
@@ -109,7 +130,7 @@ export default function Expenses() {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -576,45 +597,56 @@ export default function Expenses() {
 
       if (isPauseMonth) {
         return (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FaPlay
-              onClick={() => handleResumeExpense(expense)}
-              className={styles.playPauseIcon}
-              title="Resume expense"
-            />
-          </div>
-        );
-      } else {
-        return (
-          <FaRegCalendar
-            onClick={() => {
-              setSelectedYear(pauseYear);
-              setSelectedMonth(pauseMonth);
-            }}
-            className={styles.calendarIcon}
-            title="Go to pause month"
-          />
+          <button
+            type="button"
+            className={styles.iconActionBtn}
+            onClick={() => handleResumeExpense(expense)}
+            aria-label="Resume expense"
+          >
+            <FaPlay className={styles.playPauseIcon} />
+          </button>
         );
       }
+
+      return (
+        <button
+          type="button"
+          className={styles.iconActionBtn}
+          onClick={() => {
+            setSelectedYear(pauseYear);
+            setSelectedMonth(pauseMonth);
+          }}
+          aria-label="Go to pause month"
+        >
+          <FaRegCalendar className={styles.calendarIcon} />
+        </button>
+      );
     }
 
     return isCurrentMonth ? (
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <FaPause
-          onClick={() => handlePauseExpense(expense)}
-          className={styles.playPauseIcon}
-          title="Pause expense"
-        />
-      </div>
+      <button
+        type="button"
+        className={styles.iconActionBtn}
+        onClick={() => handlePauseExpense(expense)}
+        aria-label="Pause expense"
+      >
+        <FaPause className={styles.playPauseIcon} />
+      </button>
     ) : (
-      <FaRegCalendar
+      <button
+        type="button"
+        className={styles.iconActionBtn}
         onClick={shouldEnableCalendar ? () => {
           setSelectedYear(currentYear);
           setSelectedMonth(currentMonth);
         } : undefined}
-        className={`${styles.calendarIcon} ${!shouldEnableCalendar ? styles.disabledCalendar : ''}`}
-        title={!shouldEnableCalendar ? "This expense is in the future" : "Go to current month"}
-      />
+        disabled={!shouldEnableCalendar}
+        aria-label={!shouldEnableCalendar ? "This expense is in the future" : "Go to current month"}
+      >
+        <FaRegCalendar
+          className={`${styles.calendarIcon} ${!shouldEnableCalendar ? styles.disabledCalendar : ''}`}
+        />
+      </button>
     );
   };
 
@@ -627,6 +659,7 @@ export default function Expenses() {
       installments: expense.installments || "",
       paymentMethod: expense.method,
       pauseDate: expense.pauseDate || "",
+      categoryId: expense.categoryId || DEFAULT_CATEGORY_ID,
     });
     setShowEditModal(true);
   };
@@ -661,6 +694,7 @@ export default function Expenses() {
         value: parseFloat(editFormData.value.replace(/,/g, ".")),
         inclusionDate: editFormData.inclusionDate,
         method: editFormData.paymentMethod,
+        categoryId: editFormData.categoryId || DEFAULT_CATEGORY_ID,
       };
 
       let shouldRefetch = false;
@@ -737,10 +771,41 @@ export default function Expenses() {
     }
   };
 
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const matchesSearch = (expense) => {
+    if (!normalizedSearchQuery) {
+      return true;
+    }
+
+    const name = expense.name?.toLowerCase() ?? "";
+    const method = expense.method?.toLowerCase() ?? "";
+    const category =
+      categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.name?.toLowerCase() ??
+      "";
+
+    return (
+      name.includes(normalizedSearchQuery) ||
+      method.includes(normalizedSearchQuery) ||
+      category.includes(normalizedSearchQuery)
+    );
+  };
+
+  const filteredMonths = sortedExpensesByMonth.filter(([monthKey]) => {
+    const [year, month] = monthKey.split("-");
+    return (
+      (selectedYear === "All" || year === selectedYear) &&
+      (selectedMonth === "All" || month === selectedMonth.padStart(2, "0"))
+    );
+  });
+
+  const hasVisibleSearchResults =
+    !normalizedSearchQuery ||
+    filteredMonths.some(([, expenses]) => expenses.some(matchesSearch));
+
   return (
     <>
       <div className={styles.expensesSectionWrapper}>
-        <ToastComponent />
         <div className={styles.expensesSection}>
           <h2 style={{ color: "#000" }}>Expenses</h2>
           <div className={styles.filterContainer}>
@@ -793,17 +858,23 @@ export default function Expenses() {
               </select>
             </div>
           </div>
-          {sortedExpensesByMonth
-            .filter(([monthKey]) => {
-              const [year, month] = monthKey.split("-");
-              return (
-                (selectedYear === "All" || year === selectedYear) &&
-                (selectedMonth === "All" || month === selectedMonth.padStart(2, "0"))
-              );
-            })
+
+          {normalizedSearchQuery && !hasVisibleSearchResults && (
+            <p className={styles.noSearchResults}>
+              No expenses found for &quot;{searchQuery.trim()}&quot;
+            </p>
+          )}
+
+          {filteredMonths
             .map(([monthKey, expenses]) => {
               const [year, month] = monthKey.split("-");
-              const totalSpendings = expenses
+              const visibleExpenses = expenses.filter(matchesSearch);
+
+              if (normalizedSearchQuery && visibleExpenses.length === 0) {
+                return null;
+              }
+
+              const totalSpendings = visibleExpenses
                 .reduce((acc, cur) => acc + Number(cur.value), 0)
                 .toFixed(2);
 
@@ -994,9 +1065,32 @@ export default function Expenses() {
                     </b>
                   </p>
 
+                  <div className={styles.searchContainer}>
+                    <input
+                      type="search"
+                      placeholder="Search expenses..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className={styles.searchInput}
+                      aria-label="Search expenses"
+                      autoComplete="off"
+                      enterKeyHint="search"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        className={styles.searchClearButton}
+                        onClick={() => setSearchQuery("")}
+                        aria-label="Clear search"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+
                   <div className={styles.expensesContainer}>
-                    <AnimatePresence>
-                      {expenses
+                    <AnimatePresence initial={false}>
+                      {visibleExpenses
                         .sort(
                           (a, b) =>
                             new Date(b.inclusionDate) -
@@ -1008,13 +1102,11 @@ export default function Expenses() {
                             className={`${styles.expense} ${getBorderStyle(
                               expense.method
                             )}`}
-                            exit={{ opacity: 0, scale: -1 }}
-                            transition={{ duration: 0.4, ease: "linear" }}
-                            onAnimationComplete={() => {
-                              setExpensesList((prevExpenses) =>
-                                prevExpenses.filter((e) => e.id !== expense.id)
-                              );
-                            }}
+                            layout
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
                           >
                             <button
                               className={styles.expenseEditButton}
@@ -1024,6 +1116,10 @@ export default function Expenses() {
                               <FaPencilAlt className={styles.expensePencilIcon} />
                             </button>
                             <p className={styles.expenseName}>{expense.name}</p>
+                            <p className={styles.categoryBadge}>
+                              {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.icon}{" "}
+                              {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.name || "Other"}
+                            </p>
                             <p className={styles.expenseValue}>
                               {expense.installments > 1 ? (
                                 <>
@@ -1143,6 +1239,7 @@ export default function Expenses() {
             editingExpense={editingExpense}
             editFormData={editFormData}
             setEditFormData={setEditFormData}
+            categories={categories}
           />
         )}
       </div>

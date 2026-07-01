@@ -6,6 +6,8 @@ import './Global/global.scss'
 import NewRegister from './pages/NewRegister/NewRegister.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Expenses from './pages/Expenses/Expenses.jsx'
+import Dashboard from './pages/Dashboard/Dashboard.jsx'
+import Categories from './pages/Categories/Categories.jsx'
 import Register from './pages/Register'
 import SignIn from './pages/SignIn'
 import HomeAuth from './pages/homeAuth/index.jsx'
@@ -32,12 +34,20 @@ const router = createBrowserRouter([
     element: <HomeAuth />,
     children: [
       {
+        path: 'dashboard',
+        element: <Dashboard />
+      },
+      {
+        path: 'categories',
+        element: <Categories />
+      },
+      {
         path: 'newregister',
         element: <NewRegister/>
       },
       {
-      path: 'expenses',
-      element: <Expenses/>
+        path: 'expenses',
+        element: <Expenses/>
       },
     ]
   }
