@@ -6,12 +6,14 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
 import menu from "../../assets/menu.svg";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 function HomeAuth() {
   const navigate = useNavigate();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useBodyScrollLock(isMobile && menuOpen);
 
   const closeMenu = () => setMenuOpen(false);
   const openMenu = () => setMenuOpen(true);
@@ -36,7 +38,6 @@ function HomeAuth() {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        setIsCheckingAuth(false);
         navigate("/signin");
       }
     });
@@ -49,24 +50,6 @@ function HomeAuth() {
       unsubscribe();
     };
   }, [navigate]);
-
-  useEffect(() => {
-    if (!isCheckingAuth) {
-      navigate("/signin");
-    }
-  }, [isCheckingAuth, navigate]);
-
-  useEffect(() => {
-    if (!isMobile) {
-      document.body.style.overflow = "";
-      return undefined;
-    }
-
-    document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMobile, menuOpen]);
 
   const handleNavClick = () => {
     if (isMobile) {

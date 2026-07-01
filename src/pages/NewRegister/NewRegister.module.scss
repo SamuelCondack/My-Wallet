@@ -20,6 +20,25 @@
     justify-content: center;
 }
 
+.checkboxRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90%;
+    align-self: center;
+    min-height: 44px;
+    gap: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        margin: 0;
+        cursor: pointer;
+    }
+}
+
 .newRegisterLabels {
     color: #000;
     margin-left: 20px;

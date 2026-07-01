@@ -105,33 +105,22 @@ export default function NewRegister() {
           id="valueRegister"
           className={styles.newRegisterInputs}
           type="text"
+          inputMode="decimal"
           placeholder="how much did it cost?"
           value={value}
           required
           onChange={(e) => setValue(e.target.value)}
         />
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            width: "300px",
-          }}
-        >
-          <label
-            htmlFor="isMonthlyRegister"
-            className={styles.newRegisterLabels}
-          >
-            Monthly Expense
-          </label>
+        <label htmlFor="isMonthlyRegister" className={styles.checkboxRow}>
+          <span className={styles.newRegisterLabels}>Monthly Expense</span>
           <input
             id="isMonthlyRegister"
             type="checkbox"
             checked={isMonthly}
             onChange={(e) => setIsMonthly(e.target.checked)}
-            style={{ marginTop: "18px" }}
           />
-        </div>
+        </label>
 
         <label
           htmlFor="installmentsRegister"
@@ -143,6 +132,7 @@ export default function NewRegister() {
           id="installmentsRegister"
           className={styles.newRegisterInputs}
           type="number"
+          inputMode="numeric"
           placeholder="how many installments?"
           disabled={isMonthly}
           value={installments}

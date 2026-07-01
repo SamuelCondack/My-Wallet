@@ -8,6 +8,7 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 3;
+    overscroll-behavior: contain;
 }
 
 .modal {
@@ -18,7 +19,12 @@
     align-items: center;
     background-color: #fff;
     width: 400px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     border-radius: 15px;
     position: fixed;
     top: 50%;
@@ -47,15 +53,18 @@
     background-color: transparent;
     border: 1px solid $defaultBlue;
     width: 145px;
+    min-height: 44px;
     border-radius: 20px;
-    transition: .4s;
+    transition: .2s;
     font-size: 16px;
     color: $defaultBlue;
 
-    &:hover {
-        transform: scale(1.1);
-        cursor: pointer;
-        color: $defaultBlue;
+    @media (hover: hover) {
+        &:hover {
+            transform: scale(1.05);
+            cursor: pointer;
+            color: $defaultBlue;
+        }
     }
 }
 

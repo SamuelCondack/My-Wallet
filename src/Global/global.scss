@@ -6,11 +6,13 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --brand-blue: #3e92eb;
+  --touch-target: 44px;
 }
 
 html {
   height: 100%;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -21,6 +23,7 @@ body {
     var(--safe-bottom)
     var(--safe-left);
   overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 #root {
@@ -35,17 +38,52 @@ body {
 }
 
 button,
+a,
+[role="button"],
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
+}
+
+button,
 [role="button"] {
   -webkit-user-select: none;
   user-select: none;
 }
 
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
 .scrollable {
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 @media (display-mode: standalone) {
   body {
     background-color: #fff;
+  }
+}
+
+@media (hover: hover) {
+  button:hover,
+  a:hover {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

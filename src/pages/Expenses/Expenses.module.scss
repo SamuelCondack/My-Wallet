@@ -18,7 +18,8 @@ body {
     border-radius: 20px;
     text-align: center !important;
     border: 1px #000 solid;
-    padding: 2px 10px;
+    padding: 8px 16px;
+    min-height: 44px;
     color: $defaultBlue;
     appearance: none;
     text-align-last: center;
@@ -191,17 +192,24 @@ body {
 
 .expenseEditButton {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 6px;
+    right: 6px;
     background: none;
     border: none;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 5px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    transition: transform 0.4s ease;
+    transition: transform 0.2s ease;
 
-    &:hover {
-        transform: scale(1.1);
+    @media (hover: hover) {
+        &:hover {
+            transform: scale(1.08);
+        }
     }
 
     .expensePencilIcon {
@@ -214,31 +222,46 @@ body {
 .calendarIcon {
     color: #3e92ebba;
     font-size: 20px;
-    cursor: pointer;
-    transition: transform 0.4s ease;
-
-    &:hover {
-        transform: scale(1.1);
-    }
+    pointer-events: none;
+    transition: transform 0.2s ease;
 }
 
 .disabledCalendar {
     color: #cccccc;
     cursor: not-allowed;
+}
 
-    &:hover {
-        transform: none;
-    }
+.iconActionBtn:disabled .disabledCalendar {
+    opacity: 0.6;
 }
 
 .playPauseIcon {
     color: #3e92ebba;
     font-size: 20px;
-    cursor: pointer;
-    transition: transform 0.4s ease;
+    pointer-events: none;
+}
 
-    &:hover {
-        transform: scale(1.1);
+.iconActionBtn {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    @media (hover: hover) {
+        &:hover .playPauseIcon,
+        &:hover .calendarIcon {
+            transform: scale(1.08);
+        }
+    }
+
+    &:disabled {
+        cursor: not-allowed;
     }
 }
 
@@ -250,14 +273,19 @@ body {
     background-color: transparent;
     display: flex;
     align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
     padding: 5px;
     border: 1px solid $defaultBlue;
-    transition: all 0.4s ease;
+    transition: border-color 0.2s ease, transform 0.2s ease;
 
-    &:hover {
-        cursor: pointer;
-        border-color: $defaultBlue;
-        transform: scale(1.1);
+    @media (hover: hover) {
+        &:hover {
+            cursor: pointer;
+            border-color: $defaultBlue;
+            transform: scale(1.05);
+        }
     }
 }
 
@@ -286,7 +314,7 @@ body {
     .expensesSectionWrapper {
         overflow: visible;
         height: auto;
-        min-height: 100vh;
+        min-height: 100dvh;
     }
 
     .earningContainer {
@@ -304,9 +332,11 @@ body {
     justify-content: center;
     font-weight: bold;
     position: fixed;
-    bottom: 20px;
-    left: 10px;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    left: calc(10px + env(safe-area-inset-left, 0px));
     background-color: #007bff;
+    min-width: 44px;
+    min-height: 44px;
     color: white;
     border: none;
     border-radius: 50%;

@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import styles from "./styles.module.scss";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 const ConfirmationModal = ({
   isOpen,
@@ -14,6 +15,8 @@ const ConfirmationModal = ({
   isEditModal,
   isSubmitting
 }) => {
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   const MessageContainer = isEditModal ? 'div' : 'p';

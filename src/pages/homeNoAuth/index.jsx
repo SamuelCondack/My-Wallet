@@ -1,23 +1,32 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "../../components/Header";
 import styles from "./styles.module.scss";
 import outcomeImg from "../../assets/outcomePinkImg.png";
 import Footer from "../../components/Footer";
 import AOS from "aos";
 import "aos/dist/aos.css";
-
-AOS.init();
-
-import React from "react";
+import { useEffect } from "react";
 
 export default function HomeNoAuth() {
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!prefersReducedMotion) {
+      AOS.init({
+        once: true,
+        duration: 700,
+        disable: window.innerWidth < 768 ? "mobile" : false,
+      });
+    }
+  }, []);
+
   return (
     <>
       <Header />
       <div
         className={styles.firstContent}
-        data-aos="flip-left"
-        data-aos-duration="1600"
+        data-aos="fade-up"
+        data-aos-duration="700"
       >
         <div className={styles.title}>
           <h1>
@@ -36,7 +45,7 @@ export default function HomeNoAuth() {
           </Link>
         </div>
       </div>
-      <div className={styles.secondContent}>
+      <div className={styles.secondContent} data-section="about">
         <h1>Your everyday finance control app</h1>
         <div className={styles.firstLine}>
           <div

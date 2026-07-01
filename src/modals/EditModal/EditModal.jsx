@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import styles from "./EditModal.module.scss";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 const EditModal = ({
   isOpen,
@@ -13,6 +14,8 @@ const EditModal = ({
   setEditFormData,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+
+  useBodyScrollLock(isOpen);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

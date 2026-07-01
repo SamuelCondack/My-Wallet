@@ -1,18 +1,17 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './Global/reset.scss'
 import './Global/global.scss'
-import NewRegister from './pages/NewRegister/NewRegister.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Expenses from './pages/Expenses/Expenses.jsx'
-import Register from './pages/Register'
-import SignIn from './pages/SignIn'
-import HomeAuth from './pages/homeAuth/index.jsx'
-import Modal from 'react-modal';
 import PwaShell from './components/PwaShell/PwaShell.jsx'
+import LoadingComponent from './components/LoadingComponent/LoadingComponent.jsx'
 
-Modal.setAppElement('#root');
+const Register = lazy(() => import('./pages/Register'))
+const SignIn = lazy(() => import('./pages/SignIn'))
+const HomeAuth = lazy(() => import('./pages/homeAuth/index.jsx'))
+const NewRegister = lazy(() => import('./pages/NewRegister/NewRegister.jsx'))
+const Expenses = lazy(() => import('./pages/Expenses/Expenses.jsx'))
 
 const router = createBrowserRouter([
   {
@@ -36,8 +35,8 @@ const router = createBrowserRouter([
         element: <NewRegister/>
       },
       {
-      path: 'expenses',
-      element: <Expenses/>
+        path: 'expenses',
+        element: <Expenses/>
       },
     ]
   }
@@ -46,7 +45,9 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <PwaShell>
-      <RouterProvider router={router} />
+      <Suspense fallback={<LoadingComponent />}>
+        <RouterProvider router={router} />
+      </Suspense>
     </PwaShell>
   </React.StrictMode>,
 )

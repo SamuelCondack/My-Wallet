@@ -108,7 +108,7 @@ export default function Expenses() {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -575,45 +575,56 @@ export default function Expenses() {
 
       if (isPauseMonth) {
         return (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FaPlay
-              onClick={() => handleResumeExpense(expense)}
-              className={styles.playPauseIcon}
-              title="Resume expense"
-            />
-          </div>
-        );
-      } else {
-        return (
-          <FaRegCalendar
-            onClick={() => {
-              setSelectedYear(pauseYear);
-              setSelectedMonth(pauseMonth);
-            }}
-            className={styles.calendarIcon}
-            title="Go to pause month"
-          />
+          <button
+            type="button"
+            className={styles.iconActionBtn}
+            onClick={() => handleResumeExpense(expense)}
+            aria-label="Resume expense"
+          >
+            <FaPlay className={styles.playPauseIcon} />
+          </button>
         );
       }
+
+      return (
+        <button
+          type="button"
+          className={styles.iconActionBtn}
+          onClick={() => {
+            setSelectedYear(pauseYear);
+            setSelectedMonth(pauseMonth);
+          }}
+          aria-label="Go to pause month"
+        >
+          <FaRegCalendar className={styles.calendarIcon} />
+        </button>
+      );
     }
 
     return isCurrentMonth ? (
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <FaPause
-          onClick={() => handlePauseExpense(expense)}
-          className={styles.playPauseIcon}
-          title="Pause expense"
-        />
-      </div>
+      <button
+        type="button"
+        className={styles.iconActionBtn}
+        onClick={() => handlePauseExpense(expense)}
+        aria-label="Pause expense"
+      >
+        <FaPause className={styles.playPauseIcon} />
+      </button>
     ) : (
-      <FaRegCalendar
+      <button
+        type="button"
+        className={styles.iconActionBtn}
         onClick={shouldEnableCalendar ? () => {
           setSelectedYear(currentYear);
           setSelectedMonth(currentMonth);
         } : undefined}
-        className={`${styles.calendarIcon} ${!shouldEnableCalendar ? styles.disabledCalendar : ''}`}
-        title={!shouldEnableCalendar ? "This expense is in the future" : "Go to current month"}
-      />
+        disabled={!shouldEnableCalendar}
+        aria-label={!shouldEnableCalendar ? "This expense is in the future" : "Go to current month"}
+      >
+        <FaRegCalendar
+          className={`${styles.calendarIcon} ${!shouldEnableCalendar ? styles.disabledCalendar : ''}`}
+        />
+      </button>
     );
   };
 

@@ -107,6 +107,15 @@ export default defineConfig(() => {
     publicDir: 'static',
     build: {
       outDir: 'public',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+            motion: ['framer-motion'],
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+          },
+        },
+      },
     },
   };
 });
