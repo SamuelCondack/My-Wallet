@@ -25,24 +25,16 @@
 .headerLinks {
     color: #fff;
     text-decoration: none;
-    padding: 10px 14px;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
+    padding: 10px;
     border-radius: 10px;
-    border: none;
-    background: transparent;
-    font: inherit;
-    transition: background-color 0.2s ease, transform 0.2s ease;
+    transition: .4s;
 
-    @media (hover: hover) {
-        &:hover {
-            background-color: $defaultBlue;
-            font-weight: 800;
-            transform: scale(1.05);
-            border-radius: 500px;
-            cursor: pointer;
-        }
+    &:hover {
+        background-color: $defaultBlue;
+        font-weight: 800;
+        transform: scale(1.1);
+        border-radius: 500px;
+        cursor: pointer;
     }
 }
 

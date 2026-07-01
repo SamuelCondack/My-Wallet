@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import styles from "../Register/styles.module.scss"; // Certifique-se de que os estilos estão corretos
 import logo from "../../assets/WalletIcon.png"; // Caminho para o logo
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { auth } from "../../../config/firebase";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { signInWithGoogle } from "../../utils/googleAuth";
-import { useGoogleRedirectResult } from "../../hooks/useGoogleRedirectResult";
+import { useAuthLogin } from "../../hooks/useAuthLogin";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -16,16 +16,7 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useGoogleRedirectResult();
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        navigate("/home/expenses");
-      }
-    });
-    return () => unsubscribe(); // Limpeza do listener
-  }, [navigate]);
+  useAuthLogin();
 
   const toggleShowPassword = () => {
     setShowPassword(prevShowPassword => !prevShowPassword);

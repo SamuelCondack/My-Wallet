@@ -3,8 +3,10 @@ import logo from "../../assets/WalletIcon.png";
 import { Link } from "react-router-dom";
 
 function scrollToAbout() {
-  const section = document.querySelector("[data-section='about']");
-  section?.scrollIntoView({ behavior: "smooth" });
+  window.scroll({
+    top: 50000,
+    behavior: "smooth",
+  });
 }
 
 export default function Header() {
@@ -14,9 +16,9 @@ export default function Header() {
         <Link to="/" className={styles.headerLinks}>
           HOME
         </Link>
-        <button type="button" className={styles.headerLinks} onClick={scrollToAbout}>
+        <a className={styles.headerLinks} onClick={scrollToAbout}>
           ABOUT
-        </button>
+        </a>
         <div className={styles.logoDiv}>
           <img className={styles.logoImg} src={logo} alt="logo" />
           <p>MyWallet</p>

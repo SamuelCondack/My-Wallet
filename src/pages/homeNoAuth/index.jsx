@@ -9,15 +9,26 @@ import { useEffect } from "react";
 
 export default function HomeNoAuth() {
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
 
-    if (!prefersReducedMotion) {
-      AOS.init({
-        once: true,
-        duration: 700,
-        disable: window.innerWidth < 768 ? "mobile" : false,
-      });
+    if (prefersReducedMotion) {
+      return undefined;
     }
+
+    AOS.init({
+      duration: 1000,
+      easing: "ease-in-out",
+      once: true,
+      mirror: false,
+    });
+
+    AOS.refresh();
+
+    return () => {
+      AOS.refreshHard();
+    };
   }, []);
 
   return (
@@ -25,8 +36,8 @@ export default function HomeNoAuth() {
       <Header />
       <div
         className={styles.firstContent}
-        data-aos="fade-up"
-        data-aos-duration="700"
+        data-aos="flip-left"
+        data-aos-duration="1600"
       >
         <div className={styles.title}>
           <h1>
@@ -45,7 +56,7 @@ export default function HomeNoAuth() {
           </Link>
         </div>
       </div>
-      <div className={styles.secondContent} data-section="about">
+      <div className={styles.secondContent}>
         <h1>Your everyday finance control app</h1>
         <div className={styles.firstLine}>
           <div

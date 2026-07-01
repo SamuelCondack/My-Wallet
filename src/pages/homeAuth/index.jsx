@@ -7,11 +7,14 @@ import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
 
 function HomeAuth() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [authReady, setAuthReady] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useBodyScrollLock(isMobile && menuOpen);
 
@@ -37,8 +40,11 @@ function HomeAuth() {
     };
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthReady(true);
+      setIsAuthenticated(Boolean(user));
+
       if (!user) {
-        navigate("/signin");
+        navigate("/signin", { replace: true });
       }
     });
 
@@ -56,6 +62,10 @@ function HomeAuth() {
       closeMenu();
     }
   };
+
+  if (!authReady || !isAuthenticated) {
+    return <LoadingComponent />;
+  }
 
   const menuContent = (
     <>
