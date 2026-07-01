@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import styles from "./EditModal.module.scss";
-import { FaSpinner } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 
@@ -66,6 +65,21 @@ const EditModal = ({
         exit={{ scale: 0.8, opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
+        {isLoading && (
+          <div className={styles.skeletonOverlay} aria-hidden="true">
+            <div className={styles.skeletonTitle} />
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div key={item} className={styles.skeletonField}>
+                <div className={styles.skeletonLabel} />
+                <div className={styles.skeletonInput} />
+              </div>
+            ))}
+            <div className={styles.skeletonButtons}>
+              <div className={styles.skeletonButton} />
+              <div className={styles.skeletonButton} />
+            </div>
+          </div>
+        )}
         <h2>Edit Expense</h2>
         <form onSubmit={handleSubmit} className={styles.editForm}>
           <div className={styles.editFormContainer}>
@@ -161,15 +175,6 @@ const EditModal = ({
           </div>
         </form>
       </motion.div>
-
-      {isLoading && (
-        <div className={styles.loadingModal}>
-          <div className={styles.loadingContent}>
-            <FaSpinner className={styles.spinner} />
-            <p>Saving changes...</p>
-          </div>
-        </div>
-      )}
     </>
   );
 };

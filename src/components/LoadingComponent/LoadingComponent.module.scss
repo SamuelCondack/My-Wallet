@@ -1,44 +1,149 @@
 @import "../../Global/variables.scss";
 
-.loadingWrapper {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    align-self: center;
-    width: 100%;
-    height: 100vh;
-    background-color: #fff;
-    color: #333;
-    z-index: 2;
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid $defaultBlue;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 0.4s linear infinite;
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #f8f8f8 20%,
+    #ececec 40%,
+    #f8f8f8 60%,
+    #f0f0f0 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+.skeletonWrapper {
+  overflow: scroll;
+  height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background-color: #fff;
+}
+
+.skeletonSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 40px;
+  gap: 16px;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.pageTitle {
+  width: 140px;
+  height: 32px;
+  border-radius: 16px;
+}
+
+.filters {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.filterPill {
+  width: 150px;
+  height: 32px;
+  border-radius: 20px;
+}
+
+.monthTitle {
+  width: 180px;
+  height: 28px;
+  margin-top: 8px;
+}
+
+.earningsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.earningsLabel {
+  width: 80px;
+  height: 24px;
+}
+
+.earningsInput {
+  width: 160px;
+  height: 36px;
+  border-radius: 20px;
+}
+
+.summaryLine {
+  width: 220px;
+  height: 20px;
+}
+
+.summaryShort {
+  width: 180px;
+}
+
+.expenseCards {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.expenseCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 36px;
+  border: 1px solid #f0f0f0;
+  border-radius: 20px;
+  min-width: 140px;
+}
+
+.cardName {
+  width: 90px;
+  height: 18px;
+}
+
+.cardValue {
+  width: 70px;
+  height: 22px;
+}
+
+.cardMethod {
+  width: 100px;
+  height: 24px;
+  border-radius: 20px;
 }
 
 @media (max-width: 768px) {
-    .loadingWrapper {
-        height: 200px;
-        width: 200px;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-}
+  .skeletonSection {
+    padding-top: 16px;
+  }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+  .expenseCard {
+    min-width: 120px;
+    padding: 16px 28px;
+  }
 }
