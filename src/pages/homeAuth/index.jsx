@@ -7,6 +7,7 @@ import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import DarkModeToggle from "../../components/DarkModeToggle/DarkModeToggle";
 
 function HomeAuth() {
   const navigate = useNavigate();
@@ -71,18 +72,30 @@ function HomeAuth() {
         </button>
       )}
 
-      <Link to="expenses" onClick={handleNavClick} className={styles.iconDiv}>
+      <Link to="dashboard" onClick={handleNavClick} className={styles.iconDiv}>
         <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
         <p className={styles.namep}>MyWallet</p>
       </Link>
 
       <ul className={styles.options}>
+        <Link to="dashboard" onClick={handleNavClick} className={styles.menuLinks}>
+          Dashboard
+        </Link>
         <Link to="expenses" onClick={handleNavClick} className={styles.menuLinks}>
           Expenses
         </Link>
         <Link to="newregister" onClick={handleNavClick} className={styles.menuLinks}>
           New Register
         </Link>
+        <Link to="categories" onClick={handleNavClick} className={styles.menuLinks}>
+          Categories
+        </Link>
+        <Link to="goals" onClick={handleNavClick} className={styles.menuLinks}>
+          Goals
+        </Link>
+        <div className={styles.themeToggleWrap}>
+          <DarkModeToggle />
+        </div>
         <button type="button" onClick={logout} className={styles.logoutBtn}>
           logout
         </button>

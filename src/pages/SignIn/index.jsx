@@ -18,7 +18,7 @@ export default function SignIn() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        navigate("/home/expenses");
+        navigate("/home/dashboard");
       }
     });
     return () => unsubscribe();
@@ -43,7 +43,7 @@ export default function SignIn() {
     try {
       const result = await signInWithGoogle();
       if (result?.user) {
-        navigate("/home/expenses");
+        navigate("/home/dashboard");
       }
       setErrorMessage("");
     } catch (err) {
