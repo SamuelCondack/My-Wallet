@@ -10,24 +10,53 @@
     flex-direction: row;
     gap: 10%;
     background-color: #fff;
+    min-height: 100dvh;
+    position: relative;
+}
+
+.content {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.menuButton {
+    position: fixed;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    z-index: 4;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .menuImg {
+    display: block;
     width: 30px;
     height: 30px;
     background-color: #fff;
     border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
 
-    position: absolute;
-    top: calc(10px + env(safe-area-inset-top, 0px));
-    left: calc(10px + env(safe-area-inset-left, 0px));
-    z-index: 2;
-    transition: .4s;
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    background-color: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+}
 
-    &:hover {
-        cursor: pointer;
-        transform: scale(1.05);
-    }
+.backdropVisible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 .asideMenu {
@@ -35,30 +64,50 @@
     flex-direction: column;
     align-items: center;
     width: 290px;
+    min-width: 290px;
     height: 100dvh;
     gap: 10px;
-    background-color: rgba(0, 0, 0, 0.888);
+    background-color: rgba(0, 0, 0, 0.92);
     border-top-right-radius: 50px;
     border-bottom-right-radius: 50px;
-    z-index: 3;
+    z-index: 5;
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-left: env(safe-area-inset-left, 0px);
+}
+
+.asideMenuMobile {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translate3d(-105%, 0, 0);
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.asideMenuOpen {
+    transform: translate3d(0, 0, 0);
 }
 
 .closeMenu {
     position: absolute;
     top: calc(10px + env(safe-area-inset-top, 0px));
     left: calc(10px + env(safe-area-inset-left, 0px));
-
     width: 30px;
     height: 30px;
     z-index: 4;
-    transition: .4s;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 
-    &:hover {
-        cursor: pointer;
-        transform: scale(1.05);
+    img {
+        display: block;
+        width: 30px;
+        height: 30px;
     }
 }
 
@@ -91,21 +140,21 @@
     margin: 15px 0 0 0;
     gap: 15px;
     height: 100%;
-
 }
 
 .menuLinks {
     text-decoration: none;
     color: #fff;
-    transition: .4s;
-    padding: 5px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    padding: 8px 16px;
     border-radius: 10px;
     text-align: center;
     border: 1px solid #ffffff7e;
+    min-width: 160px;
 
     &:hover {
         background-color: $defaultBlue;
-        transform: scale(1.05);
+        transform: scale(1.03);
     }
 }
 
@@ -115,30 +164,26 @@
     border: 1px solid red;
     border-radius: 15px;
     padding: 5px 15px;
-    transition: .4s;
+    transition: color 0.2s ease, transform 0.2s ease;
     margin-top: auto;
     margin-bottom: calc(50px + env(safe-area-inset-bottom, 0));
     font-size: 14px;
 
     &:hover {
         color: #fff;
-        transform: scale(1.05);
+        transform: scale(1.03);
         cursor: pointer;
     }
 }
 
-.displayNone {
-    display: none;
-}
-
 @media (max-width: 768px) {
+    .mainContainer {
+        justify-content: center;
+        align-items: stretch;
+        gap: 0;
+    }
+
     .asideMenu {
-        height: 100dvh;
-        position: fixed;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        transition: .4s;
         background-color: #000;
     }
 
@@ -146,10 +191,11 @@
         margin-top: calc(44px + env(safe-area-inset-top, 0px));
         padding-right: env(safe-area-inset-right, 0px);
     }
+}
 
-    .mainContainer {
-        justify-content: center;
-        align-items: center;
-        gap: 0;
+@media (prefers-reduced-motion: reduce) {
+    .asideMenuMobile,
+    .backdrop {
+        transition: none;
     }
 }

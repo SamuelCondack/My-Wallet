@@ -1,51 +1,40 @@
 import walletIcon from "../../assets/WalletIcon.png";
 import styles from "./styles.module.scss";
 import { auth } from "../../../config/firebase";
-import { Link } from "react-router-dom";
-import { Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
-import "./displayNone.css";
 import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
 import menu from "../../assets/menu.svg";
-import { motion, AnimatePresence } from "framer-motion";
 
 function HomeAuth() {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [menuHidden, setMenuHidden] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  const closeMenu = () => setMenuOpen(false);
+  const openMenu = () => setMenuOpen(true);
 
   const logout = async () => {
     try {
-      await signOut(auth).then(() => {
-        navigate("/");
-      });
+      await signOut(auth);
+      navigate("/");
     } catch (err) {
       console.log(err.message);
     }
   };
 
-  function removeMenu() {
-    setMenuHidden(true);
-  }
-
-  function addMenu() {
-    setMenuHidden(false);
-  }
-
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-      if (window.innerWidth > 768) {
-        setMenuHidden(false);
-      } else {
-        setMenuHidden(true);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setMenuOpen(false);
       }
     };
 
-    onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         setIsCheckingAuth(false);
         navigate("/signin");
@@ -57,6 +46,7 @@ function HomeAuth() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      unsubscribe();
     };
   }, [navigate]);
 
@@ -66,72 +56,93 @@ function HomeAuth() {
     }
   }, [isCheckingAuth, navigate]);
 
-  return (
+  useEffect(() => {
+    if (!isMobile) {
+      document.body.style.overflow = "";
+      return undefined;
+    }
+
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobile, menuOpen]);
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      closeMenu();
+    }
+  };
+
+  const menuContent = (
     <>
-      <main className={styles.mainContainer}>
-        {isMobile && menuHidden && (
-          <div onClick={addMenu} id="openMenu" className={styles.menuDiv}>
-            <img src={menu} alt="menu icon" className={styles.menuImg} />
-          </div>
-        )}
+      {isMobile && (
+        <button
+          type="button"
+          id="closeMenu"
+          onClick={closeMenu}
+          className={styles.closeMenu}
+          aria-label="Fechar menu"
+        >
+          <img src={x} alt="" aria-hidden="true" />
+        </button>
+      )}
 
-        <AnimatePresence>
-          {!menuHidden && (
-            <motion.aside
-              id="menu"
-              className={styles.asideMenu}
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-            >
-              {isMobile && (
-                <img
-                  id="closeMenu"
-                  onClick={removeMenu}
-                  src={x}
-                  alt="close menu"
-                  className={styles.closeMenu}
-                />
-              )}
+      <Link to="expenses" onClick={handleNavClick} className={styles.iconDiv}>
+        <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
+        <p className={styles.namep}>MyWallet</p>
+      </Link>
 
-              <Link
-                to="expenses"
-                onClick={isMobile ? removeMenu : null}
-                className={styles.iconDiv}
-              >
-                <img
-                  src={walletIcon}
-                  alt="Wallet Icon"
-                  className={styles.icon}
-                />
-                <p className={styles.namep}>MyWallet</p>
-              </Link>
-              <ul className={styles.options}>
-                <Link
-                  to="expenses"
-                  onClick={isMobile ? removeMenu : null}
-                  className={styles.menuLinks}
-                >
-                  Expenses
-                </Link>
-                <Link
-                  to="newregister"
-                  onClick={isMobile ? removeMenu : null}
-                  className={styles.menuLinks}
-                >
-                  New Register
-                </Link>
-                <button onClick={logout} className={styles.logoutBtn}>
-                  logout
-                </button>
-              </ul>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-        <Outlet />
-      </main>
+      <ul className={styles.options}>
+        <Link to="expenses" onClick={handleNavClick} className={styles.menuLinks}>
+          Expenses
+        </Link>
+        <Link to="newregister" onClick={handleNavClick} className={styles.menuLinks}>
+          New Register
+        </Link>
+        <button type="button" onClick={logout} className={styles.logoutBtn}>
+          logout
+        </button>
+      </ul>
     </>
+  );
+
+  return (
+    <main className={styles.mainContainer}>
+      {isMobile && !menuOpen && (
+        <button
+          type="button"
+          id="openMenu"
+          onClick={openMenu}
+          className={styles.menuButton}
+          aria-label="Abrir menu"
+        >
+          <img src={menu} alt="" className={styles.menuImg} aria-hidden="true" />
+        </button>
+      )}
+
+      {isMobile && (
+        <div
+          className={`${styles.backdrop} ${menuOpen ? styles.backdropVisible : ""}`}
+          onClick={closeMenu}
+          aria-hidden={!menuOpen}
+        />
+      )}
+
+      <aside
+        id="menu"
+        className={`${styles.asideMenu} ${isMobile ? styles.asideMenuMobile : ""} ${
+          isMobile && menuOpen ? styles.asideMenuOpen : ""
+        }`}
+        aria-hidden={isMobile && !menuOpen}
+      >
+        {menuContent}
+      </aside>
+
+      <div className={styles.content}>
+        <Outlet />
+      </div>
+    </main>
   );
 }
 
