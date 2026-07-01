@@ -4,10 +4,10 @@ import {
   signInWithRedirect,
 } from "firebase/auth";
 import { auth, googleProvider } from "../../config/firebase";
-import { isStandaloneMode } from "./pwa";
+import { isIOS, isStandaloneMode } from "./pwa";
 
 function shouldUseRedirect() {
-  return isStandaloneMode();
+  return isStandaloneMode() || isIOS();
 }
 
 export async function signInWithGoogle() {

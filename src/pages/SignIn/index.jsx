@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { signInWithGoogle } from "../../utils/googleAuth";
-import { useAuthLogin } from "../../hooks/useAuthLogin";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -15,8 +14,6 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
-  useAuthLogin();
 
   const toggleShowPassword = () => {
     setShowPassword(prevShowPassword => !prevShowPassword);

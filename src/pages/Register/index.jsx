@@ -7,7 +7,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { signInWithGoogle } from "../../utils/googleAuth";
-import { useAuthLogin } from "../../hooks/useAuthLogin";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -16,8 +15,6 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
-
-  useAuthLogin();
 
   const toggleShowPassword = () => {
     setShowPassword((prevShowPassword) => !prevShowPassword);

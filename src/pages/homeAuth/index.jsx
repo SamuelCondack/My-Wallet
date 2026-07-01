@@ -2,19 +2,19 @@ import walletIcon from "../../assets/WalletIcon.png";
 import styles from "./styles.module.scss";
 import { auth } from "../../../config/firebase";
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
+import { useAuth } from "../../context/AuthContext";
 
 function HomeAuth() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [authReady, setAuthReady] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useBodyScrollLock(isMobile && menuOpen);
 
@@ -39,23 +39,13 @@ function HomeAuth() {
       }
     };
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setAuthReady(true);
-      setIsAuthenticated(Boolean(user));
-
-      if (!user) {
-        navigate("/signin", { replace: true });
-      }
-    });
-
     handleResize();
     window.addEventListener("resize", handleResize);
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -63,7 +53,7 @@ function HomeAuth() {
     }
   };
 
-  if (!authReady || !isAuthenticated) {
+  if (loading || !user) {
     return <LoadingComponent />;
   }
 
