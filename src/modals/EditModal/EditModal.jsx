@@ -12,6 +12,7 @@ const EditModal = ({
   editingExpense,
   editFormData,
   setEditFormData,
+  categories = [],
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -154,6 +155,23 @@ const EditModal = ({
             )}
 
             <div className={styles.formGroup}>
+              <label htmlFor="categoryId">Category:</label>
+              <select
+                id="categoryId"
+                name="categoryId"
+                value={editFormData.categoryId}
+                onChange={handleInputChange}
+                required
+              >
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
               <label htmlFor="paymentMethod">Payment Method:</label>
               <select
                 id="paymentMethod"
@@ -189,6 +207,7 @@ EditModal.propTypes = {
   editingExpense: PropTypes.object,
   editFormData: PropTypes.object.isRequired,
   setEditFormData: PropTypes.func.isRequired,
+  categories: PropTypes.array,
 };
 
 export default EditModal; 

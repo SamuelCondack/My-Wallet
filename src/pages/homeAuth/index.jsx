@@ -77,11 +77,17 @@ function HomeAuth() {
       </Link>
 
       <ul className={styles.options}>
+        <Link to="dashboard" onClick={handleNavClick} className={styles.menuLinks}>
+          Dashboard
+        </Link>
         <Link to="expenses" onClick={handleNavClick} className={styles.menuLinks}>
           Expenses
         </Link>
         <Link to="newregister" onClick={handleNavClick} className={styles.menuLinks}>
           New Register
+        </Link>
+        <Link to="categories" onClick={handleNavClick} className={styles.menuLinks}>
+          Categories
         </Link>
         <button type="button" onClick={logout} className={styles.logoutBtn}>
           logout

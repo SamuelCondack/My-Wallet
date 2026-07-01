@@ -17,6 +17,9 @@ import { toast } from "react-toastify";
 import { FaPencilAlt, FaPause, FaPlay } from "react-icons/fa";
 import { FaRegCalendar } from "react-icons/fa6";
 import EditModal from "../../modals/EditModal/EditModal";
+import { getCategoryMap } from "../../services/categoriesService";
+import { useCategories } from "../../hooks/useCategories";
+import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 
 export default function Expenses() {
   const currentDate = new Date();
@@ -50,7 +53,11 @@ export default function Expenses() {
     installments: "",
     paymentMethod: "Money",
     pauseDate: "",
+    categoryId: DEFAULT_CATEGORY_ID,
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const { categories } = useCategories(userId);
+  const categoriesMap = getCategoryMap(categories);
 
   useEffect(() => {
     let cancelled = false;
@@ -652,6 +659,7 @@ export default function Expenses() {
       installments: expense.installments || "",
       paymentMethod: expense.method,
       pauseDate: expense.pauseDate || "",
+      categoryId: expense.categoryId || DEFAULT_CATEGORY_ID,
     });
     setShowEditModal(true);
   };
@@ -686,6 +694,7 @@ export default function Expenses() {
         value: parseFloat(editFormData.value.replace(/,/g, ".")),
         inclusionDate: editFormData.inclusionDate,
         method: editFormData.paymentMethod,
+        categoryId: editFormData.categoryId || DEFAULT_CATEGORY_ID,
       };
 
       let shouldRefetch = false;
@@ -760,6 +769,14 @@ export default function Expenses() {
       toast.error("Falha ao atualizar despesa");
       setIsLoading(false);
     }
+  };
+
+  const matchesSearch = (expense) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return true;
+    }
+    return expense.name?.toLowerCase().includes(query);
   };
 
   return (
@@ -1018,9 +1035,18 @@ export default function Expenses() {
                     </b>
                   </p>
 
+                  <input
+                    type="search"
+                    placeholder="Search expenses..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={styles.searchInput}
+                  />
+
                   <div className={styles.expensesContainer}>
                     <AnimatePresence>
                       {expenses
+                        .filter(matchesSearch)
                         .sort(
                           (a, b) =>
                             new Date(b.inclusionDate) -
@@ -1048,6 +1074,10 @@ export default function Expenses() {
                               <FaPencilAlt className={styles.expensePencilIcon} />
                             </button>
                             <p className={styles.expenseName}>{expense.name}</p>
+                            <p className={styles.categoryBadge}>
+                              {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.icon}{" "}
+                              {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.name || "Other"}
+                            </p>
                             <p className={styles.expenseValue}>
                               {expense.installments > 1 ? (
                                 <>
@@ -1167,6 +1197,7 @@ export default function Expenses() {
             editingExpense={editingExpense}
             editFormData={editFormData}
             setEditFormData={setEditFormData}
+            categories={categories}
           />
         )}
       </div>
