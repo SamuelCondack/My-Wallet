@@ -18,7 +18,7 @@ export default function Register() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        navigate("/home/expenses", { replace: true });
+        navigate("/home/expenses");
       }
     });
     return () => unsubscribe();
@@ -54,12 +54,9 @@ export default function Register() {
   const continueWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      await auth.authStateReady();
-      navigate("/home/expenses", { replace: true });
-      setErrorMessage("");
+      navigate("/home/expenses");
     } catch (err) {
       console.error(err);
-      setErrorMessage("Google sign-in failed. Please try again.");
     }
   };
 

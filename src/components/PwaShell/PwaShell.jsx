@@ -14,11 +14,7 @@ export default function PwaShell({ children }) {
         return;
       }
 
-      Promise.all(registrations.map((registration) => registration.unregister())).then(() => {
-        if ("caches" in window) {
-          caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))));
-        }
-      });
+      Promise.all(registrations.map((registration) => registration.unregister()));
     });
   }, []);
 

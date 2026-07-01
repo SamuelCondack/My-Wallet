@@ -9,7 +9,6 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import bin from "../../assets/bin.png";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
@@ -54,43 +53,59 @@ export default function Expenses() {
   });
 
   useEffect(() => {
-    const auth = getAuth();
+    let cancelled = false;
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.uid);
-      } else {
-        setUserId(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const getExpensesList = async () => {
-      if (userId) {
-        const expensesCollectionRef = collection(db, userId);
-        try {
-          const data = await getDocs(expensesCollectionRef);
-
-          const filteredData = data.docs
-            .filter((doc) => !doc.id.startsWith("earnings-")) // Exclui os documentos de Earnings
-            .map((doc) => ({
-              ...doc.data(),
-              id: doc.id,
-            }));
-
-          setExpensesList(filteredData);
+    const loadExpenses = async () => {
+      await auth.authStateReady();
+      const user = auth.currentUser;
+      if (!user || cancelled) {
+        if (!cancelled) {
           setIsLoading(false);
-        } catch (err) {
-          console.error(err);
+        }
+        return;
+      }
+
+      setUserId(user.uid);
+      const expensesCollectionRef = collection(db, user.uid);
+
+      try {
+        const data = await getDocs(expensesCollectionRef);
+        if (cancelled) {
+          return;
+        }
+
+        const filteredData = data.docs
+          .filter((doc) => !doc.id.startsWith("earnings-"))
+          .map((doc) => ({
+            ...doc.data(),
+            id: doc.id,
+          }));
+
+        setExpensesList(filteredData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
         }
       }
     };
 
-    getExpensesList();
-  }, [userId]);
+    loadExpenses();
+
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        setUserId(null);
+        setExpensesList([]);
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (userId) {

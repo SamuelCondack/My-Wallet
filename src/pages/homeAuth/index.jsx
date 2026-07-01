@@ -36,18 +36,12 @@ function HomeAuth() {
       }
     };
 
-    let unsubscribe = () => {};
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate("/signin");
+      }
+    });
 
-    const setupAuthGuard = async () => {
-      await auth.authStateReady();
-      unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          navigate("/signin", { replace: true });
-        }
-      });
-    };
-
-    setupAuthGuard();
     handleResize();
     window.addEventListener("resize", handleResize);
 
