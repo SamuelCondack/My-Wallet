@@ -12,6 +12,9 @@ SPLASH = STATIC / "splash"
 BRAND_BLUE = (62, 146, 235)  # #3e92eb
 WHITE = (255, 255, 255)
 
+# ~58% do canvas: margem confortável como ícones nativos do iOS
+ICON_SCALE = 0.58
+
 SPLASH_SIZES = {
     "iphone-se": (750, 1334),
     "iphone-8": (750, 1334),
@@ -24,16 +27,26 @@ SPLASH_SIZES = {
 }
 
 
-def resize_icon(size: int, output: Path) -> None:
+def create_icon_with_padding(
+    size: int,
+    output: Path,
+    background: tuple[int, int, int] = WHITE,
+    icon_scale: float = ICON_SCALE,
+) -> None:
+    """Render icon on opaque background with padding (avoids black on iOS)."""
+    canvas = Image.new("RGB", (size, size), background)
     icon = Image.open(SOURCE).convert("RGBA")
-    icon = icon.resize((size, size), Image.Resampling.LANCZOS)
-    icon.save(output, "PNG", optimize=True)
+    icon_size = int(size * icon_scale)
+    icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
+    offset = (size - icon_size) // 2
+    canvas.paste(icon, (offset, offset), icon)
+    canvas.save(output, "PNG", optimize=True)
 
 
 def create_maskable_icon(size: int, output: Path) -> None:
-    canvas = Image.new("RGBA", (size, size), BRAND_BLUE + (255,))
+    canvas = Image.new("RGBA", (size, size), WHITE + (255,))
     icon = Image.open(SOURCE).convert("RGBA")
-    icon_size = int(size * 0.62)
+    icon_size = int(size * ICON_SCALE)
     icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
     offset = (size - icon_size) // 2
     canvas.paste(icon, (offset, offset), icon)
@@ -45,7 +58,7 @@ def create_splash(width: int, height: int, output: Path) -> None:
     draw = ImageDraw.Draw(canvas)
 
     icon = Image.open(SOURCE).convert("RGBA")
-    icon_size = min(width, height) // 4
+    icon_size = int(min(width, height) * 0.22)
     icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
     x = (width - icon_size) // 2
     y = (height - icon_size) // 2 - int(height * 0.05)
@@ -61,9 +74,9 @@ def main() -> None:
     STATIC.mkdir(parents=True, exist_ok=True)
     SPLASH.mkdir(parents=True, exist_ok=True)
 
-    resize_icon(180, STATIC / "apple-touch-icon-180.png")
-    resize_icon(512, STATIC / "favicon.png")
-    resize_icon(512, STATIC / "apple-touch-icon.png")
+    create_icon_with_padding(180, STATIC / "apple-touch-icon-180.png")
+    create_icon_with_padding(512, STATIC / "apple-touch-icon.png")
+    create_icon_with_padding(512, STATIC / "favicon.png")
     create_maskable_icon(512, STATIC / "maskable-icon-512.png")
 
     for name, (width, height) in SPLASH_SIZES.items():
