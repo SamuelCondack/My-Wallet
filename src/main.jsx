@@ -3,56 +3,40 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./Global/reset.scss";
 import "./Global/global.scss";
-import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import PwaShell from "./components/PwaShell/PwaShell.jsx";
 import LoadingComponent from "./components/LoadingComponent/LoadingComponent.jsx";
-import { AuthProvider } from "./context/AuthContext.jsx";
-import AuthRedirect from "./components/AuthRedirect/AuthRedirect.jsx";
+import Register from "./pages/Register";
+import SignIn from "./pages/SignIn";
+import HomeAuth from "./pages/homeAuth/index.jsx";
 
-const Register = lazy(() => import("./pages/Register"));
-const SignIn = lazy(() => import("./pages/SignIn"));
-const HomeAuth = lazy(() => import("./pages/homeAuth/index.jsx"));
 const NewRegister = lazy(() => import("./pages/NewRegister/NewRegister.jsx"));
 const Expenses = lazy(() => import("./pages/Expenses/Expenses.jsx"));
 
-function AppShell() {
-  return (
-    <>
-      <AuthRedirect />
-      <Outlet />
-    </>
-  );
-}
-
 const router = createBrowserRouter([
   {
-    element: <AppShell />,
+    path: "/",
+    element: <App />,
+  },
+  {
+    path: "/signup",
+    element: <Register />,
+  },
+  {
+    path: "/signin",
+    element: <SignIn />,
+  },
+  {
+    path: "/home",
+    element: <HomeAuth />,
     children: [
       {
-        path: "/",
-        element: <App />,
+        path: "newregister",
+        element: <NewRegister />,
       },
       {
-        path: "/signup",
-        element: <Register />,
-      },
-      {
-        path: "/signin",
-        element: <SignIn />,
-      },
-      {
-        path: "/home",
-        element: <HomeAuth />,
-        children: [
-          {
-            path: "newregister",
-            element: <NewRegister />,
-          },
-          {
-            path: "expenses",
-            element: <Expenses />,
-          },
-        ],
+        path: "expenses",
+        element: <Expenses />,
       },
     ],
   },
@@ -60,12 +44,10 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AuthProvider>
-      <PwaShell>
-        <Suspense fallback={<LoadingComponent />}>
-          <RouterProvider router={router} />
-        </Suspense>
-      </PwaShell>
-    </AuthProvider>
+    <PwaShell>
+      <Suspense fallback={<LoadingComponent />}>
+        <RouterProvider router={router} />
+      </Suspense>
+    </PwaShell>
   </React.StrictMode>
 );

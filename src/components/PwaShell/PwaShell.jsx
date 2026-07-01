@@ -11,6 +11,12 @@ export default function PwaShell({ children }) {
       import("virtual:pwa-register").then(({ registerSW }) => {
         registerSW({
           immediate: true,
+          onRegisteredSW(swUrl, registration) {
+            if (registration?.waiting) {
+              registration.waiting.postMessage({ type: "SKIP_WAITING" });
+            }
+            registration?.update();
+          },
           onNeedRefresh() {
             toast.info("Nova versão disponível. Recarregue para atualizar.", {
               toastId: "pwa-need-refresh",
