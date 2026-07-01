@@ -55,7 +55,7 @@ export default function Dashboard() {
   const categoryTotals = getCategoryTotals(expensesByMonth, monthKey);
 
   if (loading || categoriesLoading) {
-    return <LoadingComponent />;
+    return <LoadingComponent variant="dashboard" />;
   }
 
   return (
@@ -65,7 +65,7 @@ export default function Dashboard() {
           <h1>Dashboard</h1>
           <p>Spending by category</p>
         </div>
-        <Link to="categories" className={styles.linkBtn}>
+        <Link to="/home/categories" className={styles.linkBtn}>
           Manage categories
         </Link>
       </header>

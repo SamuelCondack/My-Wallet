@@ -71,22 +71,22 @@ function HomeAuth() {
         </button>
       )}
 
-      <Link to="expenses" onClick={handleNavClick} className={styles.iconDiv}>
+      <Link to="/home/expenses" onClick={handleNavClick} className={styles.iconDiv}>
         <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
         <p className={styles.namep}>MyWallet</p>
       </Link>
 
       <ul className={styles.options}>
-        <Link to="dashboard" onClick={handleNavClick} className={styles.menuLinks}>
+        <Link to="/home/dashboard" onClick={handleNavClick} className={styles.menuLinks}>
           Dashboard
         </Link>
-        <Link to="expenses" onClick={handleNavClick} className={styles.menuLinks}>
+        <Link to="/home/expenses" onClick={handleNavClick} className={styles.menuLinks}>
           Expenses
         </Link>
-        <Link to="newregister" onClick={handleNavClick} className={styles.menuLinks}>
+        <Link to="/home/newregister" onClick={handleNavClick} className={styles.menuLinks}>
           New Register
         </Link>
-        <Link to="categories" onClick={handleNavClick} className={styles.menuLinks}>
+        <Link to="/home/categories" onClick={handleNavClick} className={styles.menuLinks}>
           Categories
         </Link>
         <button type="button" onClick={logout} className={styles.logoutBtn}>

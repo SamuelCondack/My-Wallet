@@ -38,7 +38,7 @@ export default function Categories() {
   };
 
   if (loading) {
-    return <LoadingComponent />;
+    return <LoadingComponent variant="categories" />;
   }
 
   return (

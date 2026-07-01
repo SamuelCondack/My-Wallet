@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useCategories } from "../../hooks/useCategories";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
+import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
 
 export default function NewRegister() {
   const [name, setName] = useState("");
@@ -20,7 +21,7 @@ export default function NewRegister() {
   const [isMonthly, setIsMonthly] = useState(false);
 
   const userId = auth?.currentUser?.uid;
-  const { categories } = useCategories(userId);
+  const { categories, loading: categoriesLoading } = useCategories(userId);
   const expensesCollectionRef = userId ? collection(db, userId) : null;
 
   useEffect(() => {
@@ -64,6 +65,10 @@ export default function NewRegister() {
       setIsSubmitting(false);
     }
   };
+
+  if (categoriesLoading) {
+    return <LoadingComponent variant="form" />;
+  }
 
   return (
     <div className={styles.newRegister}>

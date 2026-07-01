@@ -161,7 +161,7 @@ export default function Expenses() {
   }, [userId]);
 
   if (isLoading) {
-    return <LoadingComponent />;
+    return <LoadingComponent variant="expenses" />;
   }
 
   const scrollToTop = () => {
