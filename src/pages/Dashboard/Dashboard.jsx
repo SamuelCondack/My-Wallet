@@ -13,6 +13,7 @@ import {
   getMonthTotal,
 } from "../../utils/expenseCalculations";
 import { formatCurrency, getMonthKey } from "../../utils/finance";
+import { getCached, setCached } from "../../utils/dataCache";
 
 export default function Dashboard() {
   const [userId, setUserId] = useState(null);
@@ -33,6 +34,13 @@ export default function Dashboard() {
       }
 
       setUserId(user.uid);
+      const cachedExpenses = getCached("expenses", user.uid);
+
+      if (cachedExpenses) {
+        setExpenses(cachedExpenses);
+        setLoading(false);
+      }
+
       const snapshot = await getDocs(collection(db, user.uid));
       const data = snapshot.docs
         .filter((item) => !item.id.startsWith("earnings-"))
@@ -40,6 +48,7 @@ export default function Dashboard() {
 
       if (active) {
         setExpenses(data);
+        setCached("expenses", user.uid, data);
         setLoading(false);
       }
     });

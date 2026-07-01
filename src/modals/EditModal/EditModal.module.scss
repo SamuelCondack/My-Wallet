@@ -81,9 +81,13 @@
     padding: 15px;
     border-radius: 8px;
     z-index: 1001;
-    min-width: 400px;
-    max-width: 90%;
+    min-width: 280px;
+    max-width: min(90%, 420px);
     width: auto;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
 
     h2 {
         text-align: center;

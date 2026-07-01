@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   setDoc,
@@ -30,9 +31,17 @@ export async function saveCategory(userId, category) {
   await setDoc(doc(db, `users/${userId}/categories`, category.id), category, { merge: true });
 }
 
+export async function deleteCategory(userId, categoryId) {
+  await deleteDoc(doc(db, `users/${userId}/categories`, categoryId));
+}
+
 export function getCategoryMap(categories) {
   return categories.reduce((map, category) => {
     map[category.id] = category;
     return map;
   }, {});
+}
+
+export function isDefaultCategory(categoryId) {
+  return DEFAULT_CATEGORIES.some((category) => category.id === categoryId);
 }

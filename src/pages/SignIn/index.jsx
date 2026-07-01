@@ -82,23 +82,26 @@ export default function SignIn() {
           <label className={styles.formLabel} htmlFor="password">
             Password
           </label>
-          <input
-            className={styles.formInput}
-            placeholder="Enter your password"
-            type={showPassword ? "text" : "password"}
-            id="password"
-            autoComplete="password"
-            required
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className={styles.passwordField}>
+            <input
+              className={styles.formInput}
+              placeholder="Enter your password"
+              type={showPassword ? "text" : "password"}
+              id="password"
+              autoComplete="password"
+              required
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className={styles.showPasswordButtonSignIn}
+              onClick={toggleShowPassword}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
-          <button
-            type="button"
-            className={styles.showPasswordButtonSignIn}
-            onClick={toggleShowPassword}
-          >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </button>
 
           <div className={styles.buttons}>
             <button className={styles.signUpBtn} type="submit">

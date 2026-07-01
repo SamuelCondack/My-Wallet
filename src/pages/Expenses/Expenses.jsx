@@ -20,6 +20,7 @@ import EditModal from "../../modals/EditModal/EditModal";
 import { getCategoryMap } from "../../services/categoriesService";
 import { useCategories } from "../../hooks/useCategories";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
+import { getCached, setCached } from "../../utils/dataCache";
 
 export default function Expenses() {
   const currentDate = new Date();
@@ -74,6 +75,12 @@ export default function Expenses() {
 
       setUserId(user.uid);
       const expensesCollectionRef = collection(db, user.uid);
+      const cachedExpenses = getCached("expenses", user.uid);
+
+      if (cachedExpenses) {
+        setExpensesList(cachedExpenses);
+        setIsLoading(false);
+      }
 
       try {
         const data = await getDocs(expensesCollectionRef);
@@ -89,6 +96,7 @@ export default function Expenses() {
           }));
 
         setExpensesList(filteredData);
+        setCached("expenses", user.uid, filteredData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -160,6 +168,12 @@ export default function Expenses() {
     loadEarningsFromFirestore();
   }, [userId]);
 
+  useEffect(() => {
+    if (userId && !isLoading) {
+      setCached("expenses", userId, expensesList);
+    }
+  }, [userId, expensesList, isLoading]);
+
   if (isLoading) {
     return <LoadingComponent variant="expenses" />;
   }
@@ -199,9 +213,13 @@ export default function Expenses() {
     try {
       const expenseDoc = doc(db, auth?.currentUser?.uid, id);
       await deleteDoc(expenseDoc);
-      setExpensesList((prevExpenses) =>
-        prevExpenses.filter((expense) => expense.id !== id)
-      );
+      setExpensesList((prevExpenses) => {
+        const next = prevExpenses.filter((expense) => expense.id !== id);
+        if (userId) {
+          setCached("expenses", userId, next);
+        }
+        return next;
+      });
       toast.success("Expense deleted!");
     } catch (error) {
       console.log(error);

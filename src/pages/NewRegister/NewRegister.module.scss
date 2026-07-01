@@ -2,11 +2,14 @@
 
 .newRegister {
     width: 100%;
-    margin: 10px;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 12px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    box-sizing: border-box;
 }
 
 .newRegisterTitle {
@@ -17,17 +20,20 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-width: 100%;
     justify-content: center;
+    box-sizing: border-box;
 }
 
 .newRegisterLabels {
     color: #000;
-    margin-left: 20px;
+    margin-left: 8px;
     align-self: flex-start;
 }
 
 .newRegisterInputs {
-    width: 90%;
+    width: 100%;
+    max-width: 100%;
     align-self: center;
     background-color: #fff;
     border: none;
@@ -35,6 +41,8 @@
     transition: .4s;
     outline: none;
     font-size: 16px;
+    box-sizing: border-box;
+    padding: 8px 4px;
 
     &:focus {
         border-bottom: 1px solid $defaultBlue;
@@ -66,13 +74,14 @@ label {
     padding: 10px;
     align-self: center;
     text-transform: uppercase;
-    font-size: 14px;
     font-weight: 800;
     letter-spacing: 3px;
     border-radius: 10px;
-    width: 90%;
+    width: 100%;
+    max-width: 100%;
     transition: .4s;
     font-size: 16px;
+    box-sizing: border-box;
 
     &:hover {
         transform: scale(1.05);

@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useCategories } from "../../hooks/useCategories";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
+import { invalidateCached } from "../../utils/dataCache";
 
 export default function NewRegister() {
   const [name, setName] = useState("");
@@ -49,6 +50,7 @@ export default function NewRegister() {
       const newExpense = { ...expenseBase, ...monthlyExpenseFields };
 
       await addDoc(expensesCollectionRef, newExpense).then(() => {
+        invalidateCached("expenses", userId);
         setName("");
         setInclusionDate(new Date().toLocaleDateString("en-CA"));
         setValue("");
