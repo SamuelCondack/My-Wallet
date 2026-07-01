@@ -1,12 +1,11 @@
 import styles from "./styles.module.scss";
-import { auth } from "../../../config/firebase";
+import { auth, googleProvider } from "../../../config/firebase";
 import logo from "../../assets/WalletIcon.png";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useState } from "react";
+import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { signInWithGoogle } from "../../utils/googleAuth";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -15,6 +14,15 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        navigate("/home/expenses");
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   const toggleShowPassword = () => {
     setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -45,10 +53,8 @@ export default function Register() {
 
   const continueWithGoogle = async () => {
     try {
-      const result = await signInWithGoogle();
-      if (result?.user) {
-        navigate("/home/expenses");
-      }
+      await signInWithPopup(auth, googleProvider);
+      navigate("/home/expenses");
     } catch (err) {
       console.error(err);
     }

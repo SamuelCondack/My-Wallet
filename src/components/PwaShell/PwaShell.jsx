@@ -1,24 +1,21 @@
 import { useEffect } from "react";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import OfflineBanner from "../OfflineBanner/OfflineBanner";
 import InstallPrompt from "../InstallPrompt/InstallPrompt";
 import ToastComponent from "../Toast/ToastComponent";
 
 export default function PwaShell({ children }) {
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      import("virtual:pwa-register").then(({ registerSW }) => {
-        registerSW({
-          immediate: true,
-          onNeedRefresh() {
-            toast.info("Nova versão disponível. Recarregue para atualizar.", {
-              toastId: "pwa-need-refresh",
-            });
-          },
-        });
-      });
+    if (!("serviceWorker" in navigator)) {
+      return;
     }
+
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      if (registrations.length === 0) {
+        return;
+      }
+
+      Promise.all(registrations.map((registration) => registration.unregister()));
+    });
   }, []);
 
   return (
