@@ -12,8 +12,8 @@ SPLASH = STATIC / "splash"
 BRAND_BLUE = (62, 146, 235)  # #3e92eb
 WHITE = (255, 255, 255)
 
-# ~58% do canvas: margem confortável como ícones nativos do iOS
-ICON_SCALE = 0.58
+# ~70% do canvas: maior que antes, ainda com margem nas bordas
+ICON_SCALE = 0.70
 
 SPLASH_SIZES = {
     "iphone-se": (750, 1334),

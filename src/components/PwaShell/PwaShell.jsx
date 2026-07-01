@@ -11,11 +11,6 @@ export default function PwaShell({ children }) {
       import("virtual:pwa-register").then(({ registerSW }) => {
         registerSW({
           immediate: true,
-          onOfflineReady() {
-            toast.info("MyWallet pronto para uso offline.", {
-              toastId: "pwa-offline-ready",
-            });
-          },
           onNeedRefresh() {
             toast.info("Nova versão disponível. Recarregue para atualizar.", {
               toastId: "pwa-need-refresh",
