@@ -9,7 +9,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
     "generate-pwa-assets": "python3 scripts/generate-pwa-assets.py",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"

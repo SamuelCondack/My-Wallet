@@ -17,9 +17,6 @@ import { toast } from "react-toastify";
 import { FaPencilAlt, FaPause, FaPlay } from "react-icons/fa";
 import { FaRegCalendar } from "react-icons/fa6";
 import EditModal from "../../modals/EditModal/EditModal";
-import { fetchCategories, getCategoryMap } from "../../services/categoriesService";
-import { exportExpensesToCsv } from "../../services/exportService";
-import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 
 export default function Expenses() {
   const currentDate = new Date();
@@ -53,12 +50,7 @@ export default function Expenses() {
     installments: "",
     paymentMethod: "Money",
     pauseDate: "",
-    categoryId: DEFAULT_CATEGORY_ID,
   });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("All");
-  const [methodFilter, setMethodFilter] = useState("All");
-  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,30 +108,11 @@ export default function Expenses() {
   }, []);
 
   useEffect(() => {
-    if (!userId) {
-      return;
-    }
-
-    fetchCategories(userId).then(setCategories);
-  }, [userId]);
-
-  useEffect(() => {
     if (userId) {
       setSelectedYear(currentYear);
       setSelectedMonth(currentMonth);
     }
   }, [userId, currentYear, currentMonth]);
-
-  const categoriesMap = getCategoryMap(categories);
-
-  const matchesFilters = (expense) => {
-    const query = searchQuery.trim().toLowerCase();
-    const matchesSearch = !query || expense.name?.toLowerCase().includes(query);
-    const matchesCategory =
-      categoryFilter === "All" || (expense.categoryId || DEFAULT_CATEGORY_ID) === categoryFilter;
-    const matchesMethod = methodFilter === "All" || expense.method === methodFilter;
-    return matchesSearch && matchesCategory && matchesMethod;
-  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -679,7 +652,6 @@ export default function Expenses() {
       installments: expense.installments || "",
       paymentMethod: expense.method,
       pauseDate: expense.pauseDate || "",
-      categoryId: expense.categoryId || DEFAULT_CATEGORY_ID,
     });
     setShowEditModal(true);
   };
@@ -714,7 +686,6 @@ export default function Expenses() {
         value: parseFloat(editFormData.value.replace(/,/g, ".")),
         inclusionDate: editFormData.inclusionDate,
         method: editFormData.paymentMethod,
-        categoryId: editFormData.categoryId || DEFAULT_CATEGORY_ID,
       };
 
       let shouldRefetch = false;
@@ -795,16 +766,7 @@ export default function Expenses() {
     <>
       <div className={styles.expensesSectionWrapper}>
         <div className={styles.expensesSection}>
-          <h2 className={styles.pageTitle}>Expenses</h2>
-          <div className={styles.toolbar}>
-            <button
-              type="button"
-              className={styles.exportBtn}
-              onClick={() => exportExpensesToCsv(expensesList, categoriesMap)}
-            >
-              Export CSV
-            </button>
-          </div>
+          <h2 style={{ color: "#000" }}>Expenses</h2>
           <div className={styles.filterContainer}>
             <div className={styles.filter}>
               <label htmlFor="yearFilter">Filter by Year: </label>
@@ -854,38 +816,6 @@ export default function Expenses() {
                 })}
               </select>
             </div>
-          </div>
-          <div className={styles.searchRow}>
-            <input
-              type="search"
-              placeholder="Search expenses..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={styles.searchInput}
-            />
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className={styles.selectFilters}
-            >
-              <option value="All">All categories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.icon} {category.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={methodFilter}
-              onChange={(e) => setMethodFilter(e.target.value)}
-              className={styles.selectFilters}
-            >
-              <option value="All">All methods</option>
-              <option value="Money">Money</option>
-              <option value="Pix">Pix</option>
-              <option value="Credit Card">Credit Card</option>
-              <option value="Debit Card">Debit Card</option>
-            </select>
           </div>
           {sortedExpensesByMonth
             .filter(([monthKey]) => {
@@ -1091,7 +1021,6 @@ export default function Expenses() {
                   <div className={styles.expensesContainer}>
                     <AnimatePresence>
                       {expenses
-                        .filter(matchesFilters)
                         .sort(
                           (a, b) =>
                             new Date(b.inclusionDate) -
@@ -1119,10 +1048,6 @@ export default function Expenses() {
                               <FaPencilAlt className={styles.expensePencilIcon} />
                             </button>
                             <p className={styles.expenseName}>{expense.name}</p>
-                            <p className={styles.categoryBadge}>
-                              {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.icon}{" "}
-                              {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.name || "Other"}
-                            </p>
                             <p className={styles.expenseValue}>
                               {expense.installments > 1 ? (
                                 <>
@@ -1242,7 +1167,6 @@ export default function Expenses() {
             editingExpense={editingExpense}
             editFormData={editFormData}
             setEditFormData={setEditFormData}
-            categories={categories}
           />
         )}
       </div>
