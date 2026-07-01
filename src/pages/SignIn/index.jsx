@@ -48,6 +48,7 @@ export default function SignIn() {
       setErrorMessage("");
     } catch (err) {
       console.error("Error with Google sign-in:", err.message);
+      setErrorMessage("Google sign-in failed. Please try again.");
     }
   };
 
