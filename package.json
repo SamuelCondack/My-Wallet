@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "pip3 install -r requirements.txt",
     "build": "python3 scripts/generate-pwa-assets.py && vite build",
     "generate-pwa-assets": "python3 scripts/generate-pwa-assets.py",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
