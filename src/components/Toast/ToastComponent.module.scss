@@ -3,4 +3,6 @@
     padding: 8px 12px;
     border-radius: 8px;
     min-height: auto;
+    margin-bottom: env(safe-area-inset-bottom, 0);
+    margin-right: env(safe-area-inset-right, 0);
 }

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "python3 scripts/generate-pwa-assets.py && vite build",
+    "generate-pwa-assets": "python3 scripts/generate-pwa-assets.py",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -36,6 +37,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.4",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "vite-plugin-pwa": "^1.3.0"
   }
 }

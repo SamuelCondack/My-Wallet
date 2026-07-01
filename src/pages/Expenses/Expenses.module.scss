@@ -110,9 +110,10 @@ body {
 
 .expensesSectionWrapper {
     overflow: scroll;
-    height: 100vh;
+    height: 100dvh;
     width: 100%;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 
     &::-webkit-scrollbar {
         width: 5px;
