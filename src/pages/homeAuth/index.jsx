@@ -80,10 +80,10 @@ function HomeAuth() {
             <motion.aside
               id="menu"
               className={styles.asideMenu}
-              initial={{ x: "-100%" }} // Começa fora da tela e menor
-              animate={{ x: 0 }} // Anima para a posição original e tamanho normal
-              exit={{ x: "-1000%" }} // Sai para fora da tela e encolhe
-              transition={{ duration: 0.3, ease: "linear" }} // Duração e suavidade da animação
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
             >
               {isMobile && (
                 <img

@@ -90,23 +90,25 @@ export default function Register() {
           <label className={styles.formLabel} htmlFor="password">
             Password
           </label>
-          <input
-            className={styles.formInput}
-            placeholder="Insert your password"
-            type={showPassword ? "text" : "password"}
-            id="password"
-            autoComplete="password"
-            required
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <button
-            type="button"
-            className={styles.showPasswordButton}
-            onClick={toggleShowPassword}
-          >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </button>
+          <div className={styles.passwordField}>
+            <input
+              className={styles.formInput}
+              placeholder="Insert your password"
+              type={showPassword ? "text" : "password"}
+              id="password"
+              autoComplete="password"
+              required
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className={styles.showPasswordButton}
+              onClick={toggleShowPassword}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
 
           <label className={styles.formLabel} htmlFor="confirmPassword">
             Confirm Password
