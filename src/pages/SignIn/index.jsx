@@ -2,10 +2,11 @@ import { Link } from "react-router-dom";
 import styles from "../Register/styles.module.scss"; // Certifique-se de que os estilos estão corretos
 import logo from "../../assets/WalletIcon.png"; // Caminho para o logo
 import { useEffect, useState } from "react";
-import { auth, googleProvider } from "../../../config/firebase";
+import { auth } from "../../../config/firebase";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { signInWithGoogle } from "../../utils/googleAuth";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -40,11 +41,14 @@ export default function SignIn() {
 
   const continueWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      navigate("/home/expenses");
-      setErrorMessage(""); // Limpa a mensagem de erro ao fazer login com sucesso
+      const result = await signInWithGoogle();
+      if (result?.user) {
+        navigate("/home/expenses");
+      }
+      setErrorMessage("");
     } catch (err) {
       console.error("Error with Google sign-in:", err.message);
+      setErrorMessage("Google sign-in failed. Please try again.");
     }
   };
 
@@ -101,6 +105,7 @@ export default function SignIn() {
               Sign In
             </button>
             <button
+              type="button"
               className={styles.continueWithGoogle}
               onClick={continueWithGoogle}
             >

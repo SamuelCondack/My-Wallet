@@ -10,6 +10,7 @@ import Register from './pages/Register'
 import SignIn from './pages/SignIn'
 import HomeAuth from './pages/homeAuth/index.jsx'
 import Modal from 'react-modal';
+import { completeGoogleRedirectSignIn } from './utils/googleAuth.js'
 
 Modal.setAppElement('#root');
 
@@ -42,8 +43,18 @@ const router = createBrowserRouter([
   }
 ])
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>,
-)
+async function startApp() {
+  try {
+    await completeGoogleRedirectSignIn();
+  } catch (error) {
+    console.error('Google redirect sign-in failed:', error);
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <RouterProvider router={router} />
+    </React.StrictMode>,
+  )
+}
+
+startApp();
