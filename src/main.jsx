@@ -13,6 +13,8 @@ import SignIn from './pages/SignIn'
 import HomeAuth from './pages/homeAuth/index.jsx'
 import Modal from 'react-modal';
 import { completeGoogleRedirectSignIn } from './utils/googleAuth.js'
+import ToastComponent from './components/Toast/ToastComponent.jsx'
+import 'react-toastify/dist/ReactToastify.css'
 
 Modal.setAppElement('#root');
 
@@ -62,6 +64,7 @@ async function startApp() {
 
   ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
+      <ToastComponent />
       <RouterProvider router={router} />
     </React.StrictMode>,
   )

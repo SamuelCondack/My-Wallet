@@ -27,6 +27,13 @@
     color: #fff;
     border: none;
     cursor: pointer;
+    min-height: 44px;
+    transition: opacity 0.2s ease;
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
   }
 }
 
