@@ -998,6 +998,37 @@ export default function Expenses() {
     );
   };
 
+  const getMonthSpendingsTotal = (monthExpenses) =>
+    monthExpenses.reduce((acc, cur) => acc + Number(cur.value), 0).toFixed(2);
+
+  const renderSpendingsSummary = (monthKey, monthExpenses, visibleExpenses) => {
+    const monthTotalSpendings = getMonthSpendingsTotal(monthExpenses);
+    const displayedSpendings = getMonthSpendingsTotal(visibleExpenses);
+    const isCategoryFiltered = effectiveSelectedCategory !== "All";
+    const categoryName =
+      categoriesMap[effectiveSelectedCategory]?.name || "Category";
+
+    return (
+      <>
+        <p className={styles.totalSpendings}>
+          {isCategoryFiltered ? (
+            <>
+              Spendings in {categoryName}: <b>${displayedSpendings}</b>
+            </>
+          ) : (
+            <>
+              Your Spendings: <b>${displayedSpendings}</b>
+            </>
+          )}
+        </p>
+        {renderNetEarnings(
+          monthKey,
+          isCategoryFiltered ? monthTotalSpendings : displayedSpendings
+        )}
+      </>
+    );
+  };
+
   return (
     <>
       <div className={styles.expensesSectionWrapper}>
@@ -1093,10 +1124,6 @@ export default function Expenses() {
                 return null;
               }
 
-              const totalSpendings = visibleExpenses
-                .reduce((acc, cur) => acc + Number(cur.value), 0)
-                .toFixed(2);
-
               // Garantir que o mês seja exibido mesmo sem despesas
               if (expenses.length === 0) {
                 return (
@@ -1117,10 +1144,7 @@ export default function Expenses() {
                       </label>
                       {renderEarningsInput(monthKey)}
                     </div>
-                    <p className={styles.totalSpendings}>
-                      Your Spendings: <b>$0.00</b>
-                    </p>
-                    {renderNetEarnings(monthKey, 0)}
+                    {renderSpendingsSummary(monthKey, expenses, visibleExpenses)}
                     {monthIndex === 0 && (
                       <div className={styles.searchContainer}>
                         <input
@@ -1191,11 +1215,7 @@ export default function Expenses() {
                     )}
                   </div>
 
-                  <p className={styles.totalSpendings}>
-                    Your Spendings: <b>${totalSpendings}</b>
-                  </p>
-
-                  {renderNetEarnings(monthKey, totalSpendings)}
+                  {renderSpendingsSummary(monthKey, expenses, visibleExpenses)}
 
                   {monthIndex === 0 && (
                     <div className={styles.searchContainer}>
