@@ -50,20 +50,12 @@
 .colorPicker {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   height: 44px;
   padding: 0 8px;
   border: 1px solid #ddd;
   border-radius: 10px;
   box-sizing: border-box;
-}
-
-.colorPreview {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  flex-shrink: 0;
 }
 
 .colorPicker input[type="color"] {

@@ -146,11 +146,6 @@ export default function Categories() {
           disabled={isSubmitting}
         />
         <div className={styles.colorPicker}>
-          <span
-            className={styles.colorPreview}
-            style={{ backgroundColor: form.color }}
-            aria-hidden="true"
-          />
           <input
             type="color"
             value={form.color}
