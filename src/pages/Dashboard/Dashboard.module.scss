@@ -1,3 +1,5 @@
+@import '../../Global/variables.scss';
+
 .page {
   padding: 16px;
   max-width: 900px;
@@ -30,18 +32,57 @@
   white-space: nowrap;
 }
 
-.monthFilter {
+.filterContainer {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 16px;
-  font-size: 14px;
+}
 
-  input {
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 16px;
+.selectFilters {
+  border-radius: 20px;
+  text-align: center !important;
+  border: 1px #000 solid;
+  padding: 8px 16px;
+  color: $defaultBlue;
+  appearance: none;
+  text-align-last: center;
+  text-align: center;
+  -webkit-text-align-last: center;
+  -webkit-appearance: none;
+  font-size: 12px;
+  background-color: #fff;
+  transition: .4s;
+  outline: none;
+
+  option {
+    color: $defaultBlue;
+    font-size: 12px;
+
+    &[data-current="true"] {
+      font-weight: bold;
+    }
+  }
+
+  &:hover {
+    cursor: pointer;
+    transform: scale(1.05);
+    border-color: $defaultBlue;
+  }
+
+  &:focus {
+    border-color: $defaultBlue;
+    transform: scale(1.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+    color: #a0a0a0;
+    border-color: #d0d0d0;
+    transform: none;
   }
 }
 
@@ -96,6 +137,10 @@
 
 @media (max-width: 768px) {
   .header {
+    flex-direction: column;
+  }
+
+  .filterContainer {
     flex-direction: column;
   }
 }

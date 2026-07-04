@@ -57,6 +57,7 @@ export default function Expenses() {
     categoryId: DEFAULT_CATEGORY_ID,
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const { categories } = useCategories(userId);
   const categoriesMap = getCategoryMap(categories);
 
@@ -815,6 +816,17 @@ export default function Expenses() {
     );
   };
 
+  const matchesCategory = (expense) => {
+    if (selectedCategory === "All") {
+      return true;
+    }
+
+    return (expense.categoryId || DEFAULT_CATEGORY_ID) === selectedCategory;
+  };
+
+  const matchesFilters = (expense) =>
+    matchesSearch(expense) && matchesCategory(expense);
+
   const filteredMonths = sortedExpensesByMonth.filter(([monthKey]) => {
     const [year, month] = monthKey.split("-");
     return (
@@ -823,9 +835,12 @@ export default function Expenses() {
     );
   });
 
-  const hasVisibleSearchResults =
-    !normalizedSearchQuery ||
-    filteredMonths.some(([, expenses]) => expenses.some(matchesSearch));
+  const hasActiveFilters =
+    Boolean(normalizedSearchQuery) || selectedCategory !== "All";
+
+  const hasVisibleResults =
+    !hasActiveFilters ||
+    filteredMonths.some(([, expenses]) => expenses.some(matchesFilters));
 
   return (
     <>
@@ -881,20 +896,40 @@ export default function Expenses() {
                 })}
               </select>
             </div>
+            <div className={styles.filter}>
+              <label htmlFor="categoryFilter">Filter by Category: </label>
+              <select
+                id="categoryFilter"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className={styles.selectFilters}
+              >
+                <option value="All">All</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {normalizedSearchQuery && !hasVisibleSearchResults && (
+          {hasActiveFilters && !hasVisibleResults && (
             <p className={styles.noSearchResults}>
-              No expenses found for &quot;{searchQuery.trim()}&quot;
+              {normalizedSearchQuery && selectedCategory !== "All"
+                ? `No expenses found for "${searchQuery.trim()}" in ${categoriesMap[selectedCategory]?.name || "this category"}.`
+                : normalizedSearchQuery
+                ? `No expenses found for "${searchQuery.trim()}".`
+                : `No expenses found in ${categoriesMap[selectedCategory]?.name || "this category"}.`}
             </p>
           )}
 
           {filteredMonths
             .map(([monthKey, expenses], monthIndex) => {
               const [year, month] = monthKey.split("-");
-              const visibleExpenses = expenses.filter(matchesSearch);
+              const visibleExpenses = expenses.filter(matchesFilters);
 
-              if (normalizedSearchQuery && visibleExpenses.length === 0) {
+              if (hasActiveFilters && visibleExpenses.length === 0) {
                 return null;
               }
 
