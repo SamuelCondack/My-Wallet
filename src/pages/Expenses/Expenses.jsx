@@ -669,10 +669,16 @@ export default function Expenses() {
   };
 
   const handleEditClick = (expense) => {
+    const installments = expense.installments ? parseInt(expense.installments, 10) : 1;
+    const totalValue =
+      expense.totalValue != null && !Number.isNaN(Number(expense.totalValue))
+        ? Number(expense.totalValue)
+        : Number(expense.value);
+
     setEditingExpense(expense);
     setEditFormData({
       name: expense.name,
-      value: expense.value.toString(),
+      value: totalValue.toString(),
       inclusionDate: expense.inclusionDate,
       installments: expense.installments || "",
       paymentMethod: expense.method,

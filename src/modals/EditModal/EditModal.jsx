@@ -100,7 +100,9 @@ const EditModal = ({
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="value">Value:</label>
+              <label htmlFor="value">
+                {editingExpense?.installments > 1 ? "Total value:" : "Value:"}
+              </label>
               <input
                 type="number"
                 id="value"
