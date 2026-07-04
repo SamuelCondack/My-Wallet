@@ -289,8 +289,9 @@ body {
         margin-left: 10%;
     }
 
-    .totalSpendings {
-        @extend .month;
+    .monthSummary {
+        margin-left: 10%;
+        padding-right: 16px;
     }
 
     .filterContainer {
@@ -307,14 +308,33 @@ body {
         height: auto;
         min-height: 100dvh;
     }
+}
 
-    .earningContainer {
-        margin-left: 10%;
-    }
+.month {
+    margin: 16px 0 8px 10%;
+    text-align: left;
+}
 
+.monthSummary {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: calc(100% - 10%);
+    margin-left: 10%;
+    padding-right: 16px;
+    box-sizing: border-box;
+
+    .earningContainer,
+    .totalSpendings,
     .netEarnings {
-        margin-left: 10%;
+        margin-left: 0;
     }
+}
+
+.totalSpendings {
+    margin: 4px 0 0;
+    text-align: left;
 }
 
 .scrollToTopButton {
@@ -352,6 +372,7 @@ body {
 .earningContainer {
     display: flex;
     align-items: center;
+    margin-left: 0;
 }
 
 .earningLabel {
@@ -396,8 +417,7 @@ body {
     font-size: 14px;
     font-weight: bold;
     color: #007b00;
-    margin-top: 5px;
-    margin-bottom: 30px;
+    margin: 4px 0 0;
 }
 
 .netEarningsNegative {
@@ -406,9 +426,9 @@ body {
 
 .searchContainer {
     position: relative;
-    width: calc(100% - 20px);
-    max-width: 400px;
-    margin: 0 auto 20px;
+    width: 100%;
+    max-width: 520px;
+    margin: 10px 0 18px;
 }
 
 .searchInput {

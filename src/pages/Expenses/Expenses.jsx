@@ -890,7 +890,7 @@ export default function Expenses() {
           )}
 
           {filteredMonths
-            .map(([monthKey, expenses]) => {
+            .map(([monthKey, expenses], monthIndex) => {
               const [year, month] = monthKey.split("-");
               const visibleExpenses = expenses.filter(matchesSearch);
 
@@ -912,6 +912,7 @@ export default function Expenses() {
                       })}{" "}
                       {year}
                     </h3>
+                    <div className={styles.monthSummary}>
                     <div className={styles.earningContainer}>
                       <label
                         htmlFor={`earning-${monthKey}`}
@@ -982,6 +983,31 @@ export default function Expenses() {
                         ${((earnings[monthKey] || 0)).toFixed(2)}
                       </b>
                     </p>
+                    {monthIndex === 0 && (
+                      <div className={styles.searchContainer}>
+                        <input
+                          type="search"
+                          placeholder="Search expenses..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className={styles.searchInput}
+                          aria-label="Search expenses"
+                          autoComplete="off"
+                          enterKeyHint="search"
+                        />
+                        {searchQuery && (
+                          <button
+                            type="button"
+                            className={styles.searchClearButton}
+                            onClick={() => setSearchQuery("")}
+                            aria-label="Clear search"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    </div>
                   </div>
                 );
               }
@@ -995,6 +1021,7 @@ export default function Expenses() {
                     {year}
                   </h3>
 
+                  <div className={styles.monthSummary}>
                   <div className={styles.earningContainer}>
                     <label
                       htmlFor={`earning-${monthKey}`}
@@ -1089,27 +1116,30 @@ export default function Expenses() {
                     </b>
                   </p>
 
-                  <div className={styles.searchContainer}>
-                    <input
-                      type="search"
-                      placeholder="Search expenses..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className={styles.searchInput}
-                      aria-label="Search expenses"
-                      autoComplete="off"
-                      enterKeyHint="search"
-                    />
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        className={styles.searchClearButton}
-                        onClick={() => setSearchQuery("")}
-                        aria-label="Clear search"
-                      >
-                        ×
-                      </button>
-                    )}
+                  {monthIndex === 0 && (
+                    <div className={styles.searchContainer}>
+                      <input
+                        type="search"
+                        placeholder="Search expenses..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className={styles.searchInput}
+                        aria-label="Search expenses"
+                        autoComplete="off"
+                        enterKeyHint="search"
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          className={styles.searchClearButton}
+                          onClick={() => setSearchQuery("")}
+                          aria-label="Clear search"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  )}
                   </div>
 
                   <div className={styles.expensesContainer}>
