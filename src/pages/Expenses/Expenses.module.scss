@@ -424,6 +424,44 @@ body {
     color: red;
 }
 
+@keyframes earningsShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.earningsShimmer,
+.netEarningsShimmer {
+    display: inline-block;
+    background: linear-gradient(
+        90deg,
+        #f0f0f0 0%,
+        #f8f8f8 20%,
+        #ececec 40%,
+        #f8f8f8 60%,
+        #f0f0f0 80%
+    );
+    background-size: 200% 100%;
+    animation: earningsShimmer 1.6s ease-in-out infinite;
+    border-radius: 12px;
+    vertical-align: middle;
+}
+
+.earningsShimmer {
+    width: 100px;
+    height: 32px;
+}
+
+.netEarningsShimmer {
+    width: 72px;
+    height: 16px;
+    border-radius: 8px;
+}
+
 .searchContainer {
     position: relative;
     width: 100%;

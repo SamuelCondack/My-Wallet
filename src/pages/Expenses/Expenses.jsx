@@ -37,6 +37,7 @@ export default function Expenses() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [earnings, setEarnings] = useState({});
+  const [isEarningsLoading, setIsEarningsLoading] = useState(true);
   const [showEarningsModal, setShowEarningsModal] = useState(false);
   const [currentMonthKey, setCurrentMonthKey] = useState(null);
   const [isEditingEarnings, setIsEditingEarnings] = useState({});
@@ -115,6 +116,8 @@ export default function Expenses() {
       if (!user) {
         setUserId(null);
         setExpensesList([]);
+        setEarnings({});
+        setIsEarningsLoading(true);
         setIsLoading(false);
       }
     });
@@ -150,21 +153,33 @@ export default function Expenses() {
 
   useEffect(() => {
     const loadEarningsFromFirestore = async () => {
-      if (userId) {
-        try {
-          const earningsCollectionRef = collection(
-            db,
-            `users/${userId}/earnings`
-          );
-          const earningsSnapshot = await getDocs(earningsCollectionRef);
-          const earningsData = {};
-          earningsSnapshot.forEach((doc) => {
-            earningsData[doc.id] = doc.data().value.toFixed(2);
-          });
-          setEarnings(earningsData);
-        } catch (error) {
-          console.error("Error loading earnings:", error);
-        }
+      if (!userId) {
+        setIsEarningsLoading(true);
+        return;
+      }
+
+      const cachedEarnings = getCached("earnings", userId);
+
+      if (cachedEarnings) {
+        setEarnings(cachedEarnings);
+        setIsEarningsLoading(false);
+      } else {
+        setIsEarningsLoading(true);
+      }
+
+      try {
+        const earningsCollectionRef = collection(db, `users/${userId}/earnings`);
+        const earningsSnapshot = await getDocs(earningsCollectionRef);
+        const earningsData = {};
+        earningsSnapshot.forEach((doc) => {
+          earningsData[doc.id] = doc.data().value.toFixed(2);
+        });
+        setEarnings(earningsData);
+        setCached("earnings", userId, earningsData);
+      } catch (error) {
+        console.error("Error loading earnings:", error);
+      } finally {
+        setIsEarningsLoading(false);
       }
     };
 
@@ -176,6 +191,12 @@ export default function Expenses() {
       setCached("expenses", userId, expensesList);
     }
   }, [userId, expensesList, isLoading]);
+
+  useEffect(() => {
+    if (userId && !isEarningsLoading) {
+      setCached("earnings", userId, earnings);
+    }
+  }, [userId, earnings, isEarningsLoading]);
 
   useEffect(() => {
     const handleTouchEnd = (event) => {
@@ -889,6 +910,94 @@ export default function Expenses() {
     !hasActiveFilters ||
     filteredMonths.some(([, expenses]) => expenses.some(matchesFilters));
 
+  const renderEarningsInput = (monthKey) => {
+    if (isEarningsLoading) {
+      return (
+        <div className={styles.earningInputWrapper}>
+          <div
+            className={styles.earningsShimmer}
+            role="status"
+            aria-label="Loading earnings"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.earningInputWrapper}>
+        <input
+          id={`earning-${monthKey}`}
+          type="text"
+          className={
+            isEditingEarnings[monthKey]
+              ? `${styles.earningInput} ${styles.editing}`
+              : `${styles.earningInput} ${styles.readOnly}`
+          }
+          placeholder="Enter your earnings"
+          value={
+            isEditingEarnings[monthKey]
+              ? earnings[monthKey] || ""
+              : earnings[monthKey]
+              ? `$${earnings[monthKey]}`
+              : "$0.00"
+          }
+          readOnly={!isEditingEarnings[monthKey]}
+          disabled={!isEditingEarnings[monthKey]}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9.]/g, "");
+            setEarnings((prev) => ({
+              ...prev,
+              [monthKey]: value,
+            }));
+          }}
+          onBlur={() => {
+            setIsEditingEarnings((prev) => ({
+              ...prev,
+              [monthKey]: false,
+            }));
+            saveEarningsToFirestore(currentMonthKey, earnings[currentMonthKey]);
+          }}
+        />
+        <button
+          className={styles.editButton}
+          onClick={() => {
+            setCurrentMonthKey(monthKey);
+            setShowEarningsModal(true);
+          }}
+        >
+          <FaPencilAlt className={styles.pencilIcon} />{" "}
+        </button>
+      </div>
+    );
+  };
+
+  const renderNetEarnings = (monthKey, totalSpendings) => {
+    if (isEarningsLoading) {
+      return (
+        <p className={styles.netEarnings}>
+          Net Earnings:{" "}
+          <span
+            className={styles.netEarningsShimmer}
+            role="status"
+            aria-label="Loading net earnings"
+          />
+        </p>
+      );
+    }
+
+    const netValue = Number(earnings[monthKey] || 0) - Number(totalSpendings || 0);
+
+    return (
+      <p
+        className={`${styles.netEarnings} ${
+          netValue < 0 ? styles.netEarningsNegative : ""
+        }`}
+      >
+        Net Earnings: <b>${netValue.toFixed(2)}</b>
+      </p>
+    );
+  };
+
   return (
     <>
       <div className={styles.expensesSectionWrapper}>
@@ -1006,69 +1115,12 @@ export default function Expenses() {
                       >
                         Earnings:
                       </label>
-                      <div className={styles.earningInputWrapper}>
-                        <input
-                          id={`earning-${monthKey}`}
-                          type="text"
-                          className={
-                            isEditingEarnings[monthKey]
-                              ? `${styles.earningInput} ${styles.editing}`
-                              : `${styles.earningInput} ${styles.readOnly}`
-                          }
-                          placeholder="Enter your earnings"
-                          value={
-                            isEditingEarnings[monthKey]
-                              ? earnings[monthKey] || ""
-                              : earnings[monthKey]
-                              ? `$${earnings[monthKey]}`
-                              : "$0.00"
-                          }
-                          readOnly={!isEditingEarnings[monthKey]}
-                          disabled={!isEditingEarnings[monthKey]}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/[^0-9.]/g, "");
-                            setEarnings((prev) => ({
-                              ...prev,
-                              [monthKey]: value,
-                            }));
-                          }}
-                          onBlur={() => {
-                            setIsEditingEarnings((prev) => ({
-                              ...prev,
-                              [monthKey]: false,
-                            }));
-                            saveEarningsToFirestore(
-                              currentMonthKey,
-                              earnings[currentMonthKey]
-                            );
-                          }}
-                        />
-                        <button
-                          className={styles.editButton}
-                          onClick={() => {
-                            setCurrentMonthKey(monthKey);
-                            setShowEarningsModal(true);
-                          }}
-                        >
-                          <FaPencilAlt className={styles.pencilIcon} />{" "}
-                        </button>
-                      </div>
+                      {renderEarningsInput(monthKey)}
                     </div>
                     <p className={styles.totalSpendings}>
                       Your Spendings: <b>$0.00</b>
                     </p>
-                    <p
-                      className={`${styles.netEarnings} ${
-                        (earnings[monthKey] || 0) < 0
-                          ? styles.netEarningsNegative
-                          : ""
-                      }`}
-                    >
-                      Net Earnings:{" "}
-                      <b>
-                        ${((earnings[monthKey] || 0)).toFixed(2)}
-                      </b>
-                    </p>
+                    {renderNetEarnings(monthKey, 0)}
                     {monthIndex === 0 && (
                       <div className={styles.searchContainer}>
                         <input
@@ -1115,67 +1167,21 @@ export default function Expenses() {
                     >
                       Earnings:
                     </label>
-                    <div className={styles.earningInputWrapper}>
-                      <input
-                        id={`earning-${monthKey}`}
-                        type="text"
-                        className={
-                          isEditingEarnings[monthKey]
-                            ? `${styles.earningInput} ${styles.editing}`
-                            : `${styles.earningInput} ${styles.readOnly}`
-                        }
-                        placeholder="Enter your earnings"
-                        value={
-                          isEditingEarnings[monthKey]
-                            ? earnings[monthKey] || ""
-                            : earnings[monthKey]
-                            ? `$${earnings[monthKey]}`
-                            : "$0.00"
-                        }
-                        readOnly={!isEditingEarnings[monthKey]} // Torna o campo somente leitura se não estiver editando
-                        disabled={!isEditingEarnings[monthKey]} // Desabilita o campo se não estiver editando
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9.]/g, "");
-                          setEarnings((prev) => ({
-                            ...prev,
-                            [monthKey]: value,
-                          }));
-                        }}
-                        onBlur={() => {
-                          setIsEditingEarnings((prev) => ({
-                            ...prev,
-                            [monthKey]: false,
-                          }));
-                          saveEarningsToFirestore(
-                            currentMonthKey,
-                            earnings[currentMonthKey]
-                          );
-                        }}
-                      />
-                      <button
-                        className={styles.editButton}
-                        onClick={() => {
-                          setCurrentMonthKey(monthKey);
-                          setShowEarningsModal(true);
-                        }}
-                      >
-                        <FaPencilAlt className={styles.pencilIcon} />{" "}
-                      </button>
-                    </div>
-                    {showEarningsModal && (
+                    {renderEarningsInput(monthKey)}
+                    {!isEarningsLoading && showEarningsModal && (
                       <ConfirmationModal
                         isOpen={showEarningsModal}
                         onRequestClose={() => setShowEarningsModal(false)}
                         onConfirm={() => {
                           setEarnings((prev) => ({
                             ...prev,
-                            [currentMonthKey]: "", // Apaga o valor do mês atual
+                            [currentMonthKey]: "",
                           }));
                           setIsEditingEarnings((prev) => ({
                             ...prev,
-                            [currentMonthKey]: true, // Libera o campo para edição
+                            [currentMonthKey]: true,
                           }));
-                          setShowEarningsModal(false); // Fecha o modal
+                          setShowEarningsModal(false);
                         }}
                         title="Edit Earnings"
                         message="Are you sure you want to edit the earnings for this month"
@@ -1189,18 +1195,7 @@ export default function Expenses() {
                     Your Spendings: <b>${totalSpendings}</b>
                   </p>
 
-                  <p
-                    className={`${styles.netEarnings} ${
-                      (earnings[monthKey] || 0) - totalSpendings < 0
-                        ? styles.netEarningsNegative
-                        : ""
-                    }`}
-                  >
-                    Net Earnings:{" "}
-                    <b>
-                      ${((earnings[monthKey] || 0) - totalSpendings).toFixed(2)}
-                    </b>
-                  </p>
+                  {renderNetEarnings(monthKey, totalSpendings)}
 
                   {monthIndex === 0 && (
                     <div className={styles.searchContainer}>
