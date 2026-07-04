@@ -1219,6 +1219,7 @@ export default function Expenses() {
                                 expense.method
                               )}`}
                               whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 1.05 }}
                               transition={{
                                 scale: { duration: 0.4, ease: "easeOut" },
                               }}
