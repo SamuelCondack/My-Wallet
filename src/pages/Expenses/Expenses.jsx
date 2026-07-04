@@ -1,6 +1,6 @@
 import styles from "./Expenses.module.scss";
 import { auth, db } from "../../../config/firebase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   getDocs,
   collection,
@@ -60,6 +60,8 @@ export default function Expenses() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const { categories } = useCategories(userId);
   const categoriesMap = getCategoryMap(categories);
+  const [pressedExpenseKey, setPressedExpenseKey] = useState(null);
+  const activeTouchIdRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,6 +177,26 @@ export default function Expenses() {
     }
   }, [userId, expensesList, isLoading]);
 
+  useEffect(() => {
+    const handleTouchEnd = (event) => {
+      if (activeTouchIdRef.current === null) {
+        return;
+      }
+
+      const touchEnded = Array.from(event.changedTouches).some(
+        (touch) => touch.identifier === activeTouchIdRef.current
+      );
+
+      if (touchEnded) {
+        activeTouchIdRef.current = null;
+        setPressedExpenseKey(null);
+      }
+    };
+
+    document.addEventListener("touchend", handleTouchEnd);
+    return () => document.removeEventListener("touchend", handleTouchEnd);
+  }, []);
+
   if (isLoading) {
     return <LoadingComponent variant="expenses" />;
   }
@@ -184,6 +206,16 @@ export default function Expenses() {
       top: 0,
       behavior: "smooth",
     });
+  };
+
+  const handleExpenseTouchStart = (event, expenseKey) => {
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+
+    activeTouchIdRef.current = touch.identifier;
+    setPressedExpenseKey(expenseKey);
   };
 
   const handleDeleteButtonClick = (id, name) => {
@@ -1204,9 +1236,13 @@ export default function Expenses() {
                             new Date(b.inclusionDate) -
                             new Date(a.inclusionDate)
                         )
-                        .map((expense) => (
+                        .map((expense) => {
+                          const expenseKey =
+                            expense.id + "-" + expense.installmentNumber;
+
+                          return (
                           <motion.div
-                            key={expense.id + "-" + expense.installmentNumber}
+                            key={expenseKey}
                             layout
                             className={styles.expenseLayoutItem}
                             initial={{ opacity: 0, y: 8 }}
@@ -1218,11 +1254,16 @@ export default function Expenses() {
                               className={`${styles.expense} ${getBorderStyle(
                                 expense.method
                               )}`}
+                              animate={{
+                                scale: pressedExpenseKey === expenseKey ? 1.05 : 1,
+                              }}
                               whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 1.05 }}
                               transition={{
                                 scale: { duration: 0.4, ease: "easeOut" },
                               }}
+                              onTouchStart={(event) =>
+                                handleExpenseTouchStart(event, expenseKey)
+                              }
                             >
                             <button
                               className={styles.expenseEditButton}
@@ -1291,7 +1332,8 @@ export default function Expenses() {
                             </div>
                             </motion.div>
                           </motion.div>
-                        ))}
+                          );
+                        })}
                     </AnimatePresence>
                     <AnimatePresence>
                       <ConfirmationModal
