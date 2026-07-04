@@ -798,6 +798,29 @@ export default function Expenses() {
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
+  const filteredMonths = sortedExpensesByMonth.filter(([monthKey]) => {
+    const [year, month] = monthKey.split("-");
+    return (
+      (selectedYear === "All" || year === selectedYear) &&
+      (selectedMonth === "All" || month === selectedMonth.padStart(2, "0"))
+    );
+  });
+
+  const categoryIdsWithExpenses = new Set(
+    filteredMonths.flatMap(([, expenses]) =>
+      expenses.map((expense) => expense.categoryId || DEFAULT_CATEGORY_ID)
+    )
+  );
+
+  const categoriesInFilter = categories.filter((category) =>
+    categoryIdsWithExpenses.has(category.id)
+  );
+
+  const effectiveSelectedCategory =
+    selectedCategory !== "All" && categoryIdsWithExpenses.has(selectedCategory)
+      ? selectedCategory
+      : "All";
+
   const matchesSearch = (expense) => {
     if (!normalizedSearchQuery) {
       return true;
@@ -817,26 +840,18 @@ export default function Expenses() {
   };
 
   const matchesCategory = (expense) => {
-    if (selectedCategory === "All") {
+    if (effectiveSelectedCategory === "All") {
       return true;
     }
 
-    return (expense.categoryId || DEFAULT_CATEGORY_ID) === selectedCategory;
+    return (expense.categoryId || DEFAULT_CATEGORY_ID) === effectiveSelectedCategory;
   };
 
   const matchesFilters = (expense) =>
     matchesSearch(expense) && matchesCategory(expense);
 
-  const filteredMonths = sortedExpensesByMonth.filter(([monthKey]) => {
-    const [year, month] = monthKey.split("-");
-    return (
-      (selectedYear === "All" || year === selectedYear) &&
-      (selectedMonth === "All" || month === selectedMonth.padStart(2, "0"))
-    );
-  });
-
   const hasActiveFilters =
-    Boolean(normalizedSearchQuery) || selectedCategory !== "All";
+    Boolean(normalizedSearchQuery) || effectiveSelectedCategory !== "All";
 
   const hasVisibleResults =
     !hasActiveFilters ||
@@ -856,6 +871,7 @@ export default function Expenses() {
                 onChange={(e) => {
                   setSelectedYear(e.target.value);
                   setSelectedMonth("All");
+                  setSelectedCategory("All");
                 }}
                 className={styles.selectFilters}
               >
@@ -874,7 +890,10 @@ export default function Expenses() {
               <select
                 id="monthFilter"
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                onChange={(e) => {
+                  setSelectedMonth(e.target.value);
+                  setSelectedCategory("All");
+                }}
                 disabled={selectedYear === "All"}
                 className={styles.selectFilters}
               >
@@ -900,12 +919,12 @@ export default function Expenses() {
               <label htmlFor="categoryFilter">Filter by Category: </label>
               <select
                 id="categoryFilter"
-                value={selectedCategory}
+                value={effectiveSelectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className={styles.selectFilters}
               >
                 <option value="All">All</option>
-                {categories.map((category) => (
+                {categoriesInFilter.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.icon} {category.name}
                   </option>
@@ -916,11 +935,11 @@ export default function Expenses() {
 
           {hasActiveFilters && !hasVisibleResults && (
             <p className={styles.noSearchResults}>
-              {normalizedSearchQuery && selectedCategory !== "All"
-                ? `No expenses found for "${searchQuery.trim()}" in ${categoriesMap[selectedCategory]?.name || "this category"}.`
+              {normalizedSearchQuery && effectiveSelectedCategory !== "All"
+                ? `No expenses found for "${searchQuery.trim()}" in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`
                 : normalizedSearchQuery
                 ? `No expenses found for "${searchQuery.trim()}".`
-                : `No expenses found in ${categoriesMap[selectedCategory]?.name || "this category"}.`}
+                : `No expenses found in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`}
             </p>
           )}
 
@@ -1178,7 +1197,7 @@ export default function Expenses() {
                   </div>
 
                   <div className={styles.expensesContainer}>
-                    <AnimatePresence initial={false}>
+                    <AnimatePresence initial={false} mode="popLayout">
                       {visibleExpenses
                         .sort(
                           (a, b) =>
@@ -1188,15 +1207,22 @@ export default function Expenses() {
                         .map((expense) => (
                           <motion.div
                             key={expense.id + "-" + expense.installmentNumber}
-                            className={`${styles.expense} ${getBorderStyle(
-                              expense.method
-                            )}`}
                             layout
+                            className={styles.expenseLayoutItem}
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                           >
+                            <motion.div
+                              className={`${styles.expense} ${getBorderStyle(
+                                expense.method
+                              )}`}
+                              whileHover={{ scale: 1.05 }}
+                              transition={{
+                                scale: { duration: 0.4, ease: "easeOut" },
+                              }}
+                            >
                             <button
                               className={styles.expenseEditButton}
                               onClick={() => handleEditClick(expense)}
@@ -1262,6 +1288,7 @@ export default function Expenses() {
                                 />
                               </button>
                             </div>
+                            </motion.div>
                           </motion.div>
                         ))}
                     </AnimatePresence>

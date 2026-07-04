@@ -152,12 +152,15 @@ body {
     margin: 0 10px 20px 10px;
 }
 
+.expenseLayoutItem {
+    display: flex;
+}
+
 .expense {
     border-radius: 20px;
     padding: 10px 40px;
     display: flex;
     flex-direction: column;
-    transition: .4s;
     align-items: center;
     position: relative;
 
@@ -166,10 +169,6 @@ body {
         margin: 0;
         margin-bottom: 10px;
         overflow-wrap: anywhere;
-    }
-
-    &:hover {
-        transform: scale(1.05);
     }
 }
 
