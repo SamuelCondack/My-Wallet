@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaPencilAlt } from "react-icons/fa";
+import { FaCheck, FaCopy, FaPencilAlt } from "react-icons/fa";
 import bin from "../../assets/bin.png";
 import { auth } from "../../../config/firebase";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
@@ -21,7 +21,7 @@ import {
   loadIncomesWithMigration,
   updateIncome,
 } from "../../services/incomeService";
-import { setCached } from "../../utils/dataCache";
+import { getCached, setCached } from "../../utils/dataCache";
 import {
   filterIncomes,
   formatDisplayDate,
@@ -56,11 +56,16 @@ export default function Income() {
   );
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("create");
+  const [modalMode, setModalMode] = useState("edit");
   const [activeIncome, setActiveIncome] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [incomeToDelete, setIncomeToDelete] = useState(null);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [pressedIncomeKey, setPressedIncomeKey] = useState(null);
+  const activeTouchIdRef = useRef(null);
+  const [copiedMetric, setCopiedMetric] = useState(null);
+  const copyTimeoutsRef = useRef([]);
 
   const { categories } = useCategories(userId);
   const incomeCategories = useMemo(
@@ -82,6 +87,13 @@ export default function Income() {
     const load = async () => {
       if (!userId) {
         setIncomes([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const cachedIncome = getCached("income", userId);
+      if (cachedIncome) {
+        setIncomes(cachedIncome);
         setIsLoading(false);
         return;
       }
@@ -111,6 +123,12 @@ export default function Income() {
   }, [userId]);
 
   useEffect(() => {
+    if (userId && !isLoading) {
+      setCached("income", userId, incomes);
+    }
+  }, [userId, incomes, isLoading]);
+
+  useEffect(() => {
     const params = {};
     if (selectedYear !== "All") params.year = selectedYear;
     if (selectedMonth !== "All") params.month = selectedMonth;
@@ -124,6 +142,41 @@ export default function Income() {
     selectedStatus,
     setSearchParams,
   ]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollToTop(window.scrollY > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleTouchEnd = (event) => {
+      if (activeTouchIdRef.current === null) {
+        return;
+      }
+
+      const touchEnded = Array.from(event.changedTouches).some(
+        (touch) => touch.identifier === activeTouchIdRef.current
+      );
+
+      if (touchEnded) {
+        activeTouchIdRef.current = null;
+        setPressedIncomeKey(null);
+      }
+    };
+
+    document.addEventListener("touchend", handleTouchEnd);
+    return () => document.removeEventListener("touchend", handleTouchEnd);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      copyTimeoutsRef.current.forEach((id) => clearTimeout(id));
+    };
+  }, []);
 
   const syncIncomes = (next) => {
     setIncomes(next);
@@ -174,8 +227,6 @@ export default function Income() {
       ? `${selectedYear}-${selectedMonth}`
       : null;
 
-  // Summary uses financial period only (incomePeriod), ignoring category/status filters
-  // except when a single period is selected — matches Expenses month summary behavior.
   const summarySource = useMemo(() => {
     if (!periodKey) {
       return filtered;
@@ -187,7 +238,10 @@ export default function Income() {
     if (periodKey) {
       return getIncomeSummaryForPeriod(incomes, periodKey);
     }
-    const earned = summarySource.reduce((sum, item) => sum + Number(item.amount), 0);
+    const earned = summarySource.reduce(
+      (sum, item) => sum + Number(item.amount),
+      0
+    );
     const received = summarySource
       .filter((item) => item.status === INCOME_STATUS.CONFIRMED)
       .reduce((sum, item) => sum + Number(item.amount), 0);
@@ -204,10 +258,97 @@ export default function Income() {
     (item) => item.status === INCOME_STATUS.CONFIRMED
   );
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   const openCreate = () => {
     setActiveIncome(null);
     setModalMode("create");
     setModalOpen(true);
+  };
+
+  const clearCopyTimeouts = () => {
+    copyTimeoutsRef.current.forEach((id) => clearTimeout(id));
+    copyTimeoutsRef.current = [];
+  };
+
+  const copyMetricValue = async (metricKey, numericValue) => {
+    const plain = Number(numericValue).toFixed(2);
+    try {
+      await navigator.clipboard.writeText(plain);
+    } catch (error) {
+      console.error(error);
+      toast.error("Couldn't copy value.");
+      return;
+    }
+
+    clearCopyTimeouts();
+    setCopiedMetric({ key: metricKey, phase: "copy" });
+
+    copyTimeoutsRef.current.push(
+      setTimeout(() => {
+        setCopiedMetric({ key: metricKey, phase: "check" });
+      }, 280)
+    );
+    copyTimeoutsRef.current.push(
+      setTimeout(() => {
+        setCopiedMetric(null);
+      }, 1400)
+    );
+  };
+
+  const renderCopyableMetric = ({
+    metricKey,
+    label,
+    numericValue,
+    displayValue,
+    className,
+    shineClass,
+  }) => {
+    const isActive = copiedMetric?.key === metricKey;
+    const phase = isActive ? copiedMetric.phase : null;
+
+    return (
+      <button
+        type="button"
+        className={`${styles.metricCopyRow} ${className || ""}`}
+        onClick={() => copyMetricValue(metricKey, numericValue)}
+        aria-label={`Copy ${label} value`}
+      >
+        {label}:{" "}
+        <b
+          className={`${styles.metricValue} ${
+            isActive ? `${styles.metricValueShine} ${shineClass || ""}` : ""
+          }`}
+        >
+          {displayValue}
+        </b>
+        {phase && (
+          <span
+            className={`${styles.metricCopyFeedback} ${
+              phase === "check" ? styles.metricCopyFeedbackDone : ""
+            }`}
+            aria-hidden="true"
+          >
+            {phase === "check" ? <FaCheck /> : <FaCopy />}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const handleIncomeTouchStart = (event, incomeKey) => {
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+
+    activeTouchIdRef.current = touch.identifier;
+    setPressedIncomeKey(incomeKey);
   };
 
   const openEdit = (income) => {
@@ -235,7 +376,6 @@ export default function Income() {
     setIsSubmitting(true);
     try {
       if (modalMode === "confirm" && activeIncome?.id) {
-        // Confirm must not change incomePeriod.
         await confirmIncome(userId, activeIncome.id, payload.receivedDate);
         syncIncomes(
           incomes.map((item) =>
@@ -297,65 +437,89 @@ export default function Income() {
   const renderCard = (income) => {
     const category = categoriesMap[income.categoryId];
     const isPending = income.status === INCOME_STATUS.PENDING;
+    const incomeKey = income.id;
 
     return (
       <motion.div
-        key={income.id}
-        className={`${styles.incomeCard} ${
-          isPending ? styles.pendingCard : styles.confirmedCard
-        }`}
+        key={incomeKey}
         layout
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        className={styles.incomeLayoutItem}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
-        <p className={styles.incomeName}>{income.description}</p>
-        <p className={styles.incomeValue}>${Number(income.amount).toFixed(2)}</p>
-        <p className={styles.incomeCategory}>
-          {category ? `${category.icon} ${category.name}` : "Other"}
-        </p>
-        <p className={styles.incomeMeta}>
-          {isPending
-            ? `Expected ${formatDisplayDate(income.expectedDate)}`
-            : `Received ${formatDisplayDate(income.receivedDate)}`}
-        </p>
-        <p className={styles.incomePeriod}>
-          Income Period: {formatPeriodLabel(income.incomePeriod)}
-        </p>
-        <span className={styles.statusBadge}>
-          {isPending ? "Pending" : "Confirmed"}
-        </span>
-
-        <div className={styles.cardActions}>
-          {isPending && (
-            <button
-              type="button"
-              className={styles.confirmButton}
-              onClick={() => openConfirm(income)}
-            >
-              Confirm received
-            </button>
-          )}
+        <motion.div
+          className={`${styles.incomeCard} ${
+            isPending ? styles.pendingCard : styles.confirmedCard
+          }`}
+          animate={{
+            scale: pressedIncomeKey === incomeKey ? 1.05 : 1,
+          }}
+          whileHover={{ scale: 1.05 }}
+          transition={{
+            scale: { duration: 0.4, ease: "easeOut" },
+          }}
+          onTouchStart={(event) => handleIncomeTouchStart(event, incomeKey)}
+        >
           <button
             type="button"
-            className={styles.iconButton}
+            className={styles.expenseEditButton}
             onClick={() => openEdit(income)}
+            title="Edit income"
             aria-label="Edit income"
           >
-            <FaPencilAlt />
+            <FaPencilAlt className={styles.expensePencilIcon} />
           </button>
-          <button
-            type="button"
-            className={styles.iconButton}
-            onClick={() => {
-              setIncomeToDelete(income);
-              setShowDeleteModal(true);
-            }}
-            aria-label="Delete income"
-          >
-            <img src={bin} alt="" width={16} height={16} />
-          </button>
-        </div>
+
+          <p className={styles.incomeName}>{income.description}</p>
+          <p className={styles.categoryBadge}>
+            {category ? `${category.icon} ${category.name}` : "Other"}
+          </p>
+          <p className={styles.incomeValue}>
+            ${Number(income.amount).toFixed(2)}
+          </p>
+          <p className={styles.expenseMethod}>
+            {isPending ? "Pending" : "Confirmed"}
+          </p>
+          <p className={styles.incomeMeta}>
+            {isPending
+              ? `Expected ${formatDisplayDate(income.expectedDate)}`
+              : `Received ${formatDisplayDate(income.receivedDate)}`}
+          </p>
+          <p className={styles.incomePeriod}>
+            Income Period: {formatPeriodLabel(income.incomePeriod)}
+          </p>
+
+          <div className={styles.cardFooter}>
+            {isPending ? (
+              <button
+                type="button"
+                className={styles.confirmButton}
+                onClick={() => openConfirm(income)}
+              >
+                Confirm received
+              </button>
+            ) : (
+              <span />
+            )}
+            <button
+              type="button"
+              className={styles.deleteButton}
+              onClick={() => {
+                setIncomeToDelete(income);
+                setShowDeleteModal(true);
+              }}
+              aria-label="Delete income"
+            >
+              <img
+                className={styles.binImg}
+                src={bin}
+                alt="delete button"
+              />
+            </button>
+          </div>
+        </motion.div>
       </motion.div>
     );
   };
@@ -363,12 +527,7 @@ export default function Income() {
   return (
     <div className={styles.pageWrapper}>
       <div className={styles.page}>
-        <div className={styles.headerRow}>
-          <h2>Income</h2>
-          <button type="button" className={styles.addButton} onClick={openCreate}>
-            + Add Income
-          </button>
-        </div>
+        <h2>Income</h2>
 
         <div className={styles.filterContainer}>
           <div className={styles.filter}>
@@ -405,14 +564,23 @@ export default function Income() {
               }}
             >
               <option value="All">All</option>
-              {months.map((month) => (
-                <option key={month} value={month}>
-                  {month} -{" "}
-                  {new Date(0, Number(month) - 1).toLocaleString("default", {
-                    month: "long",
-                  })}
-                </option>
-              ))}
+              {months.map((month) => {
+                const isCurrentMonth =
+                  selectedYear === currentYear && month === currentMonth;
+                return (
+                  <option
+                    key={month}
+                    value={month}
+                    data-current={isCurrentMonth}
+                  >
+                    {month} -{" "}
+                    {new Date(0, Number(month) - 1).toLocaleString("default", {
+                      month: "long",
+                    })}
+                    {isCurrentMonth && " 📅"}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -456,27 +624,39 @@ export default function Income() {
               ? selectedYear
               : "All periods"}
           </h3>
-          <p className={styles.summaryEarned}>
-            Earned: <b>${summary.earned.toFixed(2)}</b>
-          </p>
-          <p
-            className={
-              summary.pending > 0 ? styles.summaryPending : styles.summaryPendingZero
-            }
-          >
-            Pending: <b>${summary.pending.toFixed(2)}</b>
-          </p>
-          <p className={styles.summaryReceived}>
-            Received: <b>${summary.received.toFixed(2)}</b>
-          </p>
+          {renderCopyableMetric({
+            metricKey: `${periodKey || "all"}-earned`,
+            label: "Earned",
+            numericValue: summary.earned,
+            displayValue: `$${summary.earned.toFixed(2)}`,
+            className: styles.summaryEarned,
+            shineClass: styles.shineNeutral,
+          })}
+          {renderCopyableMetric({
+            metricKey: `${periodKey || "all"}-pending`,
+            label: "Pending",
+            numericValue: summary.pending,
+            displayValue: `$${summary.pending.toFixed(2)}`,
+            className:
+              summary.pending > 0
+                ? styles.summaryPending
+                : styles.summaryPendingZero,
+            shineClass: styles.shinePending,
+          })}
+          {renderCopyableMetric({
+            metricKey: `${periodKey || "all"}-received`,
+            label: "Received",
+            numericValue: summary.received,
+            displayValue: `$${summary.received.toFixed(2)}`,
+            className: styles.summaryReceived,
+            shineClass: styles.shineReceived,
+          })}
         </div>
 
         {filtered.length === 0 ? (
           <div className={styles.emptyState}>
             <p>No income for this period.</p>
-            <button type="button" className={styles.addButton} onClick={openCreate}>
-              + Add Income
-            </button>
+            <p>Tap + to add a new income.</p>
           </div>
         ) : (
           <>
@@ -490,7 +670,9 @@ export default function Income() {
                   </p>
                 ) : (
                   <div className={styles.cards}>
-                    <AnimatePresence>{pendingList.map(renderCard)}</AnimatePresence>
+                    <AnimatePresence initial={false} mode="popLayout">
+                      {pendingList.map(renderCard)}
+                    </AnimatePresence>
                   </div>
                 )}
               </section>
@@ -506,7 +688,7 @@ export default function Income() {
                   </p>
                 ) : (
                   <div className={styles.cards}>
-                    <AnimatePresence>
+                    <AnimatePresence initial={false} mode="popLayout">
                       {confirmedList.map(renderCard)}
                     </AnimatePresence>
                   </div>
@@ -516,6 +698,33 @@ export default function Income() {
           </>
         )}
       </div>
+
+      <AnimatePresence>
+        {showScrollToTop && (
+          <motion.button
+            type="button"
+            className={styles.scrollToTopButton}
+            onClick={scrollToTop}
+            initial={{ y: 50 }}
+            animate={{ y: 0, scale: 1 }}
+            exit={{ y: 50, scale: -1 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            aria-label="Scroll to top"
+          >
+            ↑
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      <button
+        type="button"
+        className={styles.floatingAddButton}
+        onClick={openCreate}
+        aria-label="Add income"
+        title="Add income"
+      >
+        +
+      </button>
 
       <IncomeModal
         isOpen={modalOpen}
@@ -528,8 +737,7 @@ export default function Income() {
         }}
         onSubmit={handleSave}
         initialValues={
-          activeIncome ||
-          (modalMode === "create"
+          modalMode === "create"
             ? {
                 categoryId:
                   incomeCategories[0]?.id || DEFAULT_INCOME_CATEGORY_ID,
@@ -539,7 +747,7 @@ export default function Income() {
                 expectedDate: new Date().toLocaleDateString("en-CA"),
                 status: INCOME_STATUS.PENDING,
               }
-            : null)
+            : activeIncome
         }
         categories={incomeCategories}
         isSubmitting={isSubmitting}

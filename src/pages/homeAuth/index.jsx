@@ -86,9 +86,6 @@ function HomeAuth() {
         <NavLink to="/home/income" onClick={handleNavClick} className={navClassName}>
           Income
         </NavLink>
-        <NavLink to="/home/newregister" onClick={handleNavClick} className={navClassName}>
-          New Register
-        </NavLink>
         <NavLink to="/home/dashboard" onClick={handleNavClick} className={navClassName}>
           Dashboard
         </NavLink>

@@ -220,8 +220,11 @@ export async function migrateEarningsToIncome(userId, existingIncomes = null) {
 
 export async function loadIncomesWithMigration(userId) {
   const cached = getCached("income", userId);
-  let incomes = cached ?? (await fetchIncomes(userId));
+  if (cached) {
+    return cached;
+  }
 
+  let incomes = await fetchIncomes(userId);
   const migrated = await migrateEarningsToIncome(userId, incomes);
   if (migrated.length > 0) {
     incomes = await fetchIncomes(userId);

@@ -258,14 +258,6 @@ export default function IncomeModal({
 
           <div className={styles.modalButtons}>
             <button
-              type="button"
-              className={styles.cancelButton}
-              onClick={onRequestClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
               type="submit"
               className={styles.confirmButton}
               disabled={isSubmitting}
@@ -274,7 +266,17 @@ export default function IncomeModal({
                 ? "Saving..."
                 : isConfirmMode
                 ? "Confirm received"
-                : "Save"}
+                : mode === "edit"
+                ? "Edit"
+                : "Add"}
+            </button>
+            <button
+              type="button"
+              className={styles.cancelButton}
+              onClick={onRequestClose}
+              disabled={isSubmitting}
+            >
+              Cancel
             </button>
           </div>
         </form>

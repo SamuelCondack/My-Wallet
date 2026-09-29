@@ -15,14 +15,12 @@ import {
   getUniqueMonthsForYear,
   getUniqueYears,
 } from "../../utils/expenseCalculations";
-import { formatCurrency } from "../../utils/finance";
+import { formatCompactCurrency, formatCurrency } from "../../utils/finance";
 import { getCached, setCached } from "../../utils/dataCache";
 import { loadIncomesWithMigration } from "../../services/incomeService";
 import {
   formatPeriodLabel,
-  getCashOut,
   getCashReceived,
-  getNetCashFlow,
 } from "../../utils/incomeCalculations";
 
 export default function Dashboard() {
@@ -36,6 +34,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [simulatedMonthly, setSimulatedMonthly] = useState(null);
+  const [simulateInput, setSimulateInput] = useState("");
 
   const { categories, loading: categoriesLoading } = useCategories(userId);
 
@@ -87,7 +87,10 @@ export default function Dashboard() {
   }, []);
 
   const categoriesMap = useMemo(() => getCategoryMap(categories), [categories]);
-  const expensesByMonth = useMemo(() => buildExpensesByMonth(expenses), [expenses]);
+  const expensesByMonth = useMemo(
+    () => buildExpensesByMonth(expenses),
+    [expenses]
+  );
   const sortedUniqueYears = useMemo(
     () => getUniqueYears(expenses, expensesByMonth),
     [expenses, expensesByMonth]
@@ -100,7 +103,7 @@ export default function Dashboard() {
     () => getActiveMonthKeys(expensesByMonth, selectedYear, selectedMonth),
     [expensesByMonth, selectedYear, selectedMonth]
   );
-  const monthTotal = useMemo(
+  const spendings = useMemo(
     () => getAggregatedMonthTotal(expensesByMonth, activeMonthKeys),
     [expensesByMonth, activeMonthKeys]
   );
@@ -109,16 +112,80 @@ export default function Dashboard() {
     [expensesByMonth, activeMonthKeys]
   );
 
-  // Cash Flow uses receivedDate / paidDate (or inclusionDate fallback), NOT incomePeriod.
-  const cashFlowPeriod =
+  const monthPeriod =
     selectedYear !== "All" && selectedMonth !== "All"
       ? `${selectedYear}-${selectedMonth}`
       : null;
-  const cashIn = cashFlowPeriod ? getCashReceived(incomes, cashFlowPeriod) : 0;
-  const cashOut = cashFlowPeriod ? getCashOut(expenses, cashFlowPeriod) : 0;
-  const netCash = cashFlowPeriod
-    ? getNetCashFlow(incomes, expenses, cashFlowPeriod)
+
+  const moneyReceived = monthPeriod
+    ? getCashReceived(incomes, monthPeriod)
     : 0;
+  const leftThisMonth = moneyReceived - spendings;
+
+  useEffect(() => {
+    setSimulatedMonthly(null);
+    setSimulateInput("");
+  }, [monthPeriod, leftThisMonth]);
+
+  const realMonthlySurplus = leftThisMonth;
+  const usingSimulation = simulatedMonthly !== null;
+  const activeMonthlySurplus = usingSimulation
+    ? simulatedMonthly
+    : realMonthlySurplus;
+
+  const savingsForecast = useMemo(() => {
+    if (!monthPeriod) {
+      return null;
+    }
+
+    const monthNum = Number(selectedMonth);
+    const monthsLeft = 12 - monthNum + 1;
+    if (monthsLeft <= 0) {
+      return null;
+    }
+
+    const points = [];
+    for (let i = 0; i < monthsLeft; i += 1) {
+      const monthIndex = monthNum + i;
+      const label = new Date(0, monthIndex - 1).toLocaleString("en-US", {
+        month: "short",
+      });
+      points.push({
+        key: `${selectedYear}-${String(monthIndex).padStart(2, "0")}`,
+        label,
+        cumulative: activeMonthlySurplus * (i + 1),
+        isCurrent: i === 0,
+        isLast: i === monthsLeft - 1,
+      });
+    }
+
+    const yearEndTotal = activeMonthlySurplus * monthsLeft;
+    const maxAbs = Math.max(
+      ...points.map((point) => Math.abs(point.cumulative)),
+      1
+    );
+
+    return {
+      monthsLeft,
+      yearEndTotal,
+      points,
+      maxAbs,
+    };
+  }, [monthPeriod, selectedMonth, selectedYear, activeMonthlySurplus]);
+
+  const applySimulation = (raw) => {
+    const parsed = Number(String(raw).replace(",", "."));
+    if (Number.isNaN(parsed)) {
+      return;
+    }
+    setSimulatedMonthly(parsed);
+    setSimulateInput(parsed.toFixed(2));
+  };
+
+  const resetSimulation = () => {
+    setSimulatedMonthly(null);
+    setSimulateInput("");
+  };
 
   if (loading || categoriesLoading) {
     return <LoadingComponent variant="dashboard" />;
@@ -127,13 +194,7 @@ export default function Dashboard() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <h1>Dashboard</h1>
-          <p>Spending by category</p>
-        </div>
-        <Link to="/home/categories" className={styles.linkBtn}>
-          Manage categories
-        </Link>
+        <h1>Dashboard</h1>
       </header>
 
       <div className={styles.filterContainer}>
@@ -169,9 +230,14 @@ export default function Dashboard() {
           >
             <option value="All">All</option>
             {sortedUniqueMonths.map((month) => {
-              const isCurrentMonth = selectedYear === currentYear && month === currentMonth;
+              const isCurrentMonth =
+                selectedYear === currentYear && month === currentMonth;
               return (
-                <option key={month} value={month} data-current={isCurrentMonth}>
+                <option
+                  key={month}
+                  value={month}
+                  data-current={isCurrentMonth}
+                >
                   {month} -{" "}
                   {new Date(0, month - 1).toLocaleString("default", {
                     month: "long",
@@ -184,36 +250,161 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className={styles.totalCard}>
-        <span>Total spent</span>
-        <strong>{formatCurrency(monthTotal)}</strong>
-      </div>
+      {monthPeriod ? (
+        <section className={styles.overviewCard}>
+          <h2>Month overview</h2>
+          <p className={styles.overviewPeriod}>
+            {formatPeriodLabel(monthPeriod)}
+          </p>
 
-      {cashFlowPeriod && (
-        <section className={styles.cashFlowCard}>
-          <h2>Cash Flow</h2>
-          <p className={styles.cashFlowPeriod}>{formatPeriodLabel(cashFlowPeriod)}</p>
-          <p>
-            Money In: <strong>{formatCurrency(cashIn)}</strong>
+          <div className={styles.overviewGrid}>
+            <div className={styles.overviewItem}>
+              <span>Spendings</span>
+              <strong>{formatCurrency(spendings)}</strong>
+            </div>
+            <div className={styles.overviewItem}>
+              <span>Money received</span>
+              <strong className={styles.received}>
+                {formatCurrency(moneyReceived)}
+              </strong>
+            </div>
+            <div className={styles.overviewItem}>
+              <span>Left this month</span>
+              <strong
+                className={
+                  leftThisMonth >= 0 ? styles.positive : styles.negative
+                }
+              >
+                {leftThisMonth >= 0 ? "+" : ""}
+                {formatCurrency(leftThisMonth)}
+              </strong>
+            </div>
+          </div>
+
+          <p className={styles.overviewHint}>
+            Spendings matches Expenses for the month. Money received uses
+            confirmation dates. Left = received − spendings.
           </p>
-          <p>
-            Money Out: <strong>{formatCurrency(cashOut)}</strong>
+        </section>
+      ) : (
+        <div className={styles.totalCard}>
+          <span>Total spendings</span>
+          <strong>{formatCurrency(spendings)}</strong>
+        </div>
+      )}
+
+      {savingsForecast && (
+        <section className={styles.forecastCard}>
+          <h2>Year-end savings forecast</h2>
+          <p className={styles.forecastLead}>
+            Simulate how much you&apos;d have by December if you saved this
+            amount every month.
           </p>
-          <p>
-            Net Cash Flow:{" "}
-            <strong className={netCash < 0 ? styles.negative : undefined}>
-              {netCash >= 0 ? "+" : ""}
-              {formatCurrency(netCash)}
+
+          <div className={styles.forecastControls}>
+            <label htmlFor="forecastMonthlySave" className={styles.forecastInputLabel}>
+              Monthly save
+            </label>
+            <div className={styles.forecastInputRow}>
+              <span className={styles.forecastCurrency}>$</span>
+              <input
+                id="forecastMonthlySave"
+                type="text"
+                inputMode="decimal"
+                className={styles.forecastInput}
+                value={
+                  simulateInput !== ""
+                    ? simulateInput
+                    : activeMonthlySurplus.toFixed(2)
+                }
+                onChange={(e) => {
+                  setSimulateInput(e.target.value);
+                  const parsed = Number(String(e.target.value).replace(",", "."));
+                  if (!Number.isNaN(parsed)) {
+                    setSimulatedMonthly(parsed);
+                  }
+                }}
+                onBlur={() => {
+                  if (simulateInput === "") {
+                    resetSimulation();
+                    return;
+                  }
+                  applySimulation(simulateInput);
+                }}
+              />
+              <button
+                type="button"
+                className={styles.forecastResetBtn}
+                onClick={resetSimulation}
+                disabled={!usingSimulation}
+                title="Reset to real leftover"
+              >
+                Use real
+              </button>
+            </div>
+          </div>
+
+          <div
+            className={`${styles.forecastChart} ${
+              savingsForecast.points.length > 6 ? styles.forecastChartCrowded : ""
+            }`}
+            role="img"
+            aria-label="Savings forecast chart"
+          >
+            {savingsForecast.points.map((point) => {
+              const heightPct = Math.max(
+                6,
+                (Math.abs(point.cumulative) / savingsForecast.maxAbs) * 100
+              );
+              const isNegative = point.cumulative < 0;
+              const crowded = savingsForecast.points.length > 6;
+              const valueLabel = crowded
+                ? formatCompactCurrency(point.cumulative)
+                : formatCurrency(point.cumulative);
+
+              return (
+                <div key={point.key} className={styles.forecastBarCol}>
+                  <span className={styles.forecastValue} title={formatCurrency(point.cumulative)}>
+                    {valueLabel}
+                  </span>
+                  <div className={styles.forecastBarTrack}>
+                    <div
+                      className={`${styles.forecastBar} ${
+                        isNegative ? styles.forecastBarNeg : ""
+                      } ${point.isCurrent ? styles.forecastBarCurrent : ""}`}
+                      style={{ height: `${heightPct}%` }}
+                      title={`${point.label}: ${formatCurrency(point.cumulative)}`}
+                    />
+                  </div>
+                  <span className={styles.forecastLabel}>{point.label}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className={styles.forecastTotal}>
+            Projected by Dec:{" "}
+            <strong
+              className={
+                savingsForecast.yearEndTotal >= 0
+                  ? styles.positive
+                  : styles.negative
+              }
+            >
+              {savingsForecast.yearEndTotal >= 0 ? "+" : ""}
+              {formatCurrency(savingsForecast.yearEndTotal)}
             </strong>
-          </p>
-          <p className={styles.cashFlowHint}>
-            Based on received dates for income and payment dates for expenses — not the same as Earnings.
           </p>
         </section>
       )}
 
       <section className={styles.section}>
-        <h2>By category</h2>
+        <div className={styles.sectionHeader}>
+          <h2>By category</h2>
+          <Link to="/home/categories" className={styles.linkBtn}>
+            Manage categories
+          </Link>
+        </div>
         <CategoryPieChart data={categoryTotals} categoriesMap={categoriesMap} />
       </section>
 
@@ -223,7 +414,9 @@ export default function Dashboard() {
           {categoryTotals.length === 0 && <li>No expenses for this period.</li>}
           {categoryTotals.map((item) => {
             const category = categoriesMap[item.categoryId];
-            const percent = monthTotal ? ((item.value / monthTotal) * 100).toFixed(1) : 0;
+            const percent = spendings
+              ? ((item.value / spendings) * 100).toFixed(1)
+              : 0;
             return (
               <li key={item.categoryId}>
                 <span>

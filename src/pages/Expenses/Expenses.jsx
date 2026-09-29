@@ -6,6 +6,7 @@ import {
   getDocs,
   collection,
   doc,
+  addDoc,
   deleteDoc,
   updateDoc,
 } from "firebase/firestore";
@@ -56,15 +57,17 @@ export default function Expenses() {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [resumeDate, setResumeDate] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
+  const [expenseModalMode, setExpenseModalMode] = useState("edit");
   const [editingExpense, setEditingExpense] = useState(null);
   const [editFormData, setEditFormData] = useState({
     name: "",
     value: "",
     inclusionDate: "",
     installments: "",
-    paymentMethod: "Money",
+    paymentMethod: "Credit Card",
     pauseDate: "",
     categoryId: DEFAULT_CATEGORY_ID,
+    isMonthly: false,
   });
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -184,9 +187,10 @@ export default function Expenses() {
       if (cachedIncome) {
         setIncomes(cachedIncome);
         setIsIncomeLoading(false);
-      } else {
-        setIsIncomeLoading(true);
+        return;
       }
+
+      setIsIncomeLoading(true);
 
       try {
         const data = await loadIncomesWithMigration(userId);
@@ -237,6 +241,22 @@ export default function Expenses() {
       top: 0,
       behavior: "smooth",
     });
+  };
+
+  const openCreateExpense = () => {
+    setExpenseModalMode("create");
+    setEditingExpense(null);
+    setEditFormData({
+      name: "",
+      value: "",
+      inclusionDate: new Date().toLocaleDateString("en-CA"),
+      installments: "",
+      paymentMethod: "Credit Card",
+      pauseDate: "",
+      categoryId: expenseCategories[0]?.id || DEFAULT_CATEGORY_ID,
+      isMonthly: false,
+    });
+    setShowEditModal(true);
   };
 
   const handleExpenseTouchStart = (event, expenseKey) => {
@@ -721,12 +741,12 @@ export default function Expenses() {
   };
 
   const handleEditClick = (expense) => {
-    const installments = expense.installments ? parseInt(expense.installments, 10) : 1;
     const totalValue =
       expense.totalValue != null && !Number.isNaN(Number(expense.totalValue))
         ? Number(expense.totalValue)
         : Number(expense.value);
 
+    setExpenseModalMode("edit");
     setEditingExpense(expense);
     setEditFormData({
       name: expense.name,
@@ -736,6 +756,7 @@ export default function Expenses() {
       paymentMethod: expense.method,
       pauseDate: expense.pauseDate || "",
       categoryId: expense.categoryId || DEFAULT_CATEGORY_ID,
+      isMonthly: Boolean(expense.isMonthly),
     });
     setShowEditModal(true);
   };
@@ -759,8 +780,60 @@ export default function Expenses() {
     }
   };
 
+  const closeExpenseModal = () => {
+    setShowEditModal(false);
+    setEditingExpense(null);
+    setExpenseModalMode("edit");
+  };
+
+  const handleCreateSubmit = async () => {
+    if (!userId) {
+      toast.error("You need to be signed in.");
+      return;
+    }
+
+    const isMonthly = Boolean(editFormData.isMonthly);
+    const newExpense = {
+      name: editFormData.name.trim(),
+      inclusionDate: editFormData.inclusionDate,
+      value: parseFloat(String(editFormData.value).replace(/,/g, ".")),
+      installments:
+        !isMonthly && editFormData.installments > 0
+          ? editFormData.installments
+          : "",
+      method: editFormData.paymentMethod,
+      isMonthly,
+      categoryId: editFormData.categoryId || DEFAULT_CATEGORY_ID,
+      ...(isMonthly ? { status: "active" } : {}),
+    };
+
+    const expensesCollectionRef = collection(db, userId);
+    const docRef = await addDoc(expensesCollectionRef, newExpense);
+    const created = { ...newExpense, id: docRef.id };
+
+    setExpensesList((prev) => {
+      const next = [...prev, created];
+      setCached("expenses", userId, next);
+      return next;
+    });
+
+    closeExpenseModal();
+    toast.success("Expense registered!");
+  };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+
+    if (expenseModalMode === "create") {
+      try {
+        await handleCreateSubmit();
+      } catch (error) {
+        console.error("Error creating expense:", error);
+        toast.error(error.message || "Failed to register expense");
+      }
+      return;
+    }
+
     if (!editingExpense) return;
 
     try {
@@ -785,7 +858,6 @@ export default function Expenses() {
           updateData.pauseDate = null;
           shouldRefetch = true;
         } else if (editingExpense.isPaused && editFormData.pauseDate) {
-          // Verifica se a data de pausa foi alterada
           if (editingExpense.pauseDate !== editFormData.pauseDate) {
             updateData.pauseDate = editFormData.pauseDate;
             shouldRefetch = true;
@@ -798,47 +870,35 @@ export default function Expenses() {
       await updateDoc(expenseDoc, updateData);
 
       if (shouldRefetch) {
-        // Mostra o loading
         setIsLoading(true);
+        setExpensesList([]);
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // Força uma atualização completa do estado
-        setExpensesList([]); // Limpa completamente o estado
-        
-        // Pequeno delay para garantir que o estado foi limpo
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Recarrega todas as despesas
         const expensesCollectionRef = collection(db, userId);
         const data = await getDocs(expensesCollectionRef);
         const filteredData = data.docs
-          .filter((doc) => !doc.id.startsWith("earnings-"))
-          .map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
+          .filter((docItem) => !docItem.id.startsWith("earnings-"))
+          .map((docItem) => ({
+            ...docItem.data(),
+            id: docItem.id,
           }));
 
-        // Atualiza o estado com os novos dados
         setExpensesList(filteredData);
-
-        // Força uma atualização dos filtros
+        setCached("expenses", userId, filteredData);
         setSelectedYear(selectedYear);
         setSelectedMonth(selectedMonth);
-
-        // Esconde o loading
         setIsLoading(false);
       } else {
-        // Atualiza apenas a despesa específica no estado
-        setExpensesList((prev) =>
-          prev.map((item) =>
-            item.id === editingExpense.id
-              ? { ...item, ...updateData }
-              : item
-          )
-        );
+        setExpensesList((prev) => {
+          const next = prev.map((item) =>
+            item.id === editingExpense.id ? { ...item, ...updateData } : item
+          );
+          setCached("expenses", userId, next);
+          return next;
+        });
       }
 
-      setShowEditModal(false);
-      setEditingExpense(null);
+      closeExpenseModal();
       toast.success("Despesa atualizada com sucesso!");
     } catch (error) {
       console.error("Erro ao atualizar:", error);
@@ -1457,15 +1517,24 @@ export default function Expenses() {
             <motion.button
               className={styles.scrollToTopButton}
               onClick={scrollToTop}
-              initial={{ y: 50 }} // Começa invisível e deslocado para baixo
-              animate={{ y: 0, scale: 1 }} // Anima para visível e na posição original
-              exit={{ y: 50, scale: -1 }} // Desaparece com escala e rotação
-              transition={{ duration: 0.4, ease: "easeInOut" }} // Duração e suavidade da animação
+              initial={{ y: 50 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 50, scale: -1 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
             >
               ↑
             </motion.button>
           )}
         </AnimatePresence>
+        <button
+          type="button"
+          className={styles.floatingAddButton}
+          onClick={openCreateExpense}
+          aria-label="Add expense"
+          title="Add expense"
+        >
+          +
+        </button>
         {showPauseModal && (
           <ConfirmationModal
             isOpen={showPauseModal}
@@ -1491,10 +1560,8 @@ export default function Expenses() {
         {showEditModal && (
           <EditModal
             isOpen={showEditModal}
-            onRequestClose={() => {
-              setShowEditModal(false);
-              setEditingExpense(null);
-            }}
+            mode={expenseModalMode}
+            onRequestClose={closeExpenseModal}
             onConfirm={handleEditSubmit}
             editingExpense={editingExpense}
             editFormData={editFormData}

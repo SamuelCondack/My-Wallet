@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './Global/reset.scss'
 import './Global/global.scss'
-import NewRegister from './pages/NewRegister/NewRegister.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Expenses from './pages/Expenses/Expenses.jsx'
 import Income from './pages/Income/Income.jsx'
@@ -43,10 +42,6 @@ const router = createBrowserRouter([
       {
         path: 'categories',
         element: <Categories />
-      },
-      {
-        path: 'newregister',
-        element: <NewRegister/>
       },
       {
         path: 'expenses',

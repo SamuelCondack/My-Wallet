@@ -27,30 +27,6 @@ function withType(category) {
   return { ...category, type: CATEGORY_TYPE.EXPENSE };
 }
 
-async function ensureIncomeDefaults(userId, existing) {
-  const existingIds = new Set(existing.map((item) => item.id));
-  const missing = DEFAULT_INCOME_CATEGORIES.filter((item) => !existingIds.has(item.id));
-
-  if (missing.length === 0) {
-    return existing;
-  }
-
-  const batch = writeBatch(db);
-  const baseOrder = existing.length;
-
-  missing.forEach((category, index) => {
-    const ref = doc(db, `users/${userId}/categories`, category.id);
-    batch.set(ref, { ...category, order: baseOrder + index });
-  });
-
-  await batch.commit();
-
-  return [
-    ...existing,
-    ...missing.map((category, index) => ({ ...category, order: baseOrder + index })),
-  ];
-}
-
 async function backfillExpenseTypes(userId, categories) {
   const needsType = categories.filter(
     (item) => item.type !== CATEGORY_TYPE.INCOME && item.type !== CATEGORY_TYPE.EXPENSE
@@ -95,7 +71,6 @@ export async function fetchCategories(userId) {
 
   let categories = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
   categories = await backfillExpenseTypes(userId, categories);
-  categories = await ensureIncomeDefaults(userId, categories);
 
   return categories.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }

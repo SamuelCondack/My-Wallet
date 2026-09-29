@@ -1,8 +1,21 @@
 export function formatCurrency(value) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(Number(value) || 0);
+  const amount = Number(value) || 0;
+  const sign = amount < 0 ? "-" : "";
+  return `${sign}$${Math.abs(amount).toFixed(2)}`;
+}
+
+/** Shorter labels for tight charts (e.g. $4.6k, $383). */
+export function formatCompactCurrency(value) {
+  const amount = Number(value) || 0;
+  const sign = amount < 0 ? "-" : "";
+  const abs = Math.abs(amount);
+
+  if (abs >= 1000) {
+    const compact = abs >= 10000 ? (abs / 1000).toFixed(0) : (abs / 1000).toFixed(1);
+    return `${sign}$${compact}k`;
+  }
+
+  return `${sign}$${abs.toFixed(0)}`;
 }
 
 export function getMonthKey(date = new Date()) {

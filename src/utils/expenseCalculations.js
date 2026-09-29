@@ -229,5 +229,7 @@ export function getAggregatedCategoryTotals(
     });
   });
 
-  return Object.entries(totals).map(([categoryId, value]) => ({ categoryId, value }));
+  return Object.entries(totals)
+    .map(([categoryId, value]) => ({ categoryId, value }))
+    .sort((a, b) => b.value - a.value);
 }

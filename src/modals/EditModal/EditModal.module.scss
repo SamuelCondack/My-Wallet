@@ -29,6 +29,22 @@
         text-align: left;
     }
 
+    .checkboxLabel {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 200px;
+        width: 90%;
+        cursor: pointer;
+
+        input[type="checkbox"] {
+            width: auto;
+            max-width: none;
+            margin: 0;
+            accent-color: #3e92eb;
+        }
+    }
+
     input,
     select {
         width: 90%;
@@ -41,6 +57,7 @@
         outline: none;
         font-size: 16px;
         padding: 6px;
+        box-sizing: border-box;
 
         &:focus {
             border-bottom: 1px solid #3e92eb;
@@ -81,10 +98,11 @@
     padding: 15px;
     border-radius: 8px;
     z-index: 1001;
-    min-width: 280px;
-    max-width: min(90%, 420px);
-    width: auto;
+    width: min(92vw, 420px);
+    max-width: min(92vw, 420px);
+    min-width: 0;
     max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+    overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     box-sizing: border-box;
@@ -98,19 +116,23 @@
 .modalButtons {
     display: flex;
     flex-direction: row;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
     margin-top: 30px;
     justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .confirmButton {
     background-color: transparent;
     border: 1px solid #3e92eb;
-    width: 145px;
+    width: min(145px, 42%);
     border-radius: 20px;
     transition: .4s;
     font-size: 16px;
     color: #3e92eb;
+    box-sizing: border-box;
 
     &:hover {
         transform: scale(1.1);
@@ -176,9 +198,8 @@
 
 @media (max-width: 768px) {
     .modalContent {
-        min-width: 300px;
-        width: 90%;
-        max-width: 90%;
+        width: min(92vw, 420px);
+        max-width: min(92vw, 420px);
         padding: 10px;
     }
 
@@ -186,16 +207,15 @@
         gap: 10px;
 
         button {
-            width: 120px;
+            width: min(120px, 42%);
         }
     }
 }
 
 @media (max-width: 480px) {
     .modalContent {
-        min-width: 250px;
-        width: 95%;
-        max-width: 95%;
+        width: min(94vw, 420px);
+        max-width: min(94vw, 420px);
         padding: 8px;
     }
 
@@ -203,8 +223,10 @@
 
         input,
         select {
-            width: 85%;
-            margin: 0 15px;
+            width: 90%;
+            max-width: 200px;
+            margin: 0;
+            box-sizing: border-box;
         }
     }
 
@@ -212,7 +234,7 @@
         gap: 8px;
 
         button {
-            width: 100px;
+            width: min(100px, 44%);
         }
     }
 }

@@ -7,6 +7,7 @@ import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 
 const EditModal = ({
   isOpen,
+  mode = "edit",
   onRequestClose,
   onConfirm,
   editingExpense,
@@ -15,6 +16,10 @@ const EditModal = ({
   categories = [],
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const isCreate = mode === "create";
+  const isMonthly = isCreate
+    ? Boolean(editFormData.isMonthly)
+    : Boolean(editingExpense?.isMonthly);
 
   useBodyScrollLock(isOpen);
 
@@ -29,28 +34,37 @@ const EditModal = ({
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    
+    const { name, value, type, checked } = e.target;
+
+    if (type === "checkbox") {
+      setEditFormData((prev) => ({
+        ...prev,
+        [name]: checked,
+        ...(name === "isMonthly" && checked ? { installments: "" } : {}),
+      }));
+      return;
+    }
+
     if (name === "inclusionDate" && editFormData.pauseDate) {
       const inclusionDate = new Date(value);
       const pauseDate = new Date(editFormData.pauseDate);
-      
+
       if (inclusionDate >= pauseDate) {
         toast.error("Inclusion date must be before pause date");
         return;
       }
     }
-    
+
     if (name === "pauseDate") {
       const inclusionDate = new Date(editFormData.inclusionDate);
       const newPauseDate = new Date(value);
-      
+
       if (newPauseDate <= inclusionDate) {
         toast.error("Pause date must be after inclusion date");
         return;
       }
     }
-    
+
     setEditFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -84,7 +98,7 @@ const EditModal = ({
             </div>
           </div>
         )}
-        <h2>Edit Expense</h2>
+        <h2>{isCreate ? "Add Expense" : "Edit Expense"}</h2>
         <form onSubmit={handleSubmit} className={styles.editForm}>
           <div className={styles.editFormContainer}>
             <div className={styles.formGroup}>
@@ -96,12 +110,15 @@ const EditModal = ({
                 value={editFormData.name}
                 onChange={handleInputChange}
                 required
+                autoFocus={isCreate}
               />
             </div>
 
             <div className={styles.formGroup}>
               <label htmlFor="value">
-                {editingExpense?.installments > 1 ? "Total value:" : "Value:"}
+                {!isCreate && editingExpense?.installments > 1
+                  ? "Total value:"
+                  : "Value:"}
               </label>
               <input
                 type="number"
@@ -122,12 +139,35 @@ const EditModal = ({
                 name="inclusionDate"
                 value={editFormData.inclusionDate}
                 onChange={handleInputChange}
-                max={editFormData.pauseDate ? new Date(new Date(editFormData.pauseDate).getTime() - 86400000).toISOString().split('T')[0] : undefined}
+                max={
+                  editFormData.pauseDate
+                    ? new Date(
+                        new Date(editFormData.pauseDate).getTime() - 86400000
+                      )
+                        .toISOString()
+                        .split("T")[0]
+                    : undefined
+                }
                 required
               />
             </div>
 
-            {editingExpense?.isMonthly && (
+            {isCreate && (
+              <div className={styles.formGroup}>
+                <label htmlFor="isMonthly" className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    id="isMonthly"
+                    name="isMonthly"
+                    checked={Boolean(editFormData.isMonthly)}
+                    onChange={handleInputChange}
+                  />
+                  Monthly expense
+                </label>
+              </div>
+            )}
+
+            {!isCreate && editingExpense?.isMonthly && (
               <div className={styles.formGroup}>
                 <label htmlFor="pauseDate">Pause Date:</label>
                 <input
@@ -136,12 +176,16 @@ const EditModal = ({
                   name="pauseDate"
                   value={editFormData.pauseDate}
                   onChange={handleInputChange}
-                  min={new Date(new Date(editFormData.inclusionDate).getTime() + 86400000).toISOString().split('T')[0]}
+                  min={new Date(
+                    new Date(editFormData.inclusionDate).getTime() + 86400000
+                  )
+                    .toISOString()
+                    .split("T")[0]}
                 />
               </div>
             )}
 
-            {!editingExpense?.isMonthly && (
+            {!isMonthly && (
               <div className={styles.formGroup}>
                 <label htmlFor="installments">Installments:</label>
                 <input
@@ -151,7 +195,7 @@ const EditModal = ({
                   value={editFormData.installments}
                   onChange={handleInputChange}
                   min="1"
-                  required
+                  required={!isCreate}
                 />
               </div>
             )}
@@ -182,17 +226,23 @@ const EditModal = ({
                 onChange={handleInputChange}
                 required
               >
-                <option value="Money">Money</option>
-                <option value="Pix">Pix</option>
                 <option value="Credit Card">Credit Card</option>
                 <option value="Debit Card">Debit Card</option>
+                <option value="Money">Money</option>
+                <option value="Pix">Pix</option>
               </select>
             </div>
           </div>
 
           <div className={styles.modalButtons}>
-            <button type="submit" className={styles.confirmButton}>Edit</button>
-            <button type="button" onClick={onRequestClose} className={styles.cancelButton}>
+            <button type="submit" className={styles.confirmButton}>
+              {isCreate ? "Add" : "Edit"}
+            </button>
+            <button
+              type="button"
+              onClick={onRequestClose}
+              className={styles.cancelButton}
+            >
               Cancel
             </button>
           </div>
@@ -204,6 +254,7 @@ const EditModal = ({
 
 EditModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
+  mode: PropTypes.oneOf(["create", "edit"]),
   onRequestClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   editingExpense: PropTypes.object,
@@ -212,4 +263,4 @@ EditModal.propTypes = {
   categories: PropTypes.array,
 };
 
-export default EditModal; 
+export default EditModal;
