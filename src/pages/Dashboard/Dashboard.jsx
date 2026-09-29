@@ -17,6 +17,13 @@ import {
 } from "../../utils/expenseCalculations";
 import { formatCurrency } from "../../utils/finance";
 import { getCached, setCached } from "../../utils/dataCache";
+import { loadIncomesWithMigration } from "../../services/incomeService";
+import {
+  formatPeriodLabel,
+  getCashOut,
+  getCashReceived,
+  getNetCashFlow,
+} from "../../utils/incomeCalculations";
 
 export default function Dashboard() {
   const currentDate = new Date();
@@ -25,6 +32,7 @@ export default function Dashboard() {
 
   const [userId, setUserId] = useState(null);
   const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
@@ -43,10 +51,14 @@ export default function Dashboard() {
 
       setUserId(user.uid);
       const cachedExpenses = getCached("expenses", user.uid);
+      const cachedIncome = getCached("income", user.uid);
 
       if (cachedExpenses) {
         setExpenses(cachedExpenses);
         setLoading(false);
+      }
+      if (cachedIncome) {
+        setIncomes(cachedIncome);
       }
 
       const snapshot = await getDocs(collection(db, user.uid));
@@ -54,9 +66,17 @@ export default function Dashboard() {
         .filter((item) => !item.id.startsWith("earnings-"))
         .map((item) => ({ id: item.id, ...item.data() }));
 
+      let incomeData = cachedIncome || [];
+      try {
+        incomeData = await loadIncomesWithMigration(user.uid);
+      } catch (error) {
+        console.error("Error loading income for cash flow:", error);
+      }
+
       if (active) {
         setExpenses(data);
         setCached("expenses", user.uid, data);
+        setIncomes(incomeData);
         setLoading(false);
       }
     });
@@ -88,6 +108,17 @@ export default function Dashboard() {
     () => getAggregatedCategoryTotals(expensesByMonth, activeMonthKeys),
     [expensesByMonth, activeMonthKeys]
   );
+
+  // Cash Flow uses receivedDate / paidDate (or inclusionDate fallback), NOT incomePeriod.
+  const cashFlowPeriod =
+    selectedYear !== "All" && selectedMonth !== "All"
+      ? `${selectedYear}-${selectedMonth}`
+      : null;
+  const cashIn = cashFlowPeriod ? getCashReceived(incomes, cashFlowPeriod) : 0;
+  const cashOut = cashFlowPeriod ? getCashOut(expenses, cashFlowPeriod) : 0;
+  const netCash = cashFlowPeriod
+    ? getNetCashFlow(incomes, expenses, cashFlowPeriod)
+    : 0;
 
   if (loading || categoriesLoading) {
     return <LoadingComponent variant="dashboard" />;
@@ -157,6 +188,29 @@ export default function Dashboard() {
         <span>Total spent</span>
         <strong>{formatCurrency(monthTotal)}</strong>
       </div>
+
+      {cashFlowPeriod && (
+        <section className={styles.cashFlowCard}>
+          <h2>Cash Flow</h2>
+          <p className={styles.cashFlowPeriod}>{formatPeriodLabel(cashFlowPeriod)}</p>
+          <p>
+            Money In: <strong>{formatCurrency(cashIn)}</strong>
+          </p>
+          <p>
+            Money Out: <strong>{formatCurrency(cashOut)}</strong>
+          </p>
+          <p>
+            Net Cash Flow:{" "}
+            <strong className={netCash < 0 ? styles.negative : undefined}>
+              {netCash >= 0 ? "+" : ""}
+              {formatCurrency(netCash)}
+            </strong>
+          </p>
+          <p className={styles.cashFlowHint}>
+            Based on received dates for income and payment dates for expenses — not the same as Earnings.
+          </p>
+        </section>
+      )}
 
       <section className={styles.section}>
         <h2>By category</h2>

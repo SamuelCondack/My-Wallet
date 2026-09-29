@@ -6,6 +6,7 @@ import './Global/global.scss'
 import NewRegister from './pages/NewRegister/NewRegister.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Expenses from './pages/Expenses/Expenses.jsx'
+import Income from './pages/Income/Income.jsx'
 import Dashboard from './pages/Dashboard/Dashboard.jsx'
 import Categories from './pages/Categories/Categories.jsx'
 import Register from './pages/Register'
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
       {
         path: 'expenses',
         element: <Expenses/>
+      },
+      {
+        path: 'income',
+        element: <Income/>
       },
     ]
   }

@@ -1,12 +1,12 @@
 import styles from "./Expenses.module.scss";
 import { auth, db } from "../../../config/firebase";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getDocs,
   collection,
   doc,
   deleteDoc,
-  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import bin from "../../assets/bin.png";
@@ -14,15 +14,27 @@ import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal"
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaPencilAlt, FaPause, FaPlay } from "react-icons/fa";
+import { FaCheck, FaCopy, FaPencilAlt, FaPause, FaPlay } from "react-icons/fa";
 import { FaRegCalendar } from "react-icons/fa6";
 import EditModal from "../../modals/EditModal/EditModal";
-import { getCategoryMap } from "../../services/categoriesService";
+import {
+  getCategoryMap,
+  getExpenseCategories,
+} from "../../services/categoriesService";
 import { useCategories } from "../../hooks/useCategories";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 import { getCached, setCached } from "../../utils/dataCache";
+import { matchesExpenseValueQuery } from "../../utils/finance";
+import { loadIncomesWithMigration } from "../../services/incomeService";
+import {
+  getEarnedIncome,
+  getNetEarnings,
+  getPendingIncome,
+  getReceivedIncomeForFinancialPeriod,
+} from "../../utils/incomeCalculations";
 
 export default function Expenses() {
+  const navigate = useNavigate();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
@@ -36,11 +48,8 @@ export default function Expenses() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
-  const [earnings, setEarnings] = useState({});
-  const [isEarningsLoading, setIsEarningsLoading] = useState(true);
-  const [showEarningsModal, setShowEarningsModal] = useState(false);
-  const [currentMonthKey, setCurrentMonthKey] = useState(null);
-  const [isEditingEarnings, setIsEditingEarnings] = useState({});
+  const [incomes, setIncomes] = useState([]);
+  const [isIncomeLoading, setIsIncomeLoading] = useState(true);
   const [expenseToDeleteName, setExpenseToDeleteName] = useState("");
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -57,12 +66,24 @@ export default function Expenses() {
     pauseDate: "",
     categoryId: DEFAULT_CATEGORY_ID,
   });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const { categories } = useCategories(userId);
+  const expenseCategories = getExpenseCategories(categories);
   const categoriesMap = getCategoryMap(categories);
   const [pressedExpenseKey, setPressedExpenseKey] = useState(null);
   const activeTouchIdRef = useRef(null);
+  const categoryHintValueRef = useRef(0);
+  const [copiedMetric, setCopiedMetric] = useState(null);
+  const copyTimeoutsRef = useRef([]);
+  const earnedCopyPhaseRef = useRef("copy");
+
+  useEffect(() => {
+    return () => {
+      copyTimeoutsRef.current.forEach((id) => clearTimeout(id));
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,8 +137,8 @@ export default function Expenses() {
       if (!user) {
         setUserId(null);
         setExpensesList([]);
-        setEarnings({});
-        setIsEarningsLoading(true);
+        setIncomes([]);
+        setIsIncomeLoading(true);
         setIsLoading(false);
       }
     });
@@ -152,38 +173,33 @@ export default function Expenses() {
   }, []);
 
   useEffect(() => {
-    const loadEarningsFromFirestore = async () => {
+    const loadIncomeFromFirestore = async () => {
       if (!userId) {
-        setIsEarningsLoading(true);
+        setIsIncomeLoading(true);
         return;
       }
 
-      const cachedEarnings = getCached("earnings", userId);
+      const cachedIncome = getCached("income", userId);
 
-      if (cachedEarnings) {
-        setEarnings(cachedEarnings);
-        setIsEarningsLoading(false);
+      if (cachedIncome) {
+        setIncomes(cachedIncome);
+        setIsIncomeLoading(false);
       } else {
-        setIsEarningsLoading(true);
+        setIsIncomeLoading(true);
       }
 
       try {
-        const earningsCollectionRef = collection(db, `users/${userId}/earnings`);
-        const earningsSnapshot = await getDocs(earningsCollectionRef);
-        const earningsData = {};
-        earningsSnapshot.forEach((doc) => {
-          earningsData[doc.id] = doc.data().value.toFixed(2);
-        });
-        setEarnings(earningsData);
-        setCached("earnings", userId, earningsData);
+        const data = await loadIncomesWithMigration(userId);
+        setIncomes(data);
       } catch (error) {
-        console.error("Error loading earnings:", error);
+        console.error("Error loading income:", error);
+        toast.error("Failed to load income summary.");
       } finally {
-        setIsEarningsLoading(false);
+        setIsIncomeLoading(false);
       }
     };
 
-    loadEarningsFromFirestore();
+    loadIncomeFromFirestore();
   }, [userId]);
 
   useEffect(() => {
@@ -191,12 +207,6 @@ export default function Expenses() {
       setCached("expenses", userId, expensesList);
     }
   }, [userId, expensesList, isLoading]);
-
-  useEffect(() => {
-    if (userId && !isEarningsLoading) {
-      setCached("earnings", userId, earnings);
-    }
-  }, [userId, earnings, isEarningsLoading]);
 
   useEffect(() => {
     const handleTouchEnd = (event) => {
@@ -277,18 +287,6 @@ export default function Expenses() {
       toast.success("Expense deleted!");
     } catch (error) {
       console.log(error);
-    }
-  };
-
-  const saveEarningsToFirestore = async (monthKey, value) => {
-    try {
-      const numericValue = isNaN(parseFloat(value)) ? 0 : parseFloat(value);
-
-      const earningsDoc = doc(db, `users/${userId}/earnings`, monthKey);
-      await setDoc(earningsDoc, { value: numericValue });
-    } catch (error) {
-      console.error("Error saving earnings:", error);
-      toast.error("Failed to save earnings.");
     }
   };
 
@@ -450,9 +448,9 @@ export default function Expenses() {
     .toString()
     .padStart(2, "0")}`;
 
-  if (currentMonthKey) {
-    if (!expensesByMonth[currentMonthKey]) {
-      expensesByMonth[currentMonthKey] = [];
+  if (presentMonth) {
+    if (!expensesByMonth[presentMonth]) {
+      expensesByMonth[presentMonth] = [];
     }
   }
   if (nextMonthKey) {
@@ -865,7 +863,7 @@ export default function Expenses() {
     )
   );
 
-  const categoriesInFilter = categories.filter((category) =>
+  const categoriesInFilter = expenseCategories.filter((category) =>
     categoryIdsWithExpenses.has(category.id)
   );
 
@@ -885,11 +883,18 @@ export default function Expenses() {
       categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.name?.toLowerCase() ??
       "";
 
-    return (
+    const matchesText =
       name.includes(normalizedSearchQuery) ||
       method.includes(normalizedSearchQuery) ||
-      category.includes(normalizedSearchQuery)
+      category.includes(normalizedSearchQuery);
+
+    // OR: text fields and (when query looks numeric) value prefix/exact match
+    const matchesValue = matchesExpenseValueQuery(
+      expense.value,
+      searchQuery.trim()
     );
+
+    return matchesText || matchesValue;
   };
 
   const matchesCategory = (expense) => {
@@ -910,123 +915,239 @@ export default function Expenses() {
     !hasActiveFilters ||
     filteredMonths.some(([, expenses]) => expenses.some(matchesFilters));
 
-  const renderEarningsInput = (monthKey) => {
-    if (isEarningsLoading) {
-      return (
-        <div className={styles.earningInputWrapper}>
-          <div
-            className={styles.earningsShimmer}
-            role="status"
-            aria-label="Loading earnings"
-          />
-        </div>
-      );
+  const goToIncome = (monthKey, status) => {
+    const [year, month] = monthKey.split("-");
+    const params = new URLSearchParams({ year, month });
+    if (status) {
+      params.set("status", status);
+    }
+    navigate(`/home/income?${params.toString()}`);
+  };
+
+  const clearCopyTimeouts = () => {
+    copyTimeoutsRef.current.forEach((id) => clearTimeout(id));
+    copyTimeoutsRef.current = [];
+  };
+
+  const copyMetricValue = async (metricKey, numericValue) => {
+    const plain = Number(numericValue).toFixed(2);
+    try {
+      await navigator.clipboard.writeText(plain);
+    } catch (error) {
+      console.error(error);
+      toast.error("Couldn't copy value.");
+      return;
     }
 
-    return (
-      <div className={styles.earningInputWrapper}>
-        <input
-          id={`earning-${monthKey}`}
-          type="text"
-          className={
-            isEditingEarnings[monthKey]
-              ? `${styles.earningInput} ${styles.editing}`
-              : `${styles.earningInput} ${styles.readOnly}`
-          }
-          placeholder="Enter your earnings"
-          value={
-            isEditingEarnings[monthKey]
-              ? earnings[monthKey] || ""
-              : earnings[monthKey]
-              ? `$${earnings[monthKey]}`
-              : "$0.00"
-          }
-          readOnly={!isEditingEarnings[monthKey]}
-          disabled={!isEditingEarnings[monthKey]}
-          onChange={(e) => {
-            const value = e.target.value.replace(/[^0-9.]/g, "");
-            setEarnings((prev) => ({
-              ...prev,
-              [monthKey]: value,
-            }));
-          }}
-          onBlur={() => {
-            setIsEditingEarnings((prev) => ({
-              ...prev,
-              [monthKey]: false,
-            }));
-            saveEarningsToFirestore(currentMonthKey, earnings[currentMonthKey]);
-          }}
-        />
-        <button
-          className={styles.editButton}
-          onClick={() => {
-            setCurrentMonthKey(monthKey);
-            setShowEarningsModal(true);
-          }}
-        >
-          <FaPencilAlt className={styles.pencilIcon} />{" "}
-        </button>
-      </div>
+    const isEarnedMetric = metricKey.endsWith("-earned");
+    const checkDelay = isEarnedMetric ? 620 : 280;
+    const clearDelay = isEarnedMetric ? 1700 : 1400;
+
+    clearCopyTimeouts();
+    setCopiedMetric({ key: metricKey, phase: "copy" });
+
+    copyTimeoutsRef.current.push(
+      setTimeout(() => {
+        setCopiedMetric({ key: metricKey, phase: "check" });
+      }, checkDelay)
+    );
+    copyTimeoutsRef.current.push(
+      setTimeout(() => {
+        setCopiedMetric(null);
+      }, clearDelay)
     );
   };
 
-  const renderNetEarnings = (monthKey, totalSpendings) => {
-    if (isEarningsLoading) {
-      return (
-        <p className={styles.netEarnings}>
-          Net Earnings:{" "}
+  const renderCopyableMetric = ({
+    metricKey,
+    label,
+    numericValue,
+    displayValue,
+    className,
+    shineClass,
+    hideFeedback = false,
+  }) => {
+    const isActive = copiedMetric?.key === metricKey;
+    const phase = isActive ? copiedMetric.phase : null;
+
+    return (
+      <button
+        type="button"
+        className={`${styles.metricCopyRow} ${className || ""}`}
+        onClick={() => copyMetricValue(metricKey, numericValue)}
+        aria-label={`Copy ${label} value`}
+      >
+        {label}:{" "}
+        <b
+          className={`${styles.metricValue} ${
+            isActive ? `${styles.metricValueShine} ${shineClass || ""}` : ""
+          }`}
+        >
+          {displayValue}
+        </b>
+        {!hideFeedback && phase && (
           <span
-            className={styles.netEarningsShimmer}
-            role="status"
-            aria-label="Loading net earnings"
-          />
-        </p>
+            className={`${styles.metricCopyFeedback} ${
+              phase === "check" ? styles.metricCopyFeedbackDone : ""
+            }`}
+            aria-hidden="true"
+          >
+            {phase === "check" ? <FaCheck /> : <FaCopy />}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const renderIncomeSummary = (monthKey, totalSpendings) => {
+    if (isIncomeLoading) {
+      return (
+        <>
+          <p className={styles.summaryLine}>
+            Earned:{" "}
+            <span className={styles.netEarningsShimmer} role="status" aria-label="Loading" />
+          </p>
+          <p className={styles.summaryLine}>
+            Pending Income:{" "}
+            <span className={styles.netEarningsShimmer} role="status" aria-label="Loading" />
+          </p>
+          <p className={styles.summaryLine}>
+            Received:{" "}
+            <span className={styles.netEarningsShimmer} role="status" aria-label="Loading" />
+          </p>
+          <p className={styles.totalSpendings}>
+            Your Spendings: <b>-${Number(totalSpendings || 0).toFixed(2)}</b>
+          </p>
+          <p className={styles.netEarnings}>
+            Net Earnings:{" "}
+            <span className={styles.netEarningsShimmer} role="status" aria-label="Loading" />
+          </p>
+        </>
       );
     }
 
-    const netValue = Number(earnings[monthKey] || 0) - Number(totalSpendings || 0);
+    const earned = getEarnedIncome(incomes, monthKey);
+    const received = getReceivedIncomeForFinancialPeriod(incomes, monthKey);
+    const pending = getPendingIncome(incomes, monthKey);
+    const netValue = getNetEarnings(incomes, monthKey, totalSpendings);
+    const spendingsValue = Number(totalSpendings || 0);
+    const earnedMetricKey = `${monthKey}-earned`;
+    const isEarnedCopying = copiedMetric?.key === earnedMetricKey;
+    if (isEarnedCopying && copiedMetric.phase) {
+      earnedCopyPhaseRef.current = copiedMetric.phase;
+    }
 
     return (
-      <p
-        className={`${styles.netEarnings} ${
-          netValue < 0 ? styles.netEarningsNegative : ""
-        }`}
-      >
-        Net Earnings: <b>${netValue.toFixed(2)}</b>
-      </p>
+      <>
+        <div className={styles.earnedRow}>
+          {renderCopyableMetric({
+            metricKey: earnedMetricKey,
+            label: "Earned",
+            numericValue: earned,
+            displayValue: `$${earned.toFixed(2)}`,
+            className: styles.summaryEarned,
+            shineClass: styles.shineNeutral,
+            hideFeedback: true,
+          })}
+          <span
+            className={`${styles.earnedCopySlot} ${
+              isEarnedCopying ? styles.earnedCopySlotOpen : ""
+            }`}
+            aria-hidden="true"
+          >
+            <span
+              className={`${styles.earnedCopyIcon} ${
+                earnedCopyPhaseRef.current === "check"
+                  ? styles.earnedCopyIconDone
+                  : ""
+              }`}
+            >
+              {earnedCopyPhaseRef.current === "check" ? (
+                <FaCheck />
+              ) : (
+                <FaCopy />
+              )}
+            </span>
+          </span>
+          <button
+            type="button"
+            className={styles.earnedIncomeButton}
+            onClick={(event) => {
+              event.stopPropagation();
+              goToIncome(monthKey);
+            }}
+            aria-label="Open Income page"
+            title="Open Income"
+          >
+            <FaPencilAlt className={styles.pencilIcon} aria-hidden="true" />
+          </button>
+        </div>
+        {renderCopyableMetric({
+          metricKey: `${monthKey}-pending`,
+          label: "Pending Income",
+          numericValue: pending,
+          displayValue: `$${pending.toFixed(2)}`,
+          className:
+            pending > 0 ? styles.summaryPending : styles.summaryPendingZero,
+          shineClass: styles.shinePending,
+        })}
+        {renderCopyableMetric({
+          metricKey: `${monthKey}-received`,
+          label: "Received",
+          numericValue: received,
+          displayValue: `$${received.toFixed(2)}`,
+          className: styles.summaryReceived,
+          shineClass: styles.shineReceived,
+        })}
+        {renderCopyableMetric({
+          metricKey: `${monthKey}-spendings`,
+          label: "Your Spendings",
+          numericValue: spendingsValue,
+          displayValue: `-$${spendingsValue.toFixed(2)}`,
+          className: styles.totalSpendings,
+          shineClass: styles.shineNeutral,
+        })}
+        {renderCopyableMetric({
+          metricKey: `${monthKey}-net`,
+          label: "Net Earnings",
+          numericValue: netValue,
+          displayValue: `$${netValue.toFixed(2)}`,
+          className: `${styles.netEarnings} ${
+            netValue < 0 ? styles.netEarningsNegative : ""
+          }`,
+          shineClass:
+            netValue < 0 ? styles.shineNegative : styles.shinePositive,
+        })}
+      </>
     );
   };
 
   const getMonthSpendingsTotal = (monthExpenses) =>
     monthExpenses.reduce((acc, cur) => acc + Number(cur.value), 0).toFixed(2);
 
-  const renderSpendingsSummary = (monthKey, monthExpenses, visibleExpenses) => {
-    const monthTotalSpendings = getMonthSpendingsTotal(monthExpenses);
-    const displayedSpendings = getMonthSpendingsTotal(visibleExpenses);
-    const isCategoryFiltered = effectiveSelectedCategory !== "All";
-    const categoryName =
-      categoriesMap[effectiveSelectedCategory]?.name || "Category";
+  const renderSpendingsSummary = (monthKey, monthExpenses) =>
+    renderIncomeSummary(monthKey, getMonthSpendingsTotal(monthExpenses));
 
-    return (
-      <>
-        <p className={styles.totalSpendings}>
-          {isCategoryFiltered ? (
-            <>
-              Spendings in {categoryName}: <b>${displayedSpendings}</b>
-            </>
-          ) : (
-            <>
-              Your Spendings: <b>${displayedSpendings}</b>
-            </>
-          )}
-        </p>
-        {renderNetEarnings(
-          monthKey,
-          isCategoryFiltered ? monthTotalSpendings : displayedSpendings
-        )}
-      </>
-    );
+  const filteredCategorySpendings =
+    effectiveSelectedCategory === "All"
+      ? null
+      : filteredMonths
+          .flatMap(([, expenses]) => expenses)
+          .filter(
+            (expense) =>
+              (expense.categoryId || DEFAULT_CATEGORY_ID) ===
+              effectiveSelectedCategory
+          )
+          .reduce((sum, expense) => sum + Number(expense.value), 0);
+
+  // Keep last amount so exit animation still has a value to show.
+  if (filteredCategorySpendings !== null) {
+    categoryHintValueRef.current = filteredCategorySpendings;
+  }
+
+  const categoryHintTransition = {
+    duration: 0.34,
+    ease: [0.32, 0.72, 0, 1],
   };
 
   return (
@@ -1087,137 +1208,59 @@ export default function Expenses() {
                 })}
               </select>
             </div>
-            <div className={styles.filter}>
-              <label htmlFor="categoryFilter">Filter by Category: </label>
-              <select
-                id="categoryFilter"
-                value={effectiveSelectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className={styles.selectFilters}
-              >
-                <option value="All">All</option>
-                {categoriesInFilter.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.icon} {category.name}
-                  </option>
-                ))}
-              </select>
+            <div
+              className={`${styles.filter} ${styles.categoryFilter} ${
+                filteredCategorySpendings !== null
+                  ? styles.categoryFilterWithHint
+                  : ""
+              }`}
+            >
+              <label htmlFor="categoryFilter">Filter by Category:</label>
+              <div className={styles.categorySelectWrap}>
+                <select
+                  id="categoryFilter"
+                  value={effectiveSelectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className={`${styles.selectFilters} ${styles.categorySelect}`}
+                >
+                  <option value="All">All</option>
+                  {categoriesInFilter.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.icon} {category.name}
+                    </option>
+                  ))}
+                </select>
+                <AnimatePresence>
+                  {filteredCategorySpendings !== null ? (
+                    <motion.div
+                      key="category-filter-hint"
+                      className={styles.categoryFilterHintWrap}
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={categoryHintTransition}
+                    >
+                      <span
+                        className={styles.categoryFilterHint}
+                        title="Temporary total for the selected category filter"
+                      >
+                        −${categoryHintValueRef.current.toFixed(2)}
+                      </span>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
-
-          {hasActiveFilters && !hasVisibleResults && (
-            <p className={styles.noSearchResults}>
-              {normalizedSearchQuery && effectiveSelectedCategory !== "All"
-                ? `No expenses found for "${searchQuery.trim()}" in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`
-                : normalizedSearchQuery
-                ? `No expenses found for "${searchQuery.trim()}".`
-                : `No expenses found in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`}
-            </p>
-          )}
 
           {filteredMonths
             .map(([monthKey, expenses], monthIndex) => {
               const [year, month] = monthKey.split("-");
               const visibleExpenses = expenses.filter(matchesFilters);
 
-              if (hasActiveFilters && visibleExpenses.length === 0) {
-                return null;
-              }
-
-              // Garantir que o mês seja exibido mesmo sem despesas
-              if (expenses.length === 0) {
-                return (
-                  <div key={monthKey}>
-                    <h3 className={styles.month}>
-                      {new Date(year, month - 1, 1).toLocaleString("default", {
-                        month: "long",
-                      })}{" "}
-                      {year}
-                    </h3>
-                    <div className={styles.monthSummary}>
-                    <div className={styles.earningContainer}>
-                      <label
-                        htmlFor={`earning-${monthKey}`}
-                        className={styles.earningLabel}
-                      >
-                        Earnings:
-                      </label>
-                      {renderEarningsInput(monthKey)}
-                    </div>
-                    {renderSpendingsSummary(monthKey, expenses, visibleExpenses)}
-                    {monthIndex === 0 && (
-                      <div className={styles.searchContainer}>
-                        <input
-                          type="search"
-                          placeholder="Search expenses..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className={styles.searchInput}
-                          aria-label="Search expenses"
-                          autoComplete="off"
-                          enterKeyHint="search"
-                        />
-                        {searchQuery && (
-                          <button
-                            type="button"
-                            className={styles.searchClearButton}
-                            onClick={() => setSearchQuery("")}
-                            aria-label="Clear search"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    </div>
-                  </div>
-                );
-              }
-
-              return (
-                <div key={monthKey}>
-                  <h3 className={styles.month}>
-                    {new Date(year, month - 1, 1).toLocaleString("default", {
-                      month: "long",
-                    })}{" "}
-                    {year}
-                  </h3>
-
-                  <div className={styles.monthSummary}>
-                  <div className={styles.earningContainer}>
-                    <label
-                      htmlFor={`earning-${monthKey}`}
-                      className={styles.earningLabel}
-                    >
-                      Earnings:
-                    </label>
-                    {renderEarningsInput(monthKey)}
-                    {!isEarningsLoading && showEarningsModal && (
-                      <ConfirmationModal
-                        isOpen={showEarningsModal}
-                        onRequestClose={() => setShowEarningsModal(false)}
-                        onConfirm={() => {
-                          setEarnings((prev) => ({
-                            ...prev,
-                            [currentMonthKey]: "",
-                          }));
-                          setIsEditingEarnings((prev) => ({
-                            ...prev,
-                            [currentMonthKey]: true,
-                          }));
-                          setShowEarningsModal(false);
-                        }}
-                        title="Edit Earnings"
-                        message="Are you sure you want to edit the earnings for this month"
-                        identifier={currentMonthKey}
-                        afterMessage={"?"}
-                      />
-                    )}
-                  </div>
-
-                  {renderSpendingsSummary(monthKey, expenses, visibleExpenses)}
-
-                  {monthIndex === 0 && (
+              const searchBar =
+                monthIndex === 0 ? (
+                  <>
                     <div className={styles.searchContainer}>
                       <input
                         type="search"
@@ -1240,9 +1283,51 @@ export default function Expenses() {
                         </button>
                       )}
                     </div>
-                  )}
+                    {hasActiveFilters && !hasVisibleResults && (
+                      <p className={styles.noSearchResults}>
+                        {normalizedSearchQuery && effectiveSelectedCategory !== "All"
+                          ? `No expenses found for "${searchQuery.trim()}" in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`
+                          : normalizedSearchQuery
+                          ? `No expenses found for "${searchQuery.trim()}".`
+                          : `No expenses found in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`}
+                      </p>
+                    )}
+                  </>
+                ) : null;
+
+              // Garantir que o mês seja exibido mesmo sem despesas
+              if (expenses.length === 0) {
+                return (
+                  <div key={monthKey}>
+                    <h3 className={styles.month}>
+                      {new Date(year, month - 1, 1).toLocaleString("default", {
+                        month: "long",
+                      })}{" "}
+                      {year}
+                    </h3>
+                    <div className={styles.monthSummary}>
+                      {renderSpendingsSummary(monthKey, expenses)}
+                      {searchBar}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={monthKey}>
+                  <h3 className={styles.month}>
+                    {new Date(year, month - 1, 1).toLocaleString("default", {
+                      month: "long",
+                    })}{" "}
+                    {year}
+                  </h3>
+
+                  <div className={styles.monthSummary}>
+                    {renderSpendingsSummary(monthKey, expenses)}
+                    {searchBar}
                   </div>
 
+                  {visibleExpenses.length > 0 && (
                   <div className={styles.expensesContainer}>
                     <AnimatePresence initial={false} mode="popLayout">
                       {visibleExpenses
@@ -1362,6 +1447,7 @@ export default function Expenses() {
                       />
                     </AnimatePresence>
                   </div>
+                  )}
                 </div>
               );
             })}
@@ -1413,7 +1499,7 @@ export default function Expenses() {
             editingExpense={editingExpense}
             editFormData={editFormData}
             setEditFormData={setEditFormData}
-            categories={categories}
+            categories={expenseCategories}
           />
         )}
       </div>

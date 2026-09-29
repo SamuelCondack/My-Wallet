@@ -61,6 +61,44 @@ label {
     margin-top: 15px;
 }
 
+.typeToggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.typeButton {
+    border: 1px solid #000;
+    background: #fff;
+    color: $defaultBlue;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.typeButtonActive {
+    background: $defaultBlue;
+    color: #fff;
+    border-color: $defaultBlue;
+}
+
+.fieldHint {
+    align-self: flex-start;
+    margin: 4px 0 0 8px;
+    font-size: 12px;
+    color: #666;
+}
+
+.checkboxRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
 .inclusionDate {
     height: 100%;
     text-align: unset !important;

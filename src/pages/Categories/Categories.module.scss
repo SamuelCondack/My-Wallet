@@ -10,6 +10,29 @@
   margin-top: -8px;
 }
 
+.typeToggle {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.typeButton {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #3e92eb;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.typeButtonActive {
+  background: #3e92eb;
+  color: #fff;
+  border-color: #3e92eb;
+}
+
 .form {
   display: grid;
   grid-template-columns: 1fr 80px 72px auto auto;

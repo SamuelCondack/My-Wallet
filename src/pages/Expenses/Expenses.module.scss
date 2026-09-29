@@ -296,6 +296,7 @@ body {
 
     .filterContainer {
         flex-direction: column;
+        align-items: center;
     }
 
     .expensesSection {
@@ -327,14 +328,339 @@ body {
 
     .earningContainer,
     .totalSpendings,
-    .netEarnings {
+    .netEarnings,
+    .summaryLine,
+    .metricCopyRow {
         margin-left: 0;
+    }
+}
+
+.summaryLine {
+    margin: 4px 0 0;
+    text-align: left;
+    color: #000;
+}
+
+.metricCopyRow {
+    position: relative;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 4px 0 0;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-weight: inherit;
+    line-height: 1.35;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.metricValue {
+    font-weight: 700;
+    color: inherit;
+}
+
+.metricValueShine {
+    border-radius: 2px;
+    animation: metricValueFlash 0.65s ease-out;
+}
+
+.shineNeutral {
+    --shine-glow: rgba(0, 0, 0, 0.18);
+}
+
+.shineReceived {
+    --shine-glow: rgba(62, 146, 235, 0.55);
+}
+
+.shinePending {
+    --shine-glow: rgba(201, 162, 39, 0.55);
+}
+
+.shinePositive {
+    --shine-glow: rgba(0, 180, 80, 0.45);
+}
+
+.shineNegative {
+    --shine-glow: rgba(220, 50, 50, 0.45);
+}
+
+@keyframes metricValueFlash {
+    0% {
+        text-shadow: none;
+        filter: brightness(1);
+    }
+    35% {
+        text-shadow: 0 0 10px var(--shine-glow, rgba(0, 0, 0, 0.2));
+        filter: brightness(1.25);
+    }
+    100% {
+        text-shadow: none;
+        filter: brightness(1);
+    }
+}
+
+.metricCopyFeedback {
+    position: absolute;
+    left: calc(100% + 6px);
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #9a9a9a;
+    pointer-events: none;
+    animation: metricCopyPop 0.22s ease-out;
+}
+
+.metricCopyFeedbackDone {
+    color: #2f9e44;
+    animation: metricCopyCheck 0.22s ease-out;
+}
+
+@keyframes metricCopyPop {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) scale(0.7);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+@keyframes metricCopyCheck {
+    from {
+        opacity: 0.5;
+        transform: translateY(-50%) scale(0.85);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+.summaryEarned {
+    color: #000;
+}
+
+.earnedRow {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 4px 0 0;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.earnedRow .metricCopyRow {
+    margin: 0;
+}
+
+.earnedCopySlot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0;
+    margin: 0;
+    overflow: hidden;
+    opacity: 0;
+    filter: blur(5px);
+    flex-shrink: 0;
+    pointer-events: none;
+    transition:
+        width 0.3s ease,
+        margin 0.3s ease,
+        opacity 0.3s ease,
+        filter 0.3s ease;
+}
+
+.earnedCopySlotOpen {
+    width: 14px;
+    margin-left: 6px;
+    opacity: 1;
+    filter: blur(0);
+}
+
+.earnedCopyIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #9a9a9a;
+    line-height: 1;
+}
+
+.earnedCopyIconDone {
+    color: #2f9e44;
+}
+
+.earnedIncomeButton {
+    background: none;
+    border: none;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0 0 0 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    color: #8a8a8a;
+    transition:
+        transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+    @media (hover: hover) {
+        &:hover {
+            transform: scale(1.22);
+            color: #3e92eb;
+        }
+    }
+
+    &:focus-visible {
+        transform: scale(1.22);
+        color: #3e92eb;
+    }
+
+    &:active {
+        transform: scale(1.08);
+        transition-duration: 0.12s;
+    }
+}
+
+.pencilIcon {
+    font-size: 12px;
+    color: inherit;
+    pointer-events: none;
+    display: block;
+}
+
+.summaryReceived {
+    color: $defaultBlue;
+
+    .metricValue {
+        color: $defaultBlue;
+    }
+}
+
+.summaryPending {
+    color: #c9a227;
+
+    .metricValue {
+        color: #c9a227;
+    }
+}
+
+.summaryPendingZero {
+    color: #888;
+
+    .metricValue {
+        color: #888;
     }
 }
 
 .totalSpendings {
     margin: 4px 0 0;
     text-align: left;
+    color: #000;
+}
+
+.netEarnings {
+    font-size: 14px;
+    font-weight: bold;
+    color: #007b00;
+    margin: 4px 0 0;
+}
+
+.netEarningsNegative {
+    color: red;
+}
+
+.filteredSpendings {
+    margin: 4px 0 0;
+    text-align: left;
+    color: #6b7280;
+    font-size: 13px;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.filterBadge {
+    display: inline-block;
+    font-style: normal;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: $defaultBlue;
+    background: #e8f3fc;
+    border: 1px solid #c5dff5;
+    border-radius: 999px;
+    padding: 2px 7px;
+    line-height: 1.2;
+}
+
+.filter {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    color: #000;
+    font-size: 13px;
+}
+
+.categoryFilter {
+    /* Same alignment as Year/Month — do not override align-items. */
+    position: relative;
+    transition: padding-bottom 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.categoryFilterWithHint {
+    padding-bottom: 26px;
+}
+
+.categorySelectWrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.categorySelect {
+    min-width: 148px;
+    box-sizing: border-box;
+}
+
+.categoryFilterHintWrap {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.categoryFilterHint {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: $defaultBlue;
+    background: #e8f3fc;
+    border-radius: 999px;
+    padding: 3px 8px;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .scrollToTopButton {
@@ -510,9 +836,9 @@ body {
 }
 
 .noSearchResults {
-    text-align: center;
+    text-align: left;
     color: #666;
-    margin: 24px 0;
+    margin: 0 0 12px;
     font-size: 15px;
 }
 
@@ -533,19 +859,6 @@ body {
     border: none;
     padding: 5px;
     -webkit-tap-highlight-color: transparent;
-}
-
-.pencilIcon {
-    font-size: 20px;
-    color: #000;
-    transition: transform 0.2s;
-    color: #888888;
-    cursor: pointer;
-
-    &:hover {
-        transform: scale(1.1);
-        color: #007bff;
-    }
 }
 
 .modalOverlay {

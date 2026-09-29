@@ -2,6 +2,7 @@ const stores = {
   expenses: new Map(),
   categories: new Map(),
   earnings: new Map(),
+  income: new Map(),
 };
 
 export function getCached(store, userId) {

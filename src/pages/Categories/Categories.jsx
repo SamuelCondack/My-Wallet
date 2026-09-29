@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import styles from "./Categories.module.scss";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
@@ -6,9 +6,12 @@ import { auth } from "../../../config/firebase";
 import { useCategories } from "../../hooks/useCategories";
 import {
   deleteCategory,
+  getExpenseCategories,
+  getIncomeCategories,
   isDefaultCategory,
   saveCategory,
 } from "../../services/categoriesService";
+import { CATEGORY_TYPE } from "../../constants/defaultCategories";
 import { toast } from "react-toastify";
 
 const EMPTY_FORM = { name: "", color: "#3e92eb", icon: "📦" };
@@ -20,6 +23,7 @@ export default function Categories() {
   const [editingId, setEditingId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [activeType, setActiveType] = useState(CATEGORY_TYPE.EXPENSE);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -28,6 +32,14 @@ export default function Categories() {
 
     return unsubscribe;
   }, []);
+
+  const visibleCategories = useMemo(
+    () =>
+      activeType === CATEGORY_TYPE.INCOME
+        ? getIncomeCategories(categories)
+        : getExpenseCategories(categories),
+    [categories, activeType]
+  );
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
@@ -47,12 +59,19 @@ export default function Categories() {
       return;
     }
 
-    const id = editingId ?? form.name.trim().toLowerCase().replace(/\s+/g, "-");
+    const id =
+      editingId ??
+      `${activeType === CATEGORY_TYPE.INCOME ? "income-" : ""}${form.name
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")}`;
+
     const category = {
       id,
       name: form.name.trim(),
       color: form.color,
       icon: form.icon,
+      type: activeType,
       order: editingId
         ? categories.find((item) => item.id === editingId)?.order ?? categories.length
         : categories.length,
@@ -87,6 +106,7 @@ export default function Categories() {
       color: category.color,
       icon: category.icon,
     });
+    setActiveType(category.type || CATEGORY_TYPE.EXPENSE);
   };
 
   const handleDelete = async (category) => {
@@ -128,7 +148,36 @@ export default function Categories() {
   return (
     <div className={styles.page}>
       <h1>Categories</h1>
-      <p className={styles.subtitle}>Choose which categories appear when registering expenses</p>
+      <p className={styles.subtitle}>
+        Manage expense and income categories separately
+      </p>
+
+      <div className={styles.typeToggle}>
+        <button
+          type="button"
+          className={`${styles.typeButton} ${
+            activeType === CATEGORY_TYPE.EXPENSE ? styles.typeButtonActive : ""
+          }`}
+          onClick={() => {
+            setActiveType(CATEGORY_TYPE.EXPENSE);
+            resetForm();
+          }}
+        >
+          Expense
+        </button>
+        <button
+          type="button"
+          className={`${styles.typeButton} ${
+            activeType === CATEGORY_TYPE.INCOME ? styles.typeButtonActive : ""
+          }`}
+          onClick={() => {
+            setActiveType(CATEGORY_TYPE.INCOME);
+            resetForm();
+          }}
+        >
+          Income
+        </button>
+      </div>
 
       <form className={styles.form} onSubmit={handleSubmit}>
         <input
@@ -165,7 +214,7 @@ export default function Categories() {
       </form>
 
       <div className={styles.grid}>
-        {categories.map((category) => (
+        {visibleCategories.map((category) => (
           <article key={category.id} className={styles.card}>
             <span className={styles.icon} style={{ backgroundColor: category.color }}>
               {category.icon}

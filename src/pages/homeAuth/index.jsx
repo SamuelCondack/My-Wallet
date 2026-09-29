@@ -1,7 +1,7 @@
 import walletIcon from "../../assets/WalletIcon.png";
 import styles from "./styles.module.scss";
 import { auth } from "../../../config/firebase";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
@@ -57,6 +57,9 @@ function HomeAuth() {
     }
   };
 
+  const navClassName = ({ isActive }) =>
+    `${styles.menuLinks} ${isActive ? styles.menuLinkActive : ""}`;
+
   const menuContent = (
     <>
       {isMobile && (
@@ -71,24 +74,27 @@ function HomeAuth() {
         </button>
       )}
 
-      <Link to="/home/expenses" onClick={handleNavClick} className={styles.iconDiv}>
+      <NavLink to="/home/expenses" onClick={handleNavClick} className={styles.iconDiv}>
         <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
         <p className={styles.namep}>MyWallet</p>
-      </Link>
+      </NavLink>
 
       <ul className={styles.options}>
-        <Link to="/home/dashboard" onClick={handleNavClick} className={styles.menuLinks}>
-          Dashboard
-        </Link>
-        <Link to="/home/expenses" onClick={handleNavClick} className={styles.menuLinks}>
+        <NavLink to="/home/expenses" onClick={handleNavClick} className={navClassName}>
           Expenses
-        </Link>
-        <Link to="/home/newregister" onClick={handleNavClick} className={styles.menuLinks}>
+        </NavLink>
+        <NavLink to="/home/income" onClick={handleNavClick} className={navClassName}>
+          Income
+        </NavLink>
+        <NavLink to="/home/newregister" onClick={handleNavClick} className={navClassName}>
           New Register
-        </Link>
-        <Link to="/home/categories" onClick={handleNavClick} className={styles.menuLinks}>
+        </NavLink>
+        <NavLink to="/home/dashboard" onClick={handleNavClick} className={navClassName}>
+          Dashboard
+        </NavLink>
+        <NavLink to="/home/categories" onClick={handleNavClick} className={navClassName}>
           Categories
-        </Link>
+        </NavLink>
         <button type="button" onClick={logout} className={styles.logoutBtn}>
           logout
         </button>
