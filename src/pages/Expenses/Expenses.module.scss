@@ -668,13 +668,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    font-weight: 700;
     position: fixed;
     bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     left: calc(10px + env(safe-area-inset-left, 0px));
-    background-color: #007bff;
-    color: white;
-    border: none;
+    color: #111;
+    border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: 50%;
     width: 44px;
     height: 44px;
@@ -682,13 +681,20 @@ body {
     min-height: 44px;
     font-size: 18px;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     z-index: 2;
     -webkit-tap-highlight-color: transparent;
     will-change: transform, opacity;
+    background: rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    box-shadow:
+      0 8px 24px rgba(15, 23, 42, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.04);
 
     &:hover {
-        background-color: #0056b3;
+        background: rgba(255, 255, 255, 0.55);
+        color: #000;
     }
 }
 

@@ -5,6 +5,7 @@ import styles from "./IncomeModal.module.scss";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import {
   dateInputToPeriod,
+  formatDisplayDate,
   formatPeriodLabel,
   INCOME_STATUS,
   periodToDateInput,
@@ -236,7 +237,7 @@ export default function IncomeModal({
                 Income Period:{" "}
                 {formatPeriodLabel(dateInputToPeriod(form.incomePeriodDate))}
               </p>
-              <p>Expected: {form.expectedDate}</p>
+              <p>Expected: {formatDisplayDate(form.expectedDate)}</p>
             </div>
           )}
 
@@ -278,7 +279,7 @@ export default function IncomeModal({
               {isSubmitting
                 ? "Saving..."
                 : isConfirmMode
-                ? "Confirm received"
+                ? "Confirm"
                 : mode === "edit"
                 ? "Edit"
                 : "Add"}

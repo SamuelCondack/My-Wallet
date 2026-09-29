@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [simulatedMonthly, setSimulatedMonthly] = useState(null);
   const [simulateInput, setSimulateInput] = useState("");
+  const [simulateFocused, setSimulateFocused] = useState(false);
 
   const { categories, loading: categoriesLoading } = useCategories(userId);
 
@@ -174,12 +175,17 @@ export default function Dashboard() {
   }, [monthPeriod, selectedMonth, selectedYear, activeMonthlySurplus]);
 
   const applySimulation = (raw) => {
-    const parsed = Number(String(raw).replace(",", "."));
+    const trimmed = String(raw).trim();
+    if (trimmed === "" || trimmed === "-" || trimmed === "." || trimmed === "-.") {
+      return false;
+    }
+    const parsed = Number(trimmed.replace(",", "."));
     if (Number.isNaN(parsed)) {
-      return;
+      return false;
     }
     setSimulatedMonthly(parsed);
     setSimulateInput(parsed.toFixed(2));
+    return true;
   };
 
   const resetSimulation = () => {
@@ -313,19 +319,39 @@ export default function Dashboard() {
                 inputMode="decimal"
                 className={styles.forecastInput}
                 value={
-                  simulateInput !== ""
+                  simulateFocused || simulateInput !== ""
                     ? simulateInput
                     : activeMonthlySurplus.toFixed(2)
                 }
+                onFocus={() => {
+                  setSimulateFocused(true);
+                  if (simulateInput === "") {
+                    setSimulateInput(
+                      Number(activeMonthlySurplus).toFixed(2)
+                    );
+                  }
+                }}
                 onChange={(e) => {
-                  setSimulateInput(e.target.value);
-                  const parsed = Number(String(e.target.value).replace(",", "."));
+                  const raw = e.target.value;
+                  setSimulateInput(raw);
+                  const trimmed = raw.trim();
+                  // Empty / in-progress typing must not collapse to 0.00
+                  if (
+                    trimmed === "" ||
+                    trimmed === "-" ||
+                    trimmed === "." ||
+                    trimmed === "-."
+                  ) {
+                    return;
+                  }
+                  const parsed = Number(trimmed.replace(",", "."));
                   if (!Number.isNaN(parsed)) {
                     setSimulatedMonthly(parsed);
                   }
                 }}
                 onBlur={() => {
-                  if (simulateInput === "") {
+                  setSimulateFocused(false);
+                  if (simulateInput.trim() === "") {
                     resetSimulation();
                     return;
                   }

@@ -127,11 +127,28 @@ export function formatPeriodLabel(period) {
 }
 
 export function formatDisplayDate(dateValue) {
-  if (!dateValue || !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-    return dateValue || "";
+  if (!dateValue) {
+    return "";
   }
-  const [year, month, day] = dateValue.split("-");
-  return `${month}/${day}/${year}`;
+  const raw = String(dateValue).trim();
+  // YYYY-MM-DD (with optional time)
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return `${month}/${day}/${year}`;
+  }
+  // Already MM/DD/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
+    return raw;
+  }
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    const month = String(parsed.getMonth() + 1).padStart(2, "0");
+    const day = String(parsed.getDate()).padStart(2, "0");
+    const year = parsed.getFullYear();
+    return `${month}/${day}/${year}`;
+  }
+  return raw;
 }
 
 /** Calendar input value for an incomePeriod (YYYY-MM → YYYY-MM-01). */

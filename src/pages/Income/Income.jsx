@@ -512,7 +512,7 @@ export default function Income() {
                 className={styles.confirmButton}
                 onClick={() => openConfirm(income)}
               >
-                Confirm received
+                Confirm
               </button>
             ) : (
               <span />

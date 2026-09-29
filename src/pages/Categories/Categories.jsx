@@ -604,19 +604,33 @@ export default function Categories() {
                       maxLength={4}
                       disabled={isSubmitting}
                     />
-                    <input
-                      type="color"
-                      className={styles.modalColor}
-                      value={form.color}
-                      onChange={(e) =>
-                        setForm((current) => ({
-                          ...current,
-                          color: e.target.value,
-                        }))
-                      }
-                      disabled={isSubmitting}
-                      aria-label="Category color"
-                    />
+                    <label
+                      className={styles.mobileColorPicker}
+                      title="Category color"
+                    >
+                      <span
+                        className={styles.mobileColorPreview}
+                        style={{ backgroundColor: form.color || "#3e92eb" }}
+                        aria-hidden="true"
+                      />
+                      <input
+                        type="color"
+                        className={styles.mobileColorInput}
+                        value={
+                          /^#[0-9A-Fa-f]{6}$/.test(form.color)
+                            ? form.color
+                            : "#3e92eb"
+                        }
+                        onChange={(e) =>
+                          setForm((current) => ({
+                            ...current,
+                            color: e.target.value,
+                          }))
+                        }
+                        disabled={isSubmitting}
+                        aria-label="Category color"
+                      />
+                    </label>
                   </div>
                 )}
 
