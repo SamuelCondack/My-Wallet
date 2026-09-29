@@ -190,6 +190,9 @@ export default function Dashboard() {
       ? monthOverrides[key]
       : baseMonthlySurplus;
 
+  const amountsEqual = (a, b) =>
+    Math.abs(Number(a) - Number(b)) < 0.005;
+
   const savingsForecast = useMemo(() => {
     if (!monthPeriod) {
       return null;
@@ -208,11 +211,13 @@ export default function Dashboard() {
     const points = months.map((month, index) => {
       const amount = getMonthAmount(month.key);
       cumulative += amount;
+      // Only months with a stored override that differs from the default
+      const isCustom = monthOverrides[month.key] !== undefined;
       return {
         ...month,
         amount,
         cumulative,
-        isCustom: monthOverrides[month.key] !== undefined,
+        isCustom,
         isCurrent: index === 0,
         isLast: index === months.length - 1,
       };
@@ -230,7 +235,7 @@ export default function Dashboard() {
       maxAbs,
       isYearEnd: forecastHorizon === "yearEnd",
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- getMonthAmount depends on overrides/base
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     monthPeriod,
     selectedMonth,
@@ -271,23 +276,37 @@ export default function Dashboard() {
     setMonthEditInput(Number(point.amount).toFixed(2));
   };
 
+  const cancelMonthEdit = () => {
+    setEditingMonthKey(null);
+    setMonthEditInput("");
+  };
+
   const commitMonthEdit = () => {
     if (!editingMonthKey) {
       return;
     }
     const parsed = parseMoneyInput(monthEditInput);
     if (parsed === null) {
-      setEditingMonthKey(null);
-      setMonthEditInput("");
+      cancelMonthEdit();
       return;
     }
-    setMonthOverrides((current) => ({
-      ...current,
-      [editingMonthKey]: parsed,
-    }));
-    setEditingMonthKey(null);
-    setMonthEditInput("");
+
+    setMonthOverrides((current) => {
+      const next = { ...current };
+      // Only keep an override when it differs from the default monthly amount
+      if (amountsEqual(parsed, baseMonthlySurplus)) {
+        delete next[editingMonthKey];
+      } else {
+        next[editingMonthKey] = parsed;
+      }
+      return next;
+    });
+    cancelMonthEdit();
   };
+
+  const editingMonthLabel = savingsForecast?.points.find(
+    (point) => point.key === editingMonthKey
+  )?.label;
 
   const goToCategoryExpenses = (categoryId) => {
     window.scrollTo(0, 0);
@@ -502,6 +521,54 @@ export default function Dashboard() {
             </p>
           </div>
 
+          {editingMonthKey && (
+            <div className={styles.forecastEditDock}>
+              <label
+                htmlFor="forecastMonthEdit"
+                className={styles.forecastInputLabel}
+              >
+                {editingMonthLabel || "Month"} monthly save
+              </label>
+              <div className={styles.forecastEditDockRow}>
+                <span className={styles.forecastCurrency}>$</span>
+                <input
+                  id="forecastMonthEdit"
+                  ref={monthEditRef}
+                  type="text"
+                  inputMode="decimal"
+                  className={styles.forecastEditDockInput}
+                  value={monthEditInput}
+                  aria-label={`Edit ${editingMonthLabel || "month"} monthly save`}
+                  onChange={(e) => setMonthEditInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      commitMonthEdit();
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      cancelMonthEdit();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className={styles.forecastEditDoneBtn}
+                  onClick={commitMonthEdit}
+                >
+                  Done
+                </button>
+                <button
+                  type="button"
+                  className={styles.forecastEditCancelBtn}
+                  onClick={cancelMonthEdit}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           <div
             className={`${styles.forecastChart} ${
               savingsForecast.points.length > 6
@@ -523,42 +590,24 @@ export default function Dashboard() {
               const isEditing = editingMonthKey === point.key;
 
               return (
-                <div key={point.key} className={styles.forecastBarCol}>
-                  {isEditing ? (
-                    <input
-                      ref={monthEditRef}
-                      type="text"
-                      inputMode="decimal"
-                      className={styles.forecastMonthInput}
-                      value={monthEditInput}
-                      aria-label={`Edit ${point.label} monthly save`}
-                      onChange={(e) => setMonthEditInput(e.target.value)}
-                      onBlur={commitMonthEdit}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          commitMonthEdit();
-                        }
-                        if (e.key === "Escape") {
-                          setEditingMonthKey(null);
-                          setMonthEditInput("");
-                        }
-                      }}
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      className={`${styles.forecastValueBtn} ${
-                        point.isCustom ? styles.forecastValueCustom : ""
-                      }`}
-                      title={`Tap to edit ${point.label}: ${formatCurrency(
-                        point.amount
-                      )}/mo → ${formatCurrency(point.cumulative)} cumulative`}
-                      onClick={() => startEditMonth(point)}
-                    >
-                      {valueLabel}
-                    </button>
-                  )}
+                <div
+                  key={point.key}
+                  className={`${styles.forecastBarCol} ${
+                    isEditing ? styles.forecastBarColEditing : ""
+                  }`}
+                >
+                  <button
+                    type="button"
+                    className={`${styles.forecastValueBtn} ${
+                      point.isCustom ? styles.forecastValueCustom : ""
+                    }`}
+                    title={`Tap to edit ${point.label}: ${formatCurrency(
+                      point.amount
+                    )}/mo → ${formatCurrency(point.cumulative)} cumulative`}
+                    onClick={() => startEditMonth(point)}
+                  >
+                    {valueLabel}
+                  </button>
                   <button
                     type="button"
                     className={styles.forecastBarHit}
@@ -571,7 +620,7 @@ export default function Dashboard() {
                           isNegative ? styles.forecastBarNeg : ""
                         } ${point.isCurrent ? styles.forecastBarCurrent : ""} ${
                           point.isCustom ? styles.forecastBarCustom : ""
-                        }`}
+                        } ${isEditing ? styles.forecastBarEditing : ""}`}
                         style={{ height: `${heightPct}%` }}
                       />
                     </div>
