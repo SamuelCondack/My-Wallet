@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./Dashboard.module.scss";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
 import CategoryPieChart from "../../components/CategoryPieChart/CategoryPieChart";
@@ -23,7 +23,50 @@ import {
   getCashReceived,
 } from "../../utils/incomeCalculations";
 
+const HORIZON_OPTIONS = [
+  { value: "yearEnd", label: "Until Dec" },
+  { value: "3", label: "3 months" },
+  { value: "6", label: "6 months" },
+  { value: "12", label: "12 months" },
+];
+
+function buildForecastMonths(startYear, startMonth, horizon) {
+  const start = Number(startMonth);
+  const year = Number(startYear);
+  const count =
+    horizon === "yearEnd" ? 12 - start + 1 : Math.max(1, Number(horizon) || 1);
+
+  const months = [];
+  for (let i = 0; i < count; i += 1) {
+    const date = new Date(year, start - 1 + i, 1);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    months.push({
+      key: `${y}-${m}`,
+      label: date.toLocaleString("en-US", { month: "short" }),
+      showYear: y !== year,
+      yearShort: String(y).slice(2),
+    });
+  }
+  return months;
+}
+
+function parseMoneyInput(raw) {
+  const trimmed = String(raw).trim();
+  if (
+    trimmed === "" ||
+    trimmed === "-" ||
+    trimmed === "." ||
+    trimmed === "-."
+  ) {
+    return null;
+  }
+  const parsed = Number(trimmed.replace(",", "."));
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
@@ -34,9 +77,14 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [forecastHorizon, setForecastHorizon] = useState("yearEnd");
   const [simulatedMonthly, setSimulatedMonthly] = useState(null);
+  const [monthOverrides, setMonthOverrides] = useState({});
   const [simulateInput, setSimulateInput] = useState("");
   const [simulateFocused, setSimulateFocused] = useState(false);
+  const [editingMonthKey, setEditingMonthKey] = useState(null);
+  const [monthEditInput, setMonthEditInput] = useState("");
+  const monthEditRef = useRef(null);
 
   const { categories, loading: categoriesLoading } = useCategories(userId);
 
@@ -125,62 +173,84 @@ export default function Dashboard() {
 
   useEffect(() => {
     setSimulatedMonthly(null);
+    setMonthOverrides({});
     setSimulateInput("");
+    setEditingMonthKey(null);
+    setMonthEditInput("");
   }, [monthPeriod, leftThisMonth]);
 
   const realMonthlySurplus = leftThisMonth;
-  const usingSimulation = simulatedMonthly !== null;
-  const activeMonthlySurplus = usingSimulation
-    ? simulatedMonthly
-    : realMonthlySurplus;
+  const baseMonthlySurplus =
+    simulatedMonthly !== null ? simulatedMonthly : realMonthlySurplus;
+  const usingSimulation =
+    simulatedMonthly !== null || Object.keys(monthOverrides).length > 0;
+
+  const getMonthAmount = (key) =>
+    monthOverrides[key] !== undefined
+      ? monthOverrides[key]
+      : baseMonthlySurplus;
 
   const savingsForecast = useMemo(() => {
     if (!monthPeriod) {
       return null;
     }
 
-    const monthNum = Number(selectedMonth);
-    const monthsLeft = 12 - monthNum + 1;
-    if (monthsLeft <= 0) {
+    const months = buildForecastMonths(
+      selectedYear,
+      selectedMonth,
+      forecastHorizon
+    );
+    if (months.length === 0) {
       return null;
     }
 
-    const points = [];
-    for (let i = 0; i < monthsLeft; i += 1) {
-      const monthIndex = monthNum + i;
-      const label = new Date(0, monthIndex - 1).toLocaleString("en-US", {
-        month: "short",
-      });
-      points.push({
-        key: `${selectedYear}-${String(monthIndex).padStart(2, "0")}`,
-        label,
-        cumulative: activeMonthlySurplus * (i + 1),
-        isCurrent: i === 0,
-        isLast: i === monthsLeft - 1,
-      });
-    }
+    let cumulative = 0;
+    const points = months.map((month, index) => {
+      const amount = getMonthAmount(month.key);
+      cumulative += amount;
+      return {
+        ...month,
+        amount,
+        cumulative,
+        isCustom: monthOverrides[month.key] !== undefined,
+        isCurrent: index === 0,
+        isLast: index === months.length - 1,
+      };
+    });
 
-    const yearEndTotal = activeMonthlySurplus * monthsLeft;
     const maxAbs = Math.max(
       ...points.map((point) => Math.abs(point.cumulative)),
       1
     );
 
     return {
-      monthsLeft,
-      yearEndTotal,
+      monthsCount: points.length,
+      yearEndTotal: cumulative,
       points,
       maxAbs,
+      isYearEnd: forecastHorizon === "yearEnd",
     };
-  }, [monthPeriod, selectedMonth, selectedYear, activeMonthlySurplus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getMonthAmount depends on overrides/base
+  }, [
+    monthPeriod,
+    selectedMonth,
+    selectedYear,
+    forecastHorizon,
+    baseMonthlySurplus,
+    monthOverrides,
+  ]);
+
+  useEffect(() => {
+    if (!editingMonthKey || !monthEditRef.current) {
+      return;
+    }
+    monthEditRef.current.focus();
+    monthEditRef.current.select();
+  }, [editingMonthKey]);
 
   const applySimulation = (raw) => {
-    const trimmed = String(raw).trim();
-    if (trimmed === "" || trimmed === "-" || trimmed === "." || trimmed === "-.") {
-      return false;
-    }
-    const parsed = Number(trimmed.replace(",", "."));
-    if (Number.isNaN(parsed)) {
+    const parsed = parseMoneyInput(raw);
+    if (parsed === null) {
       return false;
     }
     setSimulatedMonthly(parsed);
@@ -190,7 +260,46 @@ export default function Dashboard() {
 
   const resetSimulation = () => {
     setSimulatedMonthly(null);
+    setMonthOverrides({});
     setSimulateInput("");
+    setEditingMonthKey(null);
+    setMonthEditInput("");
+  };
+
+  const startEditMonth = (point) => {
+    setEditingMonthKey(point.key);
+    setMonthEditInput(Number(point.amount).toFixed(2));
+  };
+
+  const commitMonthEdit = () => {
+    if (!editingMonthKey) {
+      return;
+    }
+    const parsed = parseMoneyInput(monthEditInput);
+    if (parsed === null) {
+      setEditingMonthKey(null);
+      setMonthEditInput("");
+      return;
+    }
+    setMonthOverrides((current) => ({
+      ...current,
+      [editingMonthKey]: parsed,
+    }));
+    setEditingMonthKey(null);
+    setMonthEditInput("");
+  };
+
+  const goToCategoryExpenses = (categoryId) => {
+    if (!monthPeriod) {
+      navigate("/home/expenses");
+      return;
+    }
+    const params = new URLSearchParams({
+      year: selectedYear,
+      month: selectedMonth,
+      category: categoryId,
+    });
+    navigate(`/home/expenses?${params.toString()}`);
   };
 
   if (loading || categoriesLoading) {
@@ -301,80 +410,103 @@ export default function Dashboard() {
 
       {savingsForecast && (
         <section className={styles.forecastCard}>
-          <h2>Year-end savings forecast</h2>
+          <h2>Savings forecast</h2>
           <p className={styles.forecastLead}>
-            Simulate how much you&apos;d have by December if you saved this
-            amount every month.
+            Set a monthly save amount, tap a bar to customize that month, and
+            choose how far to project.
           </p>
 
           <div className={styles.forecastControls}>
-            <label htmlFor="forecastMonthlySave" className={styles.forecastInputLabel}>
-              Monthly save
-            </label>
-            <div className={styles.forecastInputRow}>
-              <span className={styles.forecastCurrency}>$</span>
-              <input
-                id="forecastMonthlySave"
-                type="text"
-                inputMode="decimal"
-                className={styles.forecastInput}
-                value={
-                  simulateFocused || simulateInput !== ""
-                    ? simulateInput
-                    : activeMonthlySurplus.toFixed(2)
-                }
-                onFocus={() => {
-                  setSimulateFocused(true);
-                  if (simulateInput === "") {
-                    setSimulateInput(
-                      Number(activeMonthlySurplus).toFixed(2)
-                    );
-                  }
-                }}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  setSimulateInput(raw);
-                  const trimmed = raw.trim();
-                  // Empty / in-progress typing must not collapse to 0.00
-                  if (
-                    trimmed === "" ||
-                    trimmed === "-" ||
-                    trimmed === "." ||
-                    trimmed === "-."
-                  ) {
-                    return;
-                  }
-                  const parsed = Number(trimmed.replace(",", "."));
-                  if (!Number.isNaN(parsed)) {
-                    setSimulatedMonthly(parsed);
-                  }
-                }}
-                onBlur={() => {
-                  setSimulateFocused(false);
-                  if (simulateInput.trim() === "") {
-                    resetSimulation();
-                    return;
-                  }
-                  applySimulation(simulateInput);
-                }}
-              />
-              <button
-                type="button"
-                className={styles.forecastResetBtn}
-                onClick={resetSimulation}
-                disabled={!usingSimulation}
-                title="Reset to real leftover"
-              >
-                Use real
-              </button>
+            <div className={styles.forecastControlGrid}>
+              <div>
+                <label
+                  htmlFor="forecastHorizon"
+                  className={styles.forecastInputLabel}
+                >
+                  Horizon
+                </label>
+                <select
+                  id="forecastHorizon"
+                  className={styles.forecastSelect}
+                  value={forecastHorizon}
+                  onChange={(e) => setForecastHorizon(e.target.value)}
+                >
+                  {HORIZON_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="forecastMonthlySave"
+                  className={styles.forecastInputLabel}
+                >
+                  Default monthly save
+                </label>
+                <div className={styles.forecastInputRow}>
+                  <span className={styles.forecastCurrency}>$</span>
+                  <input
+                    id="forecastMonthlySave"
+                    type="text"
+                    inputMode="decimal"
+                    className={styles.forecastInput}
+                    value={
+                      simulateFocused || simulateInput !== ""
+                        ? simulateInput
+                        : baseMonthlySurplus.toFixed(2)
+                    }
+                    onFocus={() => {
+                      setSimulateFocused(true);
+                      if (simulateInput === "") {
+                        setSimulateInput(
+                          Number(baseMonthlySurplus).toFixed(2)
+                        );
+                      }
+                    }}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setSimulateInput(raw);
+                      const parsed = parseMoneyInput(raw);
+                      if (parsed !== null) {
+                        setSimulatedMonthly(parsed);
+                      }
+                    }}
+                    onBlur={() => {
+                      setSimulateFocused(false);
+                      if (simulateInput.trim() === "") {
+                        setSimulatedMonthly(null);
+                        setSimulateInput("");
+                        return;
+                      }
+                      applySimulation(simulateInput);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.forecastResetBtn}
+                    onClick={resetSimulation}
+                    disabled={!usingSimulation}
+                    title="Reset to real leftover"
+                  >
+                    Use real
+                  </button>
+                </div>
+              </div>
             </div>
+            <p className={styles.forecastHint}>
+              Tip: tap a month bar to set a custom amount for that month only.
+            </p>
           </div>
 
           <div
             className={`${styles.forecastChart} ${
-              savingsForecast.points.length > 6 ? styles.forecastChartCrowded : ""
+              savingsForecast.points.length > 6
+                ? styles.forecastChartCrowded
+                : ""
             }`}
-            role="img"
             aria-label="Savings forecast chart"
           >
             {savingsForecast.points.map((point) => {
@@ -387,29 +519,75 @@ export default function Dashboard() {
               const valueLabel = crowded
                 ? formatCompactCurrency(point.cumulative)
                 : formatCurrency(point.cumulative);
+              const isEditing = editingMonthKey === point.key;
 
               return (
                 <div key={point.key} className={styles.forecastBarCol}>
-                  <span className={styles.forecastValue} title={formatCurrency(point.cumulative)}>
-                    {valueLabel}
-                  </span>
-                  <div className={styles.forecastBarTrack}>
-                    <div
-                      className={`${styles.forecastBar} ${
-                        isNegative ? styles.forecastBarNeg : ""
-                      } ${point.isCurrent ? styles.forecastBarCurrent : ""}`}
-                      style={{ height: `${heightPct}%` }}
-                      title={`${point.label}: ${formatCurrency(point.cumulative)}`}
+                  {isEditing ? (
+                    <input
+                      ref={monthEditRef}
+                      type="text"
+                      inputMode="decimal"
+                      className={styles.forecastMonthInput}
+                      value={monthEditInput}
+                      aria-label={`Edit ${point.label} monthly save`}
+                      onChange={(e) => setMonthEditInput(e.target.value)}
+                      onBlur={commitMonthEdit}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitMonthEdit();
+                        }
+                        if (e.key === "Escape") {
+                          setEditingMonthKey(null);
+                          setMonthEditInput("");
+                        }
+                      }}
                     />
-                  </div>
-                  <span className={styles.forecastLabel}>{point.label}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className={`${styles.forecastValueBtn} ${
+                        point.isCustom ? styles.forecastValueCustom : ""
+                      }`}
+                      title={`Tap to edit ${point.label}: ${formatCurrency(
+                        point.amount
+                      )}/mo → ${formatCurrency(point.cumulative)} cumulative`}
+                      onClick={() => startEditMonth(point)}
+                    >
+                      {valueLabel}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.forecastBarHit}
+                    onClick={() => startEditMonth(point)}
+                    aria-label={`Edit ${point.label} save amount`}
+                  >
+                    <div className={styles.forecastBarTrack}>
+                      <div
+                        className={`${styles.forecastBar} ${
+                          isNegative ? styles.forecastBarNeg : ""
+                        } ${point.isCurrent ? styles.forecastBarCurrent : ""} ${
+                          point.isCustom ? styles.forecastBarCustom : ""
+                        }`}
+                        style={{ height: `${heightPct}%` }}
+                      />
+                    </div>
+                  </button>
+                  <span className={styles.forecastLabel}>
+                    {point.label}
+                    {point.showYear ? ` '${point.yearShort}` : ""}
+                  </span>
                 </div>
               );
             })}
           </div>
 
           <p className={styles.forecastTotal}>
-            Projected by Dec:{" "}
+            {savingsForecast.isYearEnd
+              ? "Projected by Dec:"
+              : `Projected in ${savingsForecast.monthsCount} mo:`}{" "}
             <strong
               className={
                 savingsForecast.yearEndTotal >= 0
@@ -431,29 +609,11 @@ export default function Dashboard() {
             Manage categories
           </Link>
         </div>
-        <CategoryPieChart data={categoryTotals} categoriesMap={categoriesMap} />
-      </section>
-
-      <section className={styles.section}>
-        <h2>Breakdown</h2>
-        <ul className={styles.list}>
-          {categoryTotals.length === 0 && <li>No expenses for this period.</li>}
-          {categoryTotals.map((item) => {
-            const category = categoriesMap[item.categoryId];
-            const percent = spendings
-              ? ((item.value / spendings) * 100).toFixed(1)
-              : 0;
-            return (
-              <li key={item.categoryId}>
-                <span>
-                  {category?.icon} {category?.name || "Other"}
-                </span>
-                <span>{formatCurrency(item.value)}</span>
-                <span>{percent}%</span>
-              </li>
-            );
-          })}
-        </ul>
+        <CategoryPieChart
+          data={categoryTotals}
+          categoriesMap={categoriesMap}
+          onSliceClick={monthPeriod ? goToCategoryExpenses : undefined}
+        />
       </section>
     </div>
   );

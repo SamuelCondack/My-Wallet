@@ -1,7 +1,7 @@
 import styles from "./Expenses.module.scss";
 import { auth, db } from "../../../config/firebase";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   getDocs,
   collection,
@@ -36,6 +36,7 @@ import {
 
 export default function Expenses() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
@@ -46,8 +47,12 @@ export default function Expenses() {
   const [userId, setUserId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(
+    searchParams.get("year") || currentYear
+  );
+  const [selectedMonth, setSelectedMonth] = useState(
+    searchParams.get("month") || currentMonth
+  );
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [incomes, setIncomes] = useState([]);
   const [isIncomeLoading, setIsIncomeLoading] = useState(true);
@@ -71,7 +76,9 @@ export default function Expenses() {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState(
+    searchParams.get("category") || "All"
+  );
   const { categories } = useCategories(userId);
   const expenseCategories = getExpenseCategories(categories);
   const categoriesMap = getCategoryMap(categories);
@@ -153,11 +160,12 @@ export default function Expenses() {
   }, []);
 
   useEffect(() => {
-    if (userId) {
-      setSelectedYear(currentYear);
-      setSelectedMonth(currentMonth);
-    }
-  }, [userId, currentYear, currentMonth]);
+    const params = {};
+    if (selectedYear !== "All") params.year = selectedYear;
+    if (selectedMonth !== "All") params.month = selectedMonth;
+    if (selectedCategory !== "All") params.category = selectedCategory;
+    setSearchParams(params, { replace: true });
+  }, [selectedYear, selectedMonth, selectedCategory, setSearchParams]);
 
   useEffect(() => {
     const handleScroll = () => {
