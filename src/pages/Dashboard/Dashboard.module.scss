@@ -285,24 +285,24 @@
 }
 
 .forecastHint {
-  margin: 8px 0 0;
+  margin: 8px 0 12px;
   font-size: 12px;
   color: #888;
 }
 
 .forecastChart {
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 6px;
-  min-height: 168px;
-  padding: 14px 2px 0;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 4px;
+  min-height: 180px;
+  padding: 8px 0 0;
   border-bottom: 1px solid #e8eef5;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -311,51 +311,60 @@
 }
 
 .forecastBarCol {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  grid-template-rows: minmax(2.6em, auto) 120px 2.6em;
+  flex: 1 0 auto;
+  width: 28px;
+  min-width: 28px;
+  max-width: 48px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-items: center;
-  gap: 6px;
-  overflow: visible;
+  justify-content: flex-end;
+  gap: 4px;
+  position: relative;
+}
+
+.forecastChart:not(.forecastChartCrowded) .forecastBarCol {
+  width: auto;
+  min-width: 36px;
+  max-width: none;
+  flex: 1 1 0;
 }
 
 .forecastBarColEditing {
+  z-index: 3;
+
   .forecastLabel {
     color: $defaultBlue;
   }
-
-  z-index: 2;
 }
 
 .forecastValueSlot {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 34px;
+  flex: 0 0 34px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  overflow: visible;
 }
 
 .forecastValueBtn {
   border: none;
   background: transparent;
-  padding: 0;
-  font-size: 10px;
+  padding: 0 1px;
+  font-size: 9px;
   color: #666;
   text-align: center;
-  line-height: 1.1;
+  line-height: 1.05;
   width: 100%;
   height: 100%;
-  max-width: 100%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
   -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
 
   &:hover,
   &:focus-visible {
@@ -370,12 +379,7 @@
 }
 
 .forecastChartCrowded .forecastValueBtn {
-  font-size: 9px;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  letter-spacing: 0.02em;
-  align-items: center;
-  justify-content: flex-start;
+  font-size: 8px;
 }
 
 .forecastMonthInput {
@@ -384,8 +388,8 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 6;
-  min-width: 4ch;
-  max-width: min(148px, 72vw);
+  min-width: 4.5ch;
+  max-width: min(140px, 70vw);
   border: 1px solid $defaultBlue;
   border-radius: 10px;
   padding: 8px 10px;
@@ -400,7 +404,6 @@
     0 0 0 3px rgba(62, 146, 235, 0.16),
     0 8px 20px rgba(15, 23, 42, 0.16);
   font-variant-numeric: tabular-nums;
-  transition: width 0.12s ease;
 }
 
 .forecastBarHit {
@@ -408,7 +411,7 @@
   background: transparent;
   padding: 0;
   width: 100%;
-  height: 100%;
+  flex: 0 0 auto;
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -418,11 +421,16 @@
 
 .forecastBarTrack {
   width: 100%;
-  max-width: 36px;
-  height: 120px;
+  max-width: 28px;
+  height: 110px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+}
+
+.forecastChart:not(.forecastChartCrowded) .forecastBarTrack {
+  max-width: 36px;
+  height: 120px;
 }
 
 .forecastBar {
@@ -440,17 +448,17 @@
 
 .forecastBarCurrent {
   outline: 2px solid rgba(62, 146, 235, 0.35);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .forecastBarCustom {
   outline: 2px solid rgba(62, 146, 235, 0.85);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .forecastBarEditing {
   outline: 2px dashed $defaultBlue;
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .forecastLabel {
@@ -459,14 +467,15 @@
   align-items: center;
   justify-content: flex-start;
   width: 100%;
-  height: 100%;
-  font-size: 11px;
+  height: 28px;
+  flex: 0 0 28px;
+  font-size: 10px;
   font-weight: 700;
   color: #444;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0;
   text-align: center;
-  line-height: 1.15;
+  line-height: 1.1;
   overflow: hidden;
 }
 
@@ -474,13 +483,14 @@
   display: block;
   max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   white-space: nowrap;
+  font-size: inherit;
 }
 
 .forecastLabelYear {
   display: block;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   color: #888;
   line-height: 1.1;
@@ -488,12 +498,9 @@
 }
 
 .forecastChartCrowded .forecastLabel {
-  font-size: 9px;
-  letter-spacing: 0;
-}
-
-.forecastChartCrowded .forecastLabelYear {
   font-size: 8px;
+  height: 26px;
+  flex-basis: 26px;
 }
 
 .forecastTotal {
@@ -580,13 +587,8 @@
     font-size: 8px;
   }
 
-  .forecastChartCrowded .forecastValueBtn {
-    font-size: 8px;
-    min-height: 3.2em;
-  }
-
   .forecastLabel {
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .sectionHeader {
