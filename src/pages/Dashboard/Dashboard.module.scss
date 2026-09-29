@@ -4,6 +4,9 @@
   padding: 16px;
   max-width: 900px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 
 .header {
@@ -112,6 +115,10 @@
   padding: 16px;
   margin-bottom: 16px;
   color: #000;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
 
   h2 {
     margin: 0 0 8px;
@@ -184,6 +191,12 @@
   grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
   gap: 12px;
   align-items: end;
+  width: 100%;
+  min-width: 0;
+
+  > * {
+    min-width: 0;
+  }
 }
 
 .forecastInputLabel {
@@ -196,6 +209,7 @@
 
 .forecastSelect {
   width: 100%;
+  max-width: 100%;
   border: 1px solid #d5e3f2;
   border-radius: 12px;
   padding: 10px 12px;
@@ -217,16 +231,20 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .forecastCurrency {
   font-weight: 700;
   color: #333;
   font-size: 16px;
+  flex-shrink: 0;
 }
 
 .forecastInput {
-  flex: 1;
+  flex: 1 1 120px;
   min-width: 0;
   border: 1px solid #d5e3f2;
   border-radius: 12px;
@@ -254,6 +272,7 @@
   white-space: nowrap;
   cursor: pointer;
   transition: 0.25s ease;
+  flex: 0 0 auto;
 
   &:hover:not(:disabled) {
     background: rgba(62, 146, 235, 0.08);
@@ -279,6 +298,11 @@
   min-height: 168px;
   padding: 8px 2px 0;
   border-bottom: 1px solid #e8eef5;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .forecastChartCrowded {
@@ -438,6 +462,10 @@
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding: 12px;
+  }
+
   .filterContainer {
     flex-direction: column;
   }
@@ -446,8 +474,39 @@
     grid-template-columns: 1fr;
   }
 
+  .overviewCard,
+  .forecastCard,
+  .section {
+    padding: 12px;
+  }
+
   .forecastControlGrid {
     grid-template-columns: 1fr;
+  }
+
+  .forecastInputRow {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "currency input"
+      "reset reset";
+    gap: 8px;
+    align-items: center;
+  }
+
+  .forecastCurrency {
+    grid-area: currency;
+  }
+
+  .forecastInput {
+    grid-area: input;
+    width: 100%;
+  }
+
+  .forecastResetBtn {
+    grid-area: reset;
+    width: 100%;
+    text-align: center;
   }
 
   .forecastValueBtn {
@@ -457,6 +516,10 @@
   .forecastChartCrowded .forecastValueBtn {
     font-size: 8px;
     min-height: 3.2em;
+  }
+
+  .forecastLabel {
+    font-size: 9px;
   }
 
   .sectionHeader {

@@ -290,6 +290,7 @@ export default function Dashboard() {
   };
 
   const goToCategoryExpenses = (categoryId) => {
+    window.scrollTo(0, 0);
     if (!monthPeriod) {
       navigate("/home/expenses");
       return;

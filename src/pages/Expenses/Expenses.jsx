@@ -168,6 +168,10 @@ export default function Expenses() {
   }, [selectedYear, selectedMonth, selectedCategory, setSearchParams]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 300) {
         setShowScrollToTop(true);
