@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import styles from "./IncomeModal.module.scss";
@@ -32,6 +32,7 @@ export default function IncomeModal({
   isSubmitting = false,
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const nameInputRef = useRef(null);
 
   useBodyScrollLock(isOpen);
 
@@ -67,6 +68,16 @@ export default function IncomeModal({
       });
     }
   }, [isOpen, initialValues, categories]);
+
+  useEffect(() => {
+    if (!isOpen || mode !== "create") {
+      return;
+    }
+    const focusTimer = window.setTimeout(() => {
+      nameInputRef.current?.focus({ preventScroll: true });
+    }, 50);
+    return () => window.clearTimeout(focusTimer);
+  }, [isOpen, mode]);
 
   if (!isOpen) {
     return null;
@@ -126,14 +137,16 @@ export default function IncomeModal({
           {!isConfirmMode && (
             <>
               <div className={styles.formGroup}>
-                <label htmlFor="income-description">Description</label>
+                <label htmlFor="income-description">Name</label>
                 <input
+                  ref={nameInputRef}
                   id="income-description"
                   name="description"
                   value={form.description}
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
+                  autoFocus={mode === "create"}
                 />
               </div>
 

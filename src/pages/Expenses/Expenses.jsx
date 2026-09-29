@@ -237,10 +237,24 @@ export default function Expenses() {
   }
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    const start = window.scrollY || document.documentElement.scrollTop;
+    if (start <= 0) {
+      return;
+    }
+    const duration = Math.min(900, Math.max(420, start * 0.55));
+    const startTime = performance.now();
+    const easeOutCubic = (t) => 1 - (1 - t) ** 3;
+
+    const step = (now) => {
+      const progress = Math.min(1, (now - startTime) / duration);
+      const nextY = start * (1 - easeOutCubic(progress));
+      window.scrollTo(0, nextY);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+
+    requestAnimationFrame(step);
   };
 
   const openCreateExpense = () => {
@@ -1517,10 +1531,12 @@ export default function Expenses() {
             <motion.button
               className={styles.scrollToTopButton}
               onClick={scrollToTop}
-              initial={{ y: 50 }}
-              animate={{ y: 0, scale: 1 }}
-              exit={{ y: 50, scale: -1 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              initial={{ opacity: 0, y: 28, scale: 0.86 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.9 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+              whileTap={{ scale: 0.9 }}
+              aria-label="Scroll to top"
             >
               ↑
             </motion.button>

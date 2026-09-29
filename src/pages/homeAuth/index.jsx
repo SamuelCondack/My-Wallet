@@ -7,23 +7,41 @@ import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 
 function HomeAuth() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useBodyScrollLock(isMobile && menuOpen);
 
   const closeMenu = () => setMenuOpen(false);
   const openMenu = () => setMenuOpen(true);
 
-  const logout = async () => {
+  const requestLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const cancelLogout = () => {
+    if (isLoggingOut) {
+      return;
+    }
+    setShowLogoutConfirm(false);
+  };
+
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
     try {
       await signOut(auth);
+      setShowLogoutConfirm(false);
       navigate("/");
     } catch (err) {
       console.log(err.message);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -92,7 +110,7 @@ function HomeAuth() {
         <NavLink to="/home/categories" onClick={handleNavClick} className={navClassName}>
           Categories
         </NavLink>
-        <button type="button" onClick={logout} className={styles.logoutBtn}>
+        <button type="button" onClick={requestLogout} className={styles.logoutBtn}>
           logout
         </button>
       </ul>
@@ -134,6 +152,18 @@ function HomeAuth() {
       <div className={styles.content}>
         <Outlet />
       </div>
+
+      {showLogoutConfirm && (
+        <ConfirmationModal
+          isOpen={showLogoutConfirm}
+          onRequestClose={cancelLogout}
+          onConfirm={confirmLogout}
+          title="Log out"
+          message="Are you sure you want to log out?"
+          isEditModal
+          isSubmitting={isLoggingOut}
+        />
+      )}
     </main>
   );
 }
