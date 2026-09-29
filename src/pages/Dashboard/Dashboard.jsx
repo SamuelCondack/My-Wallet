@@ -234,6 +234,7 @@ export default function Dashboard() {
       points,
       maxAbs,
       isYearEnd: forecastHorizon === "yearEnd",
+      showYears: months.some((month) => month.showYear),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -626,8 +627,17 @@ export default function Dashboard() {
                     </div>
                   </button>
                   <span className={styles.forecastLabel}>
-                    {point.label}
-                    {point.showYear ? ` '${point.yearShort}` : ""}
+                    <span className={styles.forecastLabelMonth}>
+                      {point.label}
+                    </span>
+                    <span
+                      className={styles.forecastLabelYear}
+                      aria-hidden={!savingsForecast.showYears}
+                    >
+                      {savingsForecast.showYears
+                        ? `'${point.key.slice(2, 4)}`
+                        : "\u00A0"}
+                    </span>
                   </span>
                 </div>
               );
