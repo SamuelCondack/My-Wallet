@@ -286,6 +286,22 @@ export default function Dashboard() {
     if (!editingMonthKey) {
       return;
     }
+
+    // Empty field on blur → revert that month to the real leftover
+    if (monthEditInput.trim() === "") {
+      setMonthOverrides((current) => {
+        const next = { ...current };
+        if (amountsEqual(realMonthlySurplus, baseMonthlySurplus)) {
+          delete next[editingMonthKey];
+        } else {
+          next[editingMonthKey] = realMonthlySurplus;
+        }
+        return next;
+      });
+      cancelMonthEdit();
+      return;
+    }
+
     const parsed = parseMoneyInput(monthEditInput);
     if (parsed === null) {
       cancelMonthEdit();
@@ -533,14 +549,15 @@ export default function Dashboard() {
               );
               const isNegative = point.cumulative < 0;
               const crowded = savingsForecast.points.length > 6;
-              const valueLabel = crowded
+              const cumulativeLabel = crowded
                 ? formatCompactCurrency(point.cumulative)
                 : formatCurrency(point.cumulative);
+              const monthlyLabel = crowded
+                ? formatCompactCurrency(point.amount)
+                : formatCurrency(point.amount);
               const isEditing = editingMonthKey === point.key;
-              const editWidthCh = Math.min(
-                12,
-                Math.max(4, String(monthEditInput || "0").length + 1)
-              );
+              const editChars = Math.max(1, String(monthEditInput).length);
+              const editWidth = `calc(${editChars}ch + 32px)`;
 
               return (
                 <div
@@ -556,7 +573,7 @@ export default function Dashboard() {
                         type="text"
                         inputMode="decimal"
                         className={styles.forecastMonthInput}
-                        style={{ width: `${editWidthCh}ch` }}
+                        style={{ width: editWidth }}
                         value={monthEditInput}
                         aria-label={`Edit ${point.label} monthly save`}
                         onChange={(e) => setMonthEditInput(e.target.value)}
@@ -583,7 +600,18 @@ export default function Dashboard() {
                         )}/mo → ${formatCurrency(point.cumulative)} cumulative`}
                         onClick={() => startEditMonth(point)}
                       >
-                        {valueLabel}
+                        {point.isCustom ? (
+                          <span className={styles.forecastValueStack}>
+                            <span className={styles.forecastMonthlyTag}>
+                              {monthlyLabel}
+                            </span>
+                            <span className={styles.forecastCumulativeTag}>
+                              Σ {cumulativeLabel}
+                            </span>
+                          </span>
+                        ) : (
+                          cumulativeLabel
+                        )}
                       </button>
                     )}
                   </div>
