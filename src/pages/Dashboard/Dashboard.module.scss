@@ -290,74 +290,19 @@
   color: #888;
 }
 
-.forecastEditDock {
-  margin: 0 0 14px;
-  padding: 12px;
-  border: 1px solid #d5e3f2;
-  border-radius: 14px;
-  background: #f7fbff;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.forecastEditDockRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.forecastEditDockInput {
-  flex: 1 1 140px;
-  min-width: 0;
-  border: 1px solid $defaultBlue;
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #111;
-  outline: none;
-  box-sizing: border-box;
-  box-shadow: 0 0 0 3px rgba(62, 146, 235, 0.15);
-  font-variant-numeric: tabular-nums;
-}
-
-.forecastEditDoneBtn,
-.forecastEditCancelBtn {
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: 0.2s ease;
-}
-
-.forecastEditDoneBtn {
-  border: 1px solid $defaultBlue;
-  background: $defaultBlue;
-  color: #fff;
-}
-
-.forecastEditCancelBtn {
-  border: 1px solid #ddd;
-  background: #fff;
-  color: #555;
-}
-
 .forecastChart {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   gap: 6px;
   min-height: 168px;
-  padding: 8px 2px 0;
+  padding: 14px 2px 0;
   border-bottom: 1px solid #e8eef5;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -373,12 +318,25 @@
   align-items: center;
   justify-items: center;
   gap: 6px;
+  overflow: visible;
 }
 
 .forecastBarColEditing {
   .forecastLabel {
     color: $defaultBlue;
   }
+
+  z-index: 2;
+}
+
+.forecastValueSlot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: visible;
 }
 
 .forecastValueBtn {
@@ -418,6 +376,31 @@
   letter-spacing: 0.02em;
   align-items: center;
   justify-content: flex-start;
+}
+
+.forecastMonthInput {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  min-width: 4ch;
+  max-width: min(148px, 72vw);
+  border: 1px solid $defaultBlue;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  color: #111;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  box-shadow:
+    0 0 0 3px rgba(62, 146, 235, 0.16),
+    0 8px 20px rgba(15, 23, 42, 0.16);
+  font-variant-numeric: tabular-nums;
+  transition: width 0.12s ease;
 }
 
 .forecastBarHit {
@@ -591,36 +574,6 @@
     grid-area: reset;
     width: 100%;
     text-align: center;
-  }
-
-  .forecastEditDockRow {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "currency input"
-      "done done"
-      "cancel cancel";
-    gap: 8px;
-  }
-
-  .forecastEditDockRow .forecastCurrency {
-    grid-area: currency;
-  }
-
-  .forecastEditDockInput {
-    grid-area: input;
-    width: 100%;
-    font-size: 18px;
-  }
-
-  .forecastEditDoneBtn {
-    grid-area: done;
-    width: 100%;
-  }
-
-  .forecastEditCancelBtn {
-    grid-area: cancel;
-    width: 100%;
   }
 
   .forecastValueBtn {
