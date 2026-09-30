@@ -6,10 +6,38 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    function subscriptionUnchanged() {
+      return !request.resource.data.diff(resource.data)
+        .affectedKeys()
+        .hasAny(['subscription']);
+    }
+
+    function subscriptionCreateAllowed() {
+      return !('subscription' in request.resource.data)
+        || (
+          request.resource.data.subscription.keys()
+            .hasOnly(['status', 'planId', 'stripeCustomerId', 'stripeSubscriptionId', 'priceId', 'trialEndsAt', 'currentPeriodEnd', 'cancelAtPeriodEnd', 'updatedAt'])
+          && request.resource.data.subscription.status == 'none'
+          && request.resource.data.subscription.planId == 'free'
+          && request.resource.data.subscription.stripeCustomerId == null
+          && request.resource.data.subscription.stripeSubscriptionId == null
+        );
+    }
+
+    // Legacy expenses live directly under /{uid}/{expenseId}
     match /{uid}/{document=**} {
       allow read, write: if isOwner(uid);
     }
 
+    // User profile + billing state
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && subscriptionCreateAllowed();
+      allow update: if isOwner(uid) && subscriptionUnchanged();
+      allow delete: if false;
+    }
+
+    // Nested user data (categories, income, etc.)
     match /users/{uid}/{document=**} {
       allow read, write: if isOwner(uid);
     }

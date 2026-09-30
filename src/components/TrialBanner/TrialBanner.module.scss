@@ -1,0 +1,87 @@
+@import "../../Global/variables.scss";
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+}
+
+.promo {
+  background: #eef6ff;
+  border-color: #c5ddf8;
+}
+
+.info {
+  background: #f5f9ff;
+  border-color: #d8e8fb;
+}
+
+.warning {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  strong {
+    font-size: 14px;
+    color: #111;
+  }
+
+  span {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.35;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.primaryBtn,
+.primaryLink {
+  background: $defaultBlue;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dismiss {
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+@media (max-width: 520px) {
+  .banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions {
+    justify-content: space-between;
+  }
+}

@@ -569,6 +569,48 @@
   margin-bottom: 14px;
 }
 
+.proPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.proPreviewLead {
+  margin: 0;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.proPreviewList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li {
+    background: #f5f9ff;
+    border: 1px solid #d8e8fb;
+    border-radius: 12px;
+    padding: 12px;
+
+    strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    span {
+      display: block;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.4;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 12px;

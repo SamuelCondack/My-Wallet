@@ -1,0 +1,59 @@
+@import "../../Global/variables.scss";
+
+.locked {
+  background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
+  border: 1px dashed #9ec4ef;
+  border-radius: 14px;
+  padding: 18px 16px;
+  text-align: center;
+  color: #111;
+
+  h3 {
+    margin: 8px 0 6px;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0 0 14px;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
+.lockBadge {
+  display: inline-block;
+  background: $defaultBlue;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.unlockBtn {
+  background: $defaultBlue;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profileLink {
+  color: $defaultBlue;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}

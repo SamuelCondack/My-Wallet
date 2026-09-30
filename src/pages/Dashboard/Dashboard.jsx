@@ -22,6 +22,9 @@ import {
   formatPeriodLabel,
   getCashReceived,
 } from "../../utils/incomeCalculations";
+import TrialBanner from "../../components/TrialBanner/TrialBanner";
+import ProGate from "../../components/ProGate/ProGate";
+import { PRO_FEATURES } from "../../constants/subscription";
 
 const HORIZON_OPTIONS = [
   { value: "yearEnd", label: "Until Dec" },
@@ -344,6 +347,8 @@ export default function Dashboard() {
       <header className={styles.header}>
         <h1>Dashboard</h1>
       </header>
+
+      <TrialBanner />
 
       <div className={styles.filterContainer}>
         <div className={styles.filter}>
@@ -684,6 +689,30 @@ export default function Dashboard() {
           categoriesMap={categoriesMap}
           onSliceClick={monthPeriod ? goToCategoryExpenses : undefined}
         />
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2>Pro tools</h2>
+        </div>
+        <ProGate
+          title="Budgets, OCR, AI review & exports"
+          description="Pro features land next. Start a free trial from Profile to be ready when they unlock."
+        >
+          <div className={styles.proPreview}>
+            <p className={styles.proPreviewLead}>
+              You have Pro access. These tools will unlock here as they ship:
+            </p>
+            <ul className={styles.proPreviewList}>
+              {PRO_FEATURES.map((feature) => (
+                <li key={feature.id}>
+                  <strong>{feature.title}</strong>
+                  <span>{feature.description}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </ProGate>
       </section>
     </div>
   );

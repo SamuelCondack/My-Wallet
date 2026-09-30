@@ -1,6 +1,6 @@
 import styles from "./Expenses.module.scss";
 import { auth, db } from "../../../config/firebase";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   getDocs,
@@ -17,12 +17,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { FaCheck, FaCopy, FaPencilAlt, FaPause, FaPlay } from "react-icons/fa";
 import { FaRegCalendar } from "react-icons/fa6";
-import EditModal from "../../modals/EditModal/EditModal";
+import ExpenseFormModal from "../../modals/ExpenseFormModal/ExpenseFormModal";
 import {
   getCategoryMap,
   getExpenseCategories,
 } from "../../services/categoriesService";
 import { useCategories } from "../../hooks/useCategories";
+import { useExpenseFavorites } from "../../hooks/useExpenseFavorites";
+import { useSubscription } from "../../hooks/useSubscription";
+import { buildRecentTemplates } from "../../services/expenseFavoritesService";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 import { getCached, setCached } from "../../utils/dataCache";
 import { matchesExpenseValueQuery } from "../../utils/finance";
@@ -60,20 +63,10 @@ export default function Expenses() {
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
-  const [resumeDate, setResumeDate] = useState("");
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [expenseModalMode, setExpenseModalMode] = useState("edit");
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [expenseModalMode, setExpenseModalMode] = useState("create");
   const [editingExpense, setEditingExpense] = useState(null);
-  const [editFormData, setEditFormData] = useState({
-    name: "",
-    value: "",
-    inclusionDate: "",
-    installments: "",
-    paymentMethod: "Credit Card",
-    pauseDate: "",
-    categoryId: DEFAULT_CATEGORY_ID,
-    isMonthly: false,
-  });
+  const [expenseFormInitial, setExpenseFormInitial] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(
@@ -82,6 +75,12 @@ export default function Expenses() {
   const { categories } = useCategories(userId);
   const expenseCategories = getExpenseCategories(categories);
   const categoriesMap = getCategoryMap(categories);
+  const { favorites, addFavorite, removeFavorite } = useExpenseFavorites(userId);
+  const { isPro } = useSubscription();
+  const recentTemplates = useMemo(
+    () => buildRecentTemplates(expensesList, 6),
+    [expensesList]
+  );
   const [pressedExpenseKey, setPressedExpenseKey] = useState(null);
   const activeTouchIdRef = useRef(null);
   const categoryHintValueRef = useRef(0);
@@ -244,6 +243,17 @@ export default function Expenses() {
     return () => document.removeEventListener("touchend", handleTouchEnd);
   }, []);
 
+  useEffect(() => {
+    if (searchParams.get("add") !== "1") return;
+    setExpenseModalMode("create");
+    setEditingExpense(null);
+    setExpenseFormInitial(null);
+    setShowExpenseModal(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("add");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   if (isLoading) {
     return <LoadingComponent variant="expenses" />;
   }
@@ -272,17 +282,15 @@ export default function Expenses() {
   const openCreateExpense = () => {
     setExpenseModalMode("create");
     setEditingExpense(null);
-    setEditFormData({
-      name: "",
-      value: "",
-      inclusionDate: new Date().toLocaleDateString("en-CA"),
-      installments: "",
-      paymentMethod: "Credit Card",
-      pauseDate: "",
-      categoryId: expenseCategories[0]?.id || DEFAULT_CATEGORY_ID,
-      isMonthly: false,
-    });
-    setShowEditModal(true);
+    setExpenseFormInitial(null);
+    setShowExpenseModal(true);
+  };
+
+  const closeExpenseModal = () => {
+    setShowExpenseModal(false);
+    setEditingExpense(null);
+    setExpenseFormInitial(null);
+    setExpenseModalMode("create");
   };
 
   const handleExpenseTouchStart = (event, expenseKey) => {
@@ -774,7 +782,7 @@ export default function Expenses() {
 
     setExpenseModalMode("edit");
     setEditingExpense(expense);
-    setEditFormData({
+    setExpenseFormInitial({
       name: expense.name,
       value: totalValue.toString(),
       inclusionDate: expense.inclusionDate,
@@ -784,153 +792,128 @@ export default function Expenses() {
       categoryId: expense.categoryId || DEFAULT_CATEGORY_ID,
       isMonthly: Boolean(expense.isMonthly),
     });
-    setShowEditModal(true);
+    setShowExpenseModal(true);
   };
 
-  const refetchExpenses = async () => {
-    try {
-      const expensesCollectionRef = collection(db, userId);
-      const data = await getDocs(expensesCollectionRef);
-      const filteredData = data.docs
-        .filter((doc) => !doc.id.startsWith("earnings-"))
-        .map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        }));
-
-      // Força uma atualização do estado
-      setExpensesList([]); // Limpa o estado primeiro
-      setExpensesList(filteredData); // Atualiza com os novos dados
-    } catch (error) {
-      console.error("Erro ao recarregar despesas:", error);
-    }
-  };
-
-  const closeExpenseModal = () => {
-    setShowEditModal(false);
-    setEditingExpense(null);
-    setExpenseModalMode("edit");
-  };
-
-  const handleCreateSubmit = async () => {
+  const handleExpenseFormSave = async (payload) => {
     if (!userId) {
       toast.error("You need to be signed in.");
       return;
     }
 
-    const isMonthly = Boolean(editFormData.isMonthly);
-    const newExpense = {
-      name: editFormData.name.trim(),
-      inclusionDate: editFormData.inclusionDate,
-      value: parseFloat(String(editFormData.value).replace(/,/g, ".")),
-      installments:
-        !isMonthly && editFormData.installments > 0
-          ? editFormData.installments
-          : "",
-      method: editFormData.paymentMethod,
-      isMonthly,
-      categoryId: editFormData.categoryId || DEFAULT_CATEGORY_ID,
-      ...(isMonthly ? { status: "active" } : {}),
-    };
-
-    const expensesCollectionRef = collection(db, userId);
-    const docRef = await addDoc(expensesCollectionRef, newExpense);
-    const created = { ...newExpense, id: docRef.id };
-
-    setExpensesList((prev) => {
-      const next = [...prev, created];
-      setCached("expenses", userId, next);
-      return next;
-    });
-
-    closeExpenseModal();
-    toast.success("Expense registered!");
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-
     if (expenseModalMode === "create") {
-      try {
-        await handleCreateSubmit();
-      } catch (error) {
-        console.error("Error creating expense:", error);
-        toast.error(error.message || "Failed to register expense");
-      }
+      const isMonthly = Boolean(payload.isMonthly);
+      const newExpense = {
+        name: payload.name.trim(),
+        inclusionDate: payload.inclusionDate,
+        value: Number(payload.value),
+        installments:
+          !isMonthly && payload.installments > 0 ? payload.installments : "",
+        method: payload.paymentMethod,
+        isMonthly,
+        categoryId: payload.categoryId || DEFAULT_CATEGORY_ID,
+        ...(isMonthly ? { status: "active" } : {}),
+      };
+
+      const expensesCollectionRef = collection(db, userId);
+      const docRef = await addDoc(expensesCollectionRef, newExpense);
+      const created = { ...newExpense, id: docRef.id };
+
+      setExpensesList((prev) => {
+        const next = [...prev, created];
+        setCached("expenses", userId, next);
+        return next;
+      });
+
+      closeExpenseModal();
+      toast.success("Expense registered!");
       return;
     }
 
     if (!editingExpense) return;
 
-    try {
-      const expenseDoc = doc(db, auth.currentUser.uid, editingExpense.id);
-      const updateData = {
-        name: editFormData.name,
-        value: parseFloat(editFormData.value.replace(/,/g, ".")),
-        inclusionDate: editFormData.inclusionDate,
-        method: editFormData.paymentMethod,
-        categoryId: editFormData.categoryId || DEFAULT_CATEGORY_ID,
-      };
+    const isMonthly = Boolean(payload.isMonthly);
+    const updateData = {
+      name: payload.name,
+      value: Number(payload.value),
+      inclusionDate: payload.inclusionDate,
+      method: payload.paymentMethod,
+      categoryId: payload.categoryId || DEFAULT_CATEGORY_ID,
+      isMonthly,
+    };
 
-      let shouldRefetch = false;
+    let shouldRefetch = false;
+    const wasMonthly = Boolean(editingExpense.isMonthly);
 
-      if (editingExpense.isMonthly) {
-        if (!editingExpense.isPaused && editFormData.pauseDate) {
-          updateData.isPaused = true;
-          updateData.pauseDate = editFormData.pauseDate;
+    if (isMonthly) {
+      updateData.installments = "";
+      updateData.status = editingExpense.status || "active";
+
+      if (!wasMonthly) {
+        updateData.isPaused = false;
+        updateData.pauseDate = null;
+        shouldRefetch = true;
+      }
+
+      if (!editingExpense.isPaused && payload.pauseDate) {
+        updateData.isPaused = true;
+        updateData.pauseDate = payload.pauseDate;
+        shouldRefetch = true;
+      } else if (editingExpense.isPaused && !payload.pauseDate) {
+        updateData.isPaused = false;
+        updateData.pauseDate = null;
+        shouldRefetch = true;
+      } else if (editingExpense.isPaused && payload.pauseDate) {
+        if (editingExpense.pauseDate !== payload.pauseDate) {
+          updateData.pauseDate = payload.pauseDate;
           shouldRefetch = true;
-        } else if (editingExpense.isPaused && !editFormData.pauseDate) {
-          updateData.isPaused = false;
-          updateData.pauseDate = null;
-          shouldRefetch = true;
-        } else if (editingExpense.isPaused && editFormData.pauseDate) {
-          if (editingExpense.pauseDate !== editFormData.pauseDate) {
-            updateData.pauseDate = editFormData.pauseDate;
-            shouldRefetch = true;
-          }
         }
-      } else {
-        updateData.installments = editFormData.installments;
       }
-
-      await updateDoc(expenseDoc, updateData);
-
-      if (shouldRefetch) {
-        setIsLoading(true);
-        setExpensesList([]);
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        const expensesCollectionRef = collection(db, userId);
-        const data = await getDocs(expensesCollectionRef);
-        const filteredData = data.docs
-          .filter((docItem) => !docItem.id.startsWith("earnings-"))
-          .map((docItem) => ({
-            ...docItem.data(),
-            id: docItem.id,
-          }));
-
-        setExpensesList(filteredData);
-        setCached("expenses", userId, filteredData);
-        setSelectedYear(selectedYear);
-        setSelectedMonth(selectedMonth);
-        setIsLoading(false);
-      } else {
-        setExpensesList((prev) => {
-          const next = prev.map((item) =>
-            item.id === editingExpense.id ? { ...item, ...updateData } : item
-          );
-          setCached("expenses", userId, next);
-          return next;
-        });
+    } else {
+      updateData.installments = payload.installments || "1";
+      updateData.isPaused = false;
+      updateData.pauseDate = null;
+      if (wasMonthly) {
+        shouldRefetch = true;
       }
-
-      closeExpenseModal();
-      toast.success("Despesa atualizada com sucesso!");
-    } catch (error) {
-      console.error("Erro ao atualizar:", error);
-      toast.error("Falha ao atualizar despesa");
-      setIsLoading(false);
     }
+
+    if (wasMonthly !== isMonthly) {
+      shouldRefetch = true;
+    }
+
+    const expenseDoc = doc(db, auth.currentUser.uid, editingExpense.id);
+    await updateDoc(expenseDoc, updateData);
+
+    if (shouldRefetch) {
+      setIsLoading(true);
+      setExpensesList([]);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const expensesCollectionRef = collection(db, userId);
+      const data = await getDocs(expensesCollectionRef);
+      const filteredData = data.docs
+        .filter((docItem) => !docItem.id.startsWith("earnings-"))
+        .map((docItem) => ({
+          ...docItem.data(),
+          id: docItem.id,
+        }));
+
+      setExpensesList(filteredData);
+      setCached("expenses", userId, filteredData);
+      setIsLoading(false);
+    } else {
+      setExpensesList((prev) => {
+        const next = prev.map((item) =>
+          item.id === editingExpense.id ? { ...item, ...updateData } : item
+        );
+        setCached("expenses", userId, next);
+        return next;
+      });
+    }
+
+    closeExpenseModal();
+    toast.success("Despesa atualizada com sucesso!");
   };
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
@@ -1554,15 +1537,17 @@ export default function Expenses() {
             </motion.button>
           )}
         </AnimatePresence>
-        <button
-          type="button"
-          className={styles.floatingAddButton}
-          onClick={openCreateExpense}
-          aria-label="Add expense"
-          title="Add expense"
-        >
-          +
-        </button>
+        {!showExpenseModal && (
+          <button
+            type="button"
+            className={styles.floatingAddButton}
+            onClick={openCreateExpense}
+            aria-label="Add expense"
+            title="Add expense"
+          >
+            +
+          </button>
+        )}
         {showPauseModal && (
           <ConfirmationModal
             isOpen={showPauseModal}
@@ -1585,16 +1570,32 @@ export default function Expenses() {
             expenseName={expenseToDeleteName}
           />
         )}
-        {showEditModal && (
-          <EditModal
-            isOpen={showEditModal}
+        {showExpenseModal && (
+          <ExpenseFormModal
+            isOpen={showExpenseModal}
             mode={expenseModalMode}
-            onRequestClose={closeExpenseModal}
-            onConfirm={handleEditSubmit}
-            editingExpense={editingExpense}
-            editFormData={editFormData}
-            setEditFormData={setEditFormData}
+            onClose={closeExpenseModal}
+            onSave={async (payload) => {
+              try {
+                await handleExpenseFormSave(payload);
+              } catch (error) {
+                console.error("Expense save failed:", error);
+                toast.error(
+                  error.message ||
+                    (expenseModalMode === "create"
+                      ? "Failed to register expense"
+                      : "Falha ao atualizar despesa")
+                );
+              }
+            }}
             categories={expenseCategories}
+            favorites={favorites}
+            recent={recentTemplates}
+            isPro={isPro}
+            onAddFavorite={addFavorite}
+            onRemoveFavorite={removeFavorite}
+            initialValues={expenseFormInitial}
+            editingExpense={editingExpense}
           />
         )}
       </div>

@@ -5,6 +5,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import x from "../../assets/x.svg";
 import { useEffect, useState } from "react";
+import { FaUser } from "react-icons/fa";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
@@ -110,9 +111,22 @@ function HomeAuth() {
         <NavLink to="/home/categories" onClick={handleNavClick} className={navClassName}>
           Categories
         </NavLink>
-        <button type="button" onClick={requestLogout} className={styles.logoutBtn}>
-          logout
-        </button>
+        <div className={styles.profileSlot}>
+          <NavLink
+            to="/home/profile"
+            onClick={handleNavClick}
+            className={({ isActive }) =>
+              `${styles.profileIconBtn} ${isActive ? styles.profileIconBtnActive : ""}`
+            }
+            aria-label="Profile"
+            title="Profile"
+          >
+            <FaUser aria-hidden="true" />
+          </NavLink>
+          <button type="button" onClick={requestLogout} className={styles.logoutBtn}>
+            logout
+          </button>
+        </div>
       </ul>
     </>
   );

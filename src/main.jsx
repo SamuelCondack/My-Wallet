@@ -8,6 +8,7 @@ import Expenses from './pages/Expenses/Expenses.jsx'
 import Income from './pages/Income/Income.jsx'
 import Dashboard from './pages/Dashboard/Dashboard.jsx'
 import Categories from './pages/Categories/Categories.jsx'
+import Profile from './pages/Profile/Profile.jsx'
 import Register from './pages/Register'
 import SignIn from './pages/SignIn'
 import HomeAuth from './pages/homeAuth/index.jsx'
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
       {
         path: 'income',
         element: <Income/>
+      },
+      {
+        path: 'profile',
+        element: <Profile />
       },
     ]
   }
