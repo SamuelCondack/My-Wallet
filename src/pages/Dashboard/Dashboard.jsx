@@ -24,7 +24,10 @@ import {
 } from "../../utils/incomeCalculations";
 import TrialBanner from "../../components/TrialBanner/TrialBanner";
 import ProGate from "../../components/ProGate/ProGate";
-import { PRO_FEATURES } from "../../constants/subscription";
+import {
+  buildMonthExpensesCsv,
+  downloadTextFile,
+} from "../../utils/exportExpensesCsv";
 
 const HORIZON_OPTIONS = [
   { value: "yearEnd", label: "Until Dec" },
@@ -163,6 +166,31 @@ export default function Dashboard() {
     () => getAggregatedCategoryTotals(expensesByMonth, activeMonthKeys),
     [expensesByMonth, activeMonthKeys]
   );
+
+  const periodExportRows = useMemo(() => {
+    const rows = [];
+    for (const key of activeMonthKeys) {
+      const list = expensesByMonth[key] || [];
+      for (const expense of list) {
+        rows.push(expense);
+      }
+    }
+    return rows;
+  }, [activeMonthKeys, expensesByMonth]);
+
+  const exportPeriodLabel = useMemo(() => {
+    if (selectedYear !== "All" && selectedMonth !== "All") {
+      return `${selectedYear}-${selectedMonth}`;
+    }
+    if (selectedYear !== "All") return String(selectedYear);
+    return "all";
+  }, [selectedYear, selectedMonth]);
+
+  const handleExportCsv = () => {
+    if (!periodExportRows.length) return;
+    const csv = buildMonthExpensesCsv(periodExportRows, categoriesMap);
+    downloadTextFile(`mywallet-expenses-${exportPeriodLabel}.csv`, csv);
+  };
 
   const monthPeriod =
     selectedYear !== "All" && selectedMonth !== "All"
@@ -697,21 +725,29 @@ export default function Dashboard() {
           <h2>Pro tools</h2>
         </div>
         <ProGate
-          title="Budgets, OCR, AI review & exports"
-          description="Pro features land next. Start a free trial from Profile to be ready when they unlock."
+          title="CSV export"
+          description="Download expenses for the filters above as a clean CSV. Unlock with Pro."
         >
           <div className={styles.proPreview}>
             <p className={styles.proPreviewLead}>
-              You have Pro access. These tools will unlock here as they ship:
+              Export expenses for{" "}
+              <strong>
+                {selectedYear !== "All" && selectedMonth !== "All"
+                  ? formatPeriodLabel(monthPeriod)
+                  : exportPeriodLabel}
+              </strong>{" "}
+              as CSV (name, date, value, category, method).
             </p>
-            <ul className={styles.proPreviewList}>
-              {PRO_FEATURES.map((feature) => (
-                <li key={feature.id}>
-                  <strong>{feature.title}</strong>
-                  <span>{feature.description}</span>
-                </li>
-              ))}
-            </ul>
+            <button
+              type="button"
+              className={styles.exportBtn}
+              onClick={handleExportCsv}
+              disabled={periodExportRows.length === 0}
+            >
+              {periodExportRows.length === 0
+                ? "No expenses to export"
+                : `Export CSV (${periodExportRows.length})`}
+            </button>
           </div>
         </ProGate>
       </section>

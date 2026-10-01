@@ -622,6 +622,29 @@
   color: var(--mw-muted);
   font-size: 13px;
   line-height: 1.4;
+
+  strong {
+    color: var(--mw-ink);
+    font-weight: 700;
+  }
+}
+
+.exportBtn {
+  @include glass-button;
+  align-self: flex-start;
+  border: 1px solid $defaultBlue;
+  background: $defaultBlue;
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 .proPreviewList {

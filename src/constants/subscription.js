@@ -47,8 +47,8 @@ export const PRO_FEATURES = [
   },
   {
     id: "export",
-    title: "PDF / CSV export",
-    description: "Download a clean monthly report whenever you need it.",
+    title: "CSV export",
+    description: "Download a clean monthly CSV whenever you need it.",
   },
 ];
 

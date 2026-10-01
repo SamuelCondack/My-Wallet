@@ -488,7 +488,15 @@ export default function Profile() {
                 <strong>{feature.title}</strong>
                 <span>{feature.description}</span>
               </div>
-              <span className={styles.coming}>{isPro ? "Included" : "Soon"}</span>
+              <span className={styles.coming}>
+                {feature.id === "export"
+                  ? isPro
+                    ? "Included"
+                    : "Pro"
+                  : isPro
+                    ? "Included"
+                    : "Soon"}
+              </span>
             </li>
           ))}
         </ul>
