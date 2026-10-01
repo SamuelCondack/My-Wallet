@@ -75,6 +75,7 @@ export default function Categories() {
   const [showEmojiPanel, setShowEmojiPanel] = useState(false);
   const [emojiSearch, setEmojiSearch] = useState("");
   const activeTouchIdRef = useRef(null);
+  const pressReleaseTimerRef = useRef(0);
   const customColorRef = useRef(null);
   const emojiSearchRef = useRef(null);
 
@@ -95,12 +96,25 @@ export default function Categories() {
       );
       if (touchEnded) {
         activeTouchIdRef.current = null;
-        setPressedKey(null);
+        if (pressReleaseTimerRef.current) {
+          window.clearTimeout(pressReleaseTimerRef.current);
+        }
+        pressReleaseTimerRef.current = window.setTimeout(() => {
+          setPressedKey(null);
+          pressReleaseTimerRef.current = 0;
+        }, 220);
       }
     };
 
     document.addEventListener("touchend", handleTouchEnd);
-    return () => document.removeEventListener("touchend", handleTouchEnd);
+    document.addEventListener("touchcancel", handleTouchEnd);
+    return () => {
+      document.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("touchcancel", handleTouchEnd);
+      if (pressReleaseTimerRef.current) {
+        window.clearTimeout(pressReleaseTimerRef.current);
+      }
+    };
   }, []);
 
   const visibleCategories = useMemo(() => {
@@ -281,6 +295,10 @@ export default function Categories() {
       return;
     }
     activeTouchIdRef.current = touch.identifier;
+    if (pressReleaseTimerRef.current) {
+      window.clearTimeout(pressReleaseTimerRef.current);
+      pressReleaseTimerRef.current = 0;
+    }
     setPressedKey(key);
   };
 
@@ -349,7 +367,7 @@ export default function Categories() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <div
                     className={`${styles.categoryCard} ${

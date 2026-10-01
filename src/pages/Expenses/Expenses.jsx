@@ -86,6 +86,7 @@ export default function Expenses() {
   );
   const [pressedExpenseKey, setPressedExpenseKey] = useState(null);
   const activeTouchIdRef = useRef(null);
+  const pressReleaseTimerRef = useRef(0);
   const categoryHintValueRef = useRef(0);
   const [copiedMetric, setCopiedMetric] = useState(null);
   const copyTimeoutsRef = useRef([]);
@@ -94,6 +95,9 @@ export default function Expenses() {
   useEffect(() => {
     return () => {
       copyTimeoutsRef.current.forEach((id) => clearTimeout(id));
+      if (pressReleaseTimerRef.current) {
+        window.clearTimeout(pressReleaseTimerRef.current);
+      }
     };
   }, []);
 
@@ -238,12 +242,23 @@ export default function Expenses() {
 
       if (touchEnded) {
         activeTouchIdRef.current = null;
-        setPressedExpenseKey(null);
+        if (pressReleaseTimerRef.current) {
+          window.clearTimeout(pressReleaseTimerRef.current);
+        }
+        // Hold pressed briefly so the scale-up can finish before easing down.
+        pressReleaseTimerRef.current = window.setTimeout(() => {
+          setPressedExpenseKey(null);
+          pressReleaseTimerRef.current = 0;
+        }, 220);
       }
     };
 
     document.addEventListener("touchend", handleTouchEnd);
-    return () => document.removeEventListener("touchend", handleTouchEnd);
+    document.addEventListener("touchcancel", handleTouchEnd);
+    return () => {
+      document.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("touchcancel", handleTouchEnd);
+    };
   }, []);
 
   useEffect(() => {
@@ -303,6 +318,10 @@ export default function Expenses() {
     }
 
     activeTouchIdRef.current = touch.identifier;
+    if (pressReleaseTimerRef.current) {
+      window.clearTimeout(pressReleaseTimerRef.current);
+      pressReleaseTimerRef.current = 0;
+    }
     setPressedExpenseKey(expenseKey);
   };
 
@@ -1422,7 +1441,7 @@ export default function Expenses() {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
                           >
                             <div
                               className={`${styles.expense} ${getBorderStyle(

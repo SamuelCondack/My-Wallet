@@ -134,9 +134,9 @@ body {
         inset 0 1px 0 var(--mw-inset-highlight);
     transform: translateZ(0);
     transition:
-        box-shadow 0.35s $easeOut,
-        border-color 0.35s $easeOut,
-        transform 0.38s $easeOut;
+        box-shadow 0.55s $easeSoft,
+        border-color 0.55s $easeSoft,
+        transform 0.62s $easeSoft;
 
     @media (hover: hover) {
         &:hover {
