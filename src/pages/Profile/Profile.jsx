@@ -8,8 +8,10 @@ import PaywallModal from "../../components/PaywallModal/PaywallModal";
 import ProWelcomeCelebration from "../../components/ProWelcomeCelebration/ProWelcomeCelebration";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import {
+  PRO_COPY,
   PRO_FEATURES,
   PRO_PRICE_LABEL,
+  getProFeatureBadge,
   SUBSCRIPTION_STATUS,
   TRIAL_DAYS,
 } from "../../constants/subscription";
@@ -447,9 +449,7 @@ export default function Profile() {
           {showTrial && (
             <div className={styles.subscribeHero}>
               <p className={styles.subscribeEyebrow}>Try Pro free</p>
-              <p className={styles.subscribeLead}>
-                Budgets, CSV & PDF export, and more Pro tools — no charge today.
-              </p>
+              <p className={styles.subscribeLead}>{PRO_COPY.trialLead}</p>
               <button
                 type="button"
                 className={styles.primaryBtn}
@@ -469,9 +469,7 @@ export default function Profile() {
           {showSubscribe && (
             <div className={styles.subscribeHero}>
               <p className={styles.subscribeEyebrow}>Unlock MyWallet Pro</p>
-              <p className={styles.subscribeLead}>
-                Budgets, CSV & PDF export — receipt capture and AI review coming soon.
-              </p>
+              <p className={styles.subscribeLead}>{PRO_COPY.subscribeLead}</p>
               <button
                 type="button"
                 className={styles.primaryBtn}
@@ -527,13 +525,7 @@ export default function Profile() {
                 <span>{feature.description}</span>
               </div>
               <span className={styles.coming}>
-                {feature.id === "export" || feature.id === "budgets"
-                  ? isPro
-                    ? "Included"
-                    : "Pro"
-                  : isPro
-                    ? "Included"
-                    : "Soon"}
+                {getProFeatureBadge(feature, { isPro })}
               </span>
             </li>
           ))}

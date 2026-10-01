@@ -1,7 +1,7 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
-import { PRO_FEATURES, PRO_PRICE_LABEL, TRIAL_DAYS } from "../../constants/subscription";
+import { PRO_FEATURES_SHIPPED, PRO_PRICE_LABEL, TRIAL_DAYS } from "../../constants/subscription";
 import { startCheckout, openStripeSession } from "../../services/subscriptionService";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import styles from "./PaywallModal.module.scss";
@@ -71,7 +71,7 @@ export default function PaywallModal({
         <p className={styles.message}>{resolvedMessage}</p>
 
         <ul className={styles.featureList}>
-          {PRO_FEATURES.map((feature) => (
+          {PRO_FEATURES_SHIPPED.map((feature) => (
             <li key={feature.id}>
               <strong>{feature.title}</strong>
               <span>{feature.description}</span>

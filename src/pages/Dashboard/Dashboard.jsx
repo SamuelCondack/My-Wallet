@@ -32,6 +32,7 @@ import CategoryBudgetsPanel, {
   BudgetTeaserPreview,
 } from "../../components/CategoryBudgetsPanel/CategoryBudgetsPanel";
 import { useCategoryBudgets } from "../../hooks/useCategoryBudgets";
+import { getProFeature } from "../../constants/subscription";
 import {
   buildMonthExpensesCsv,
   downloadTextFile,
@@ -564,8 +565,8 @@ export default function Dashboard() {
           <h2>Budgets</h2>
         </div>
         <ProGate
-          title="Category budgets"
-          description="Set monthly limits per category and see when you’re close to overspending."
+          title={getProFeature("budgets").title}
+          description={getProFeature("budgets").description}
           preview={<BudgetTeaserPreview />}
         >
           <CategoryBudgetsPanel
@@ -832,8 +833,8 @@ export default function Dashboard() {
           <h2>Pro tools</h2>
         </div>
         <ProGate
-          title="CSV & PDF export"
-          description="Download a clean CSV or PDF report for the filters above. Unlock with Pro."
+          title={getProFeature("export").title}
+          description={getProFeature("export").description}
           preview={
             <div className={styles.exportTeaser} aria-hidden="true">
               <div className={styles.exportTeaserRow}>

@@ -10,6 +10,7 @@ import {
   PAYMENT_METHODS,
   PAYMENT_METHOD_COLORS,
 } from "../../constants/quickAdd";
+import { PRO_COPY } from "../../constants/subscription";
 import { useSubscription } from "../../hooks/useSubscription";
 import styles from "./ExpenseFormModal.module.scss";
 
@@ -995,8 +996,8 @@ export default function ExpenseFormModal({
       <PaywallModal
         isOpen={paywallOpen}
         onClose={() => setPaywallOpen(false)}
-        title="Unlimited favorites + Pro tools"
-        message={`Free plan allows ${FREE_FAVORITE_LIMIT} favorites. Upgrade for unlimited favorites and Pro tools.`}
+        title={PRO_COPY.favoritesPaywallTitle}
+        message={PRO_COPY.favoritesPaywallMessage}
         canStartTrial={canStartTrial}
       />
     </>

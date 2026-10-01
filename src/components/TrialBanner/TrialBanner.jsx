@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSubscription } from "../../hooks/useSubscription";
-import { SUBSCRIPTION_STATUS, TRIAL_DAYS } from "../../constants/subscription";
+import {
+  PRO_COPY,
+  SUBSCRIPTION_STATUS,
+} from "../../constants/subscription";
 import PaywallModal from "../PaywallModal/PaywallModal";
 import styles from "./TrialBanner.module.scss";
 
@@ -100,7 +103,7 @@ export default function TrialBanner() {
         <div className={styles.copy}>
           <strong>Try MyWallet Pro free</strong>
           <span>
-            {TRIAL_DAYS}-day trial · budgets, CSV & PDF export live on Pro.
+            {PRO_COPY.trialBanner}
           </span>
         </div>
         <div className={styles.actions}>
