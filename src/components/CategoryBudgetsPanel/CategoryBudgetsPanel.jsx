@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import BottomSheet from "../BottomSheet/BottomSheet";
+import sheetStyles from "../BottomSheet/BottomSheet.module.scss";
 import { formatCurrency } from "../../utils/finance";
 import styles from "./CategoryBudgetsPanel.module.scss";
 
@@ -150,6 +151,10 @@ export default function CategoryBudgetsPanel({
 
     setSaving(true);
     try {
+      // Budgets are keyed by categoryId — moving category means delete + create.
+      if (editingId && editingId !== categoryId) {
+        await onRemove(editingId);
+      }
       await onSave(categoryId, value);
       toast.success(editingId ? "Budget updated." : "Budget saved.");
       setSheetOpen(false);
@@ -256,23 +261,16 @@ export default function CategoryBudgetsPanel({
         lockScroll
       >
         <form className={styles.sheetForm} onSubmit={handleSave}>
-          <header className={styles.sheetHeader}>
-            <h2 id="budget-sheet-title">
-              {editingId ? "Edit budget" : "Add budget"}
-            </h2>
-          </header>
+          <div className={styles.sheetBody}>
+            <header className={styles.sheetHeader}>
+              <h2 id="budget-sheet-title">
+                {editingId ? "Edit budget" : "Add budget"}
+              </h2>
+            </header>
 
-          <label className={styles.fieldLabel} htmlFor="budgetCategory">
-            Category
-          </label>
-          {editingId ? (
-            <div className={styles.categoryReadonly} id="budgetCategory">
-              <span aria-hidden="true">
-                {categoryById[categoryId]?.icon || "📦"}
-              </span>
-              <span>{categoryById[categoryId]?.name || "Category"}</span>
-            </div>
-          ) : (
+            <label className={styles.fieldLabel} htmlFor="budgetCategory">
+              Category
+            </label>
             <select
               id="budgetCategory"
               className={styles.select}
@@ -291,42 +289,54 @@ export default function CategoryBudgetsPanel({
                 ))
               )}
             </select>
-          )}
 
-          <label className={styles.fieldLabel} htmlFor="budgetAmount">
-            Monthly limit
-          </label>
-          <div className={styles.amountRow}>
-            <span aria-hidden="true">$</span>
-            <input
-              id="budgetAmount"
-              className={styles.amountInput}
-              inputMode="decimal"
-              placeholder="0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              autoComplete="off"
-            />
+            <label className={styles.fieldLabel} htmlFor="budgetAmount">
+              Monthly limit
+            </label>
+            <div className={styles.amountRow}>
+              <span aria-hidden="true">$</span>
+              <input
+                id="budgetAmount"
+                className={styles.amountInput}
+                inputMode="decimal"
+                placeholder="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                autoComplete="off"
+              />
+            </div>
+
+            {editingId && (
+              <button
+                type="button"
+                className={styles.removeBtn}
+                onClick={handleRemove}
+                disabled={saving}
+              >
+                Remove budget
+              </button>
+            )}
           </div>
 
-          <button
-            type="submit"
-            className={styles.saveBtn}
-            disabled={saving || !categoryId}
-          >
-            {saving ? "Saving…" : editingId ? "Save budget" : "Add budget"}
-          </button>
-
-          {editingId && (
-            <button
-              type="button"
-              className={styles.removeBtn}
-              onClick={handleRemove}
-              disabled={saving}
-            >
-              Remove budget
-            </button>
-          )}
+          <div className={sheetStyles.footer}>
+            <div className={sheetStyles.actions}>
+              <button
+                type="submit"
+                className={sheetStyles.primaryBtn}
+                disabled={saving || !categoryId}
+              >
+                {saving ? "Saving…" : editingId ? "Edit" : "Add"}
+              </button>
+              <button
+                type="button"
+                className={sheetStyles.secondaryBtn}
+                onClick={closeSheet}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </form>
       </BottomSheet>
     </>
