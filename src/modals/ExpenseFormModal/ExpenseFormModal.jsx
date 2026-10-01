@@ -111,20 +111,23 @@ export default function ExpenseFormModal({
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
-  const [stepPulse, setStepPulse] = useState(null);
+  const [stepPulse, setStepPulse] = useState({ side: null, tick: 0 });
   const valueRef = useRef(null);
   const categorySearchRef = useRef(null);
   const stepPulseTimerRef = useRef(0);
 
   const pulseStepper = (side) => {
-    setStepPulse(side);
     if (stepPulseTimerRef.current) {
       window.clearTimeout(stepPulseTimerRef.current);
-    }
-    stepPulseTimerRef.current = window.setTimeout(() => {
-      setStepPulse(null);
       stepPulseTimerRef.current = 0;
-    }, 1100);
+    }
+    // Bump tick so the pulse class remounts and the CSS animation restarts
+    // on every click (not only the first while the class was already on).
+    setStepPulse((prev) => ({ side, tick: prev.tick + 1 }));
+    stepPulseTimerRef.current = window.setTimeout(() => {
+      setStepPulse((prev) => ({ ...prev, side: null }));
+      stepPulseTimerRef.current = 0;
+    }, 1150);
   };
 
   useEffect(() => {
@@ -809,9 +812,14 @@ export default function ExpenseFormModal({
                 </label>
                 <div className={styles.stepperRow}>
                   <button
+                    key={
+                      stepPulse.side === "dec"
+                        ? `dec-${stepPulse.tick}`
+                        : "dec"
+                    }
                     type="button"
                     className={`${styles.stepperBtn} ${
-                      stepPulse === "dec" ? styles.stepperBtnPulse : ""
+                      stepPulse.side === "dec" ? styles.stepperBtnPulse : ""
                     }`}
                     aria-label="Decrease installments"
                     disabled={isSaving}
@@ -850,9 +858,14 @@ export default function ExpenseFormModal({
                     className={styles.stepperInput}
                   />
                   <button
+                    key={
+                      stepPulse.side === "inc"
+                        ? `inc-${stepPulse.tick}`
+                        : "inc"
+                    }
                     type="button"
                     className={`${styles.stepperBtn} ${
-                      stepPulse === "inc" ? styles.stepperBtnPulse : ""
+                      stepPulse.side === "inc" ? styles.stepperBtnPulse : ""
                     }`}
                     aria-label="Increase installments"
                     disabled={isSaving}
