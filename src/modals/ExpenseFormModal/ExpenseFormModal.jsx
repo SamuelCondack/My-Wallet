@@ -3,13 +3,20 @@ import PropTypes from "prop-types";
 import { FaStar, FaRegStar, FaTimes, FaChevronRight, FaSearch } from "react-icons/fa";
 import { toast } from "react-toastify";
 import BottomSheet from "../../components/BottomSheet/BottomSheet";
+import PaywallModal from "../../components/PaywallModal/PaywallModal";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 import {
   FREE_FAVORITE_LIMIT,
   PAYMENT_METHODS,
   PAYMENT_METHOD_COLORS,
 } from "../../constants/quickAdd";
+import { useSubscription } from "../../hooks/useSubscription";
 import styles from "./ExpenseFormModal.module.scss";
+
+function templateQuickValue(template) {
+  const value = Number(template?.value);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
 
 const EMPTY_FORM = {
   name: "",
@@ -77,9 +84,11 @@ export default function ExpenseFormModal({
   editingExpense = null,
 }) {
   const isCreate = mode === "create";
+  const { canStartTrial } = useSubscription();
   const [form, setForm] = useState(EMPTY_FORM);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingFavorite, setIsSavingFavorite] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
   const [stepPulse, setStepPulse] = useState(null);
@@ -213,7 +222,33 @@ export default function ExpenseFormModal({
     form.paymentMethod,
   ]);
 
-  const applyTemplate = (template) => {
+  const applyTemplate = async (template) => {
+    if (isSaving) return;
+
+    const name = String(template?.name || "").trim();
+    const quickValue = templateQuickValue(template);
+
+    // One-tap save when name + amount are present (create only).
+    if (isCreate && name && quickValue != null) {
+      setIsSaving(true);
+      try {
+        await onSave({
+          name,
+          value: quickValue,
+          inclusionDate: form.inclusionDate || todayISO(),
+          categoryId: template.categoryId || form.categoryId || DEFAULT_CATEGORY_ID,
+          paymentMethod:
+            template.paymentMethod || form.paymentMethod || "Credit Card",
+          isMonthly: false,
+          installments: "",
+          pauseDate: "",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
       name: template.name || "",
@@ -311,9 +346,7 @@ export default function ExpenseFormModal({
       }
 
       if (!isPro && favorites.length >= FREE_FAVORITE_LIMIT) {
-        toast.info(
-          `Free plan allows ${FREE_FAVORITE_LIMIT} favorites. Upgrade to Pro for unlimited.`
-        );
+        setPaywallOpen(true);
         return;
       }
 
@@ -377,44 +410,68 @@ export default function ExpenseFormModal({
               <div className={styles.shortcuts}>
                 {favorites.length > 0 && (
                     <div className={styles.shortcutBlock}>
-                    <p className={styles.shortcutLabel}>Favorites</p>
+                    <p className={styles.shortcutLabel}>Favorites · quick add</p>
                     <HorizontalChipRow className={styles.chipRow}>
-                      {favorites.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className={`${styles.chip} ${styles.favoriteChip}`}
-                          onClick={() => applyTemplate(item)}
-                        >
-                          <FaStar
-                            className={styles.chipStar}
-                            aria-hidden="true"
-                          />
-                          <span>{shortLabel(item.name)}</span>
-                          {item.value != null && (
-                            <em>${Number(item.value).toFixed(0)}</em>
-                          )}
-                        </button>
-                      ))}
+                      {favorites.map((item) => {
+                        const canQuickAdd = templateQuickValue(item) != null;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className={`${styles.chip} ${styles.favoriteChip}${
+                              canQuickAdd ? ` ${styles.chipQuick}` : ""
+                            }`}
+                            onClick={() => applyTemplate(item)}
+                            disabled={isSaving}
+                            title={
+                              canQuickAdd
+                                ? "Tap to save this expense"
+                                : "Tap to prefill"
+                            }
+                          >
+                            <FaStar
+                              className={styles.chipStar}
+                              aria-hidden="true"
+                            />
+                            <span>{shortLabel(item.name)}</span>
+                            {item.value != null && (
+                              <em>${Number(item.value).toFixed(0)}</em>
+                            )}
+                          </button>
+                        );
+                      })}
                     </HorizontalChipRow>
                   </div>
                 )}
 
                 {recent.length > 0 && (
                   <div className={styles.shortcutBlock}>
-                    <p className={styles.shortcutLabel}>Repeat recent</p>
+                    <p className={styles.shortcutLabel}>
+                      Repeat recent · quick add
+                    </p>
                     <HorizontalChipRow className={styles.chipRow}>
-                      {recent.map((item) => (
-                        <button
-                          key={`recent-${item.id}`}
-                          type="button"
-                          className={styles.chip}
-                          onClick={() => applyTemplate(item)}
-                        >
-                          <span>{shortLabel(item.name)}</span>
-                          <em>${Number(item.value).toFixed(0)}</em>
-                        </button>
-                      ))}
+                      {recent.map((item) => {
+                        const canQuickAdd = templateQuickValue(item) != null;
+                        return (
+                          <button
+                            key={`recent-${item.id}`}
+                            type="button"
+                            className={`${styles.chip}${
+                              canQuickAdd ? ` ${styles.chipQuick}` : ""
+                            }`}
+                            onClick={() => applyTemplate(item)}
+                            disabled={isSaving}
+                            title={
+                              canQuickAdd
+                                ? "Tap to save this expense"
+                                : "Tap to prefill"
+                            }
+                          >
+                            <span>{shortLabel(item.name)}</span>
+                            <em>${Number(item.value).toFixed(0)}</em>
+                          </button>
+                        );
+                      })}
                     </HorizontalChipRow>
                   </div>
                 )}
@@ -796,6 +853,14 @@ export default function ExpenseFormModal({
           })}
         </div>
       </BottomSheet>
+
+      <PaywallModal
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        title="Unlimited favorites + Pro tools"
+        message={`Free plan allows ${FREE_FAVORITE_LIMIT} favorites. Upgrade for unlimited favorites and Pro tools.`}
+        canStartTrial={canStartTrial}
+      />
     </>
   );
 }

@@ -211,6 +211,15 @@
   flex-shrink: 0;
 }
 
+.chipQuick {
+  border-color: rgba($defaultBlue, 0.45);
+}
+
+.chip:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .chipActive {
   background: $defaultBlue;
   border-color: $defaultBlue;
