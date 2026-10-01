@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import BottomSheet from "../BottomSheet/BottomSheet";
 import sheetStyles from "../BottomSheet/BottomSheet.module.scss";
+import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import { formatCurrency } from "../../utils/finance";
 import styles from "./CategoryBudgetsPanel.module.scss";
 
@@ -64,6 +65,7 @@ export default function CategoryBudgetsPanel({
   const [categoryId, setCategoryId] = useState("");
   const [amount, setAmount] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
   const spentByCategory = useMemo(() => {
     const map = {};
@@ -134,7 +136,13 @@ export default function CategoryBudgetsPanel({
 
   const closeSheet = () => {
     if (saving) return;
+    setConfirmRemoveOpen(false);
     setSheetOpen(false);
+  };
+
+  const requestRemove = () => {
+    if (!editingId || saving) return;
+    setConfirmRemoveOpen(true);
   };
 
   const handleSave = async (event) => {
@@ -172,6 +180,7 @@ export default function CategoryBudgetsPanel({
     try {
       await onRemove(editingId);
       toast.success("Budget removed.");
+      setConfirmRemoveOpen(false);
       setSheetOpen(false);
     } catch (err) {
       console.error(err);
@@ -310,7 +319,7 @@ export default function CategoryBudgetsPanel({
               <button
                 type="button"
                 className={styles.removeBtn}
-                onClick={handleRemove}
+                onClick={requestRemove}
                 disabled={saving}
               >
                 Remove budget
@@ -339,6 +348,18 @@ export default function CategoryBudgetsPanel({
           </div>
         </form>
       </BottomSheet>
+
+      <ConfirmationModal
+        isOpen={confirmRemoveOpen}
+        onRequestClose={() => {
+          if (!saving) setConfirmRemoveOpen(false);
+        }}
+        onConfirm={handleRemove}
+        title="Remove budget"
+        message="Are you sure you want to remove the budget for"
+        expenseName={categoryById[editingId]?.name || "this category"}
+        isSubmitting={saving}
+      />
     </>
   );
 }
