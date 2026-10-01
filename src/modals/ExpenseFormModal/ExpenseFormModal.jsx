@@ -18,6 +18,24 @@ function templateQuickValue(template) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
+function monthSpendForCategory(expensesByMonth, monthKey, categoryId, excludeId) {
+  if (!monthKey || !categoryId) return 0;
+  return (expensesByMonth?.[monthKey] || [])
+    .filter(
+      (item) =>
+        item.categoryId === categoryId &&
+        (!excludeId || item.id !== excludeId)
+    )
+    .reduce((sum, item) => sum + Number(item.value || 0), 0);
+}
+
+function budgetImpactAmount({ value, isMonthly, installments }) {
+  if (isMonthly) return value;
+  const count = Number(installments);
+  if (Number.isFinite(count) && count > 1) return value / count;
+  return value;
+}
+
 const EMPTY_FORM = {
   name: "",
   value: "",
@@ -78,6 +96,8 @@ export default function ExpenseFormModal({
   favorites = [],
   recent = [],
   isPro = false,
+  budgets = [],
+  expensesByMonth = {},
   onAddFavorite,
   onRemoveFavorite,
   initialValues = null,
@@ -177,6 +197,53 @@ export default function ExpenseFormModal({
     );
   }, [categories, form.categoryId]);
 
+  const budgetHint = useMemo(() => {
+    if (!isPro || !budgets.length) return null;
+    const budget = budgets.find((item) => item.categoryId === form.categoryId);
+    const limit = Number(budget?.amount) || 0;
+    if (!(limit > 0)) return null;
+
+    const monthKey = String(form.inclusionDate || todayISO()).slice(0, 7);
+    const excludeId = isCreate ? null : editingExpense?.id;
+    const spent = monthSpendForCategory(
+      expensesByMonth,
+      monthKey,
+      form.categoryId,
+      excludeId
+    );
+    const draftValue = Number(String(form.value).replace(",", "."));
+    const installmentsRaw = String(form.installments || "").trim();
+    const impact =
+      Number.isFinite(draftValue) && draftValue > 0
+        ? budgetImpactAmount({
+            value: draftValue,
+            isMonthly: Boolean(form.isMonthly),
+            installments: installmentsRaw,
+          })
+        : 0;
+    const projected = spent + impact;
+    const ratio = projected / limit;
+    const tone = ratio >= 1 ? "over" : ratio >= 0.8 ? "warn" : "ok";
+    return {
+      limit,
+      spent,
+      projected,
+      tone,
+      percent: Math.min(100, Math.round(ratio * 100)),
+    };
+  }, [
+    isPro,
+    budgets,
+    form.categoryId,
+    form.inclusionDate,
+    form.value,
+    form.isMonthly,
+    form.installments,
+    expensesByMonth,
+    isCreate,
+    editingExpense?.id,
+  ]);
+
   const quickCategories = useMemo(() => {
     const byId = new Map(categories.map((item) => [item.id, item]));
     const picks = [];
@@ -232,17 +299,37 @@ export default function ExpenseFormModal({
     if (isCreate && name && quickValue != null) {
       setIsSaving(true);
       try {
+        const categoryId =
+          template.categoryId || form.categoryId || DEFAULT_CATEGORY_ID;
         await onSave({
           name,
           value: quickValue,
           inclusionDate: form.inclusionDate || todayISO(),
-          categoryId: template.categoryId || form.categoryId || DEFAULT_CATEGORY_ID,
+          categoryId,
           paymentMethod:
             template.paymentMethod || form.paymentMethod || "Credit Card",
           isMonthly: false,
           installments: "",
           pauseDate: "",
         });
+        if (isPro && budgets.length) {
+          const budget = budgets.find((item) => item.categoryId === categoryId);
+          const limit = Number(budget?.amount) || 0;
+          if (limit > 0) {
+            const monthKey = String(form.inclusionDate || todayISO()).slice(0, 7);
+            const spent = monthSpendForCategory(
+              expensesByMonth,
+              monthKey,
+              categoryId,
+              null
+            );
+            if (spent + quickValue >= limit) {
+              toast.info("That category is over its monthly budget.");
+            } else if (spent + quickValue >= limit * 0.8) {
+              toast.info("That category is nearing its monthly budget.");
+            }
+          }
+        }
       } finally {
         setIsSaving(false);
       }
@@ -323,6 +410,15 @@ export default function ExpenseFormModal({
             })(),
         pauseDate: form.pauseDate || "",
       });
+      if (budgetHint?.tone === "over") {
+        toast.info(
+          `${selectedCategory.name} is over its monthly budget after this expense.`
+        );
+      } else if (budgetHint?.tone === "warn") {
+        toast.info(
+          `${selectedCategory.name} is nearing its monthly budget.`
+        );
+      }
     } finally {
       setIsSaving(false);
     }
@@ -535,6 +631,35 @@ export default function ExpenseFormModal({
               </span>
               <FaChevronRight className={styles.categoryChevron} aria-hidden="true" />
             </button>
+
+            {budgetHint && (
+              <div
+                className={`${styles.budgetHint} ${
+                  budgetHint.tone === "over"
+                    ? styles.budgetHintOver
+                    : budgetHint.tone === "warn"
+                      ? styles.budgetHintWarn
+                      : styles.budgetHintOk
+                }`}
+              >
+                <div className={styles.budgetHintCopy}>
+                  <strong>
+                    {budgetHint.tone === "over"
+                      ? "Over budget"
+                      : budgetHint.tone === "warn"
+                        ? "Near budget limit"
+                        : "Within budget"}
+                  </strong>
+                  <span>
+                    ${budgetHint.projected.toFixed(0)} / $
+                    {budgetHint.limit.toFixed(0)} this month
+                  </span>
+                </div>
+                <div className={styles.budgetHintTrack}>
+                  <span style={{ width: `${budgetHint.percent}%` }} />
+                </div>
+              </div>
+            )}
 
             {quickCategories.length > 0 && (
               <div className={styles.quickCategoryRow}>
@@ -874,6 +999,8 @@ ExpenseFormModal.propTypes = {
   favorites: PropTypes.array,
   recent: PropTypes.array,
   isPro: PropTypes.bool,
+  budgets: PropTypes.array,
+  expensesByMonth: PropTypes.object,
   onAddFavorite: PropTypes.func,
   onRemoveFavorite: PropTypes.func,
   initialValues: PropTypes.object,

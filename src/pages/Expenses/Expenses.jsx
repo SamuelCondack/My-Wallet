@@ -25,6 +25,7 @@ import {
 import { useCategories } from "../../hooks/useCategories";
 import { useExpenseFavorites } from "../../hooks/useExpenseFavorites";
 import { useSubscription } from "../../hooks/useSubscription";
+import { useCategoryBudgets } from "../../hooks/useCategoryBudgets";
 import { buildRecentTemplates } from "../../services/expenseFavoritesService";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 import { getCached, setCached } from "../../utils/dataCache";
@@ -80,6 +81,7 @@ export default function Expenses() {
   const categoriesMap = getCategoryMap(categories);
   const { favorites, addFavorite, removeFavorite } = useExpenseFavorites(userId);
   const { isPro } = useSubscription();
+  const { budgets } = useCategoryBudgets(userId);
   const recentTemplates = useMemo(
     () => buildRecentTemplates(expensesList, 6),
     [expensesList]
@@ -1624,6 +1626,8 @@ export default function Expenses() {
           favorites={favorites}
           recent={recentTemplates}
           isPro={isPro}
+          budgets={isPro ? budgets : []}
+          expensesByMonth={expensesByMonth}
           onAddFavorite={addFavorite}
           onRemoveFavorite={removeFavorite}
           initialValues={expenseFormInitial}
