@@ -57,6 +57,17 @@
   }
 }
 
+:global(html[data-theme="dark"]) {
+  .themeSwitch:not(.themeSwitchOn) {
+    background: rgba(148, 163, 184, 0.28);
+  }
+
+  .card {
+    background: var(--mw-card);
+    border-color: var(--mw-card-border);
+  }
+}
+
 .themeSwitchOn {
   background: $defaultBlue;
 }
@@ -68,7 +79,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--mw-card);
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -89,7 +100,7 @@
 
   p {
     margin: 0;
-    color: #666;
+    color: var(--mw-muted);
     font-size: 13px;
     word-break: break-word;
   }
@@ -196,7 +207,7 @@
 .label {
   margin: 0 0 4px;
   font-size: 12px;
-  color: #666;
+  color: var(--mw-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 600;
@@ -209,7 +220,7 @@
 
 .statusDetail {
   margin: 0;
-  color: #555;
+  color: var(--mw-muted);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -229,7 +240,7 @@
 
 .badgeFree {
   background: #f3f4f6;
-  color: #555;
+  color: var(--mw-muted);
 }
 
 .planActions {
@@ -302,9 +313,9 @@
 }
 
 .secondaryBtn {
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--mw-danger-bg);
   color: $ink;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--mw-line);
 
   &:disabled {
     opacity: 0.7;
@@ -315,7 +326,7 @@
 .priceNote {
   margin: 0;
   font-size: 12px;
-  color: #777;
+  color: var(--mw-muted);
   line-height: 1.4;
 }
 
@@ -350,7 +361,7 @@
     span {
       display: block;
       font-size: 12px;
-      color: #666;
+      color: var(--mw-muted);
       line-height: 1.4;
     }
   }

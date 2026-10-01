@@ -49,7 +49,7 @@
 
         &:first-child {
             background-color: #ccc;
-            color: #000;
+            color: var(--mw-ink);
         }
 
         &:last-child {

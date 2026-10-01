@@ -12,6 +12,16 @@ $inkSoft: var(--mw-ink-soft);
 $surface: var(--mw-surface);
 $surfaceElevated: var(--mw-surface-elevated);
 $line: var(--mw-line);
+$card: var(--mw-card);
+$cardBorder: var(--mw-card-border);
+$sheet: var(--mw-sheet);
+$inputBg: var(--mw-input-bg);
+$inputBorder: var(--mw-input-border);
+$muted: var(--mw-muted);
+$chipBg: var(--mw-chip-bg);
+$controlBg: var(--mw-control-bg);
+$insetHighlight: var(--mw-inset-highlight);
+$shadowSoft: var(--mw-shadow-soft);
 $blueDeep: #1d4ed8;
 $blueSoft: #60a5fa;
 $easeOut: cubic-bezier(0.16, 1, 0.3, 1);
@@ -30,8 +40,8 @@ $easeSoft: cubic-bezier(0.22, 1, 0.36, 1);
 @mixin glass-dark($radius: 24px) {
   background: linear-gradient(
     160deg,
-    rgba(20, 24, 33, 0.78) 0%,
-    rgba(8, 10, 16, 0.72) 100%
+    rgba(20, 24, 33, 0.92) 0%,
+    rgba(8, 10, 16, 0.88) 100%
   );
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: $radius;

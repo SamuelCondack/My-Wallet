@@ -18,7 +18,7 @@ body {
 .selectFilters {
     border-radius: 999px;
     text-align: center !important;
-    border: 1px solid rgba(15, 23, 42, 0.1);
+    border: 1px solid var(--mw-line);
     padding: 8px 16px;
     color: $defaultBlue;
     appearance: none;
@@ -28,8 +28,8 @@ body {
     -webkit-appearance: none;
     font-size: 12px;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: var(--mw-card);
+    box-shadow: inset 0 1px 0 var(--mw-inset-highlight);
     transition: 0.18s $easeOut;
     outline: none;
 
@@ -53,8 +53,8 @@ body {
 
     &:disabled {
         cursor: not-allowed;
-        background-color: #f0f0f0;
-        color: #a0a0a0;
+        background-color: var(--mw-chip-bg);
+        color: var(--mw-muted);
         border-color: #d0d0d0;
         transform: none;
     }
@@ -126,11 +126,12 @@ body {
     flex-direction: column;
     align-items: center;
     position: relative;
-    background: rgba(255, 255, 255, 0.94);
-    border: 1.5px solid rgba(15, 23, 42, 0.08);
+    background: var(--mw-card);
+    border: 1.5px solid var(--mw-card-border);
+    color: var(--mw-ink);
     box-shadow:
-        0 12px 28px rgba(15, 23, 42, 0.07),
-        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+        var(--mw-shadow-soft),
+        inset 0 1px 0 var(--mw-inset-highlight);
     transform: translateZ(0);
     transition:
         box-shadow 0.35s $easeOut,
@@ -148,6 +149,7 @@ body {
         margin: 0;
         margin-bottom: 10px;
         overflow-wrap: anywhere;
+        color: inherit;
     }
 }
 
@@ -160,7 +162,7 @@ body {
     box-shadow:
         0 12px 28px rgba(15, 23, 42, 0.06),
         0 10px 28px rgba(235, 171, 61, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 1px 0 var(--mw-inset-highlight),
         inset 0 0 0 1px rgba(235, 171, 61, 0.08);
 
     .expenseMethod {
@@ -174,7 +176,7 @@ body {
     box-shadow:
         0 12px 28px rgba(15, 23, 42, 0.06),
         0 10px 28px rgba(52, 123, 199, 0.16),
-        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 1px 0 var(--mw-inset-highlight),
         inset 0 0 0 1px rgba(52, 123, 199, 0.08);
 
     .expenseMethod {
@@ -188,7 +190,7 @@ body {
     box-shadow:
         0 12px 28px rgba(15, 23, 42, 0.06),
         0 10px 30px rgba(62, 146, 235, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 1px 0 var(--mw-inset-highlight),
         inset 0 0 0 1px rgba(62, 146, 235, 0.1);
 
     .expenseMethod {
@@ -202,7 +204,7 @@ body {
     box-shadow:
         0 12px 28px rgba(15, 23, 42, 0.06),
         0 10px 28px rgba(195, 133, 212, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 1px 0 var(--mw-inset-highlight),
         inset 0 0 0 1px rgba(195, 133, 212, 0.1);
 
     .expenseMethod {
@@ -264,7 +266,7 @@ body {
 }
 
 .disabledCalendar {
-    color: #cccccc;
+    color: var(--mw-muted);
     cursor: not-allowed;
 }
 
@@ -381,7 +383,7 @@ body {
 .summaryLine {
     margin: 4px 0 0;
     text-align: left;
-    color: #000;
+    color: var(--mw-ink);
 }
 
 .metricCopyRow {
@@ -456,7 +458,7 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    color: #9a9a9a;
+    color: var(--mw-muted);
     pointer-events: none;
     animation: metricCopyPop 0.22s ease-out;
 }
@@ -489,7 +491,7 @@ body {
 }
 
 .summaryEarned {
-    color: #000;
+    color: var(--mw-ink);
 }
 
 .earnedRow {
@@ -535,7 +537,7 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    color: #9a9a9a;
+    color: var(--mw-muted);
     line-height: 1;
 }
 
@@ -556,7 +558,7 @@ body {
     cursor: pointer;
     flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
-    color: #8a8a8a;
+    color: var(--mw-muted);
     transition:
         transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
         color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
@@ -603,17 +605,17 @@ body {
 }
 
 .summaryPendingZero {
-    color: #888;
+    color: var(--mw-muted);
 
     .metricValue {
-        color: #888;
+        color: var(--mw-muted);
     }
 }
 
 .totalSpendings {
     margin: 4px 0 0;
     text-align: left;
-    color: #000;
+    color: var(--mw-ink);
 }
 
 .netEarnings {
@@ -630,7 +632,7 @@ body {
 .filteredSpendings {
     margin: 4px 0 0;
     text-align: left;
-    color: #6b7280;
+    color: var(--mw-muted);
     font-size: 13px;
     font-style: italic;
     display: flex;
@@ -647,7 +649,7 @@ body {
     letter-spacing: 0.4px;
     text-transform: uppercase;
     color: $defaultBlue;
-    background: #e8f3fc;
+    background: var(--mw-chip-bg);
     border: 1px solid #c5dff5;
     border-radius: 999px;
     padding: 2px 7px;
@@ -659,7 +661,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
-    color: #000;
+    color: var(--mw-ink);
     font-size: 13px;
 }
 
@@ -699,7 +701,7 @@ body {
     font-size: 11px;
     font-weight: 600;
     color: $defaultBlue;
-    background: #e8f3fc;
+    background: var(--mw-chip-bg);
     border-radius: 999px;
     padding: 3px 8px;
     line-height: 1;
@@ -714,8 +716,8 @@ body {
     position: fixed;
     bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     left: calc(10px + env(safe-area-inset-left, 0px));
-    color: #111;
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    color: var(--mw-ink);
+    border: 1px solid var(--mw-line);
     border-radius: 50%;
     width: 44px;
     height: 44px;
@@ -725,15 +727,15 @@ body {
     cursor: pointer;
     z-index: 2;
     -webkit-tap-highlight-color: transparent;
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--mw-card);
     box-shadow:
       0 8px 24px rgba(15, 23, 42, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      inset 0 1px 0 var(--mw-inset-highlight);
     touch-action: manipulation;
 
     &:hover {
-        background: #fff;
-        color: #000;
+        background: var(--mw-card);
+        color: var(--mw-ink);
     }
 }
 
@@ -839,7 +841,7 @@ body {
     outline: none;
 
     &:disabled {
-        color: #000;
+        color: var(--mw-ink);
         background-color: rgba(216, 215, 215, 0.199);
     }
 
@@ -928,7 +930,7 @@ body {
     box-sizing: border-box;
     -webkit-appearance: none;
     appearance: none;
-    background-color: #fff;
+    background-color: var(--mw-card);
 
     &::-webkit-search-cancel-button {
         -webkit-appearance: none;
@@ -950,8 +952,8 @@ body {
     min-height: 28px;
     border: none;
     border-radius: 50%;
-    background: #e8e8e8;
-    color: #555;
+    background: var(--mw-chip-bg);
+    color: var(--mw-muted);
     font-size: 18px;
     line-height: 1;
     padding: 0;
@@ -960,14 +962,14 @@ body {
 
 .noSearchResults {
     text-align: left;
-    color: #666;
+    color: var(--mw-muted);
     margin: 0 0 12px;
     font-size: 15px;
 }
 
 .categoryBadge {
     font-size: 12px;
-    color: #666;
+    color: var(--mw-muted);
     margin-top: -6px;
 }
 
@@ -1008,7 +1010,7 @@ body {
 
     h2 {
         margin-bottom: 20px;
-        color: #000;
+        color: var(--mw-ink);
     }
 
     .formGroup {
@@ -1017,7 +1019,7 @@ body {
         label {
             display: block;
             margin-bottom: 5px;
-            color: #000;
+            color: var(--mw-ink);
         }
 
         input,
@@ -1045,7 +1047,7 @@ body {
 
             &:first-child {
                 background-color: #ccc;
-                color: #000;
+                color: var(--mw-ink);
             }
 
             &:last-child {
@@ -1069,7 +1071,7 @@ body {
     gap: 5px;
 
     label {
-        color: #000;
+        color: var(--mw-ink);
         font-weight: 500;
     }
 

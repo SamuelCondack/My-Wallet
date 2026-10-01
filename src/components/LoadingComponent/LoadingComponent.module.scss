@@ -30,7 +30,7 @@
   width: 100%;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  background-color: #fff;
+  background-color: var(--mw-card);
 }
 
 .skeletonSection {
@@ -302,7 +302,7 @@
   border: 1px solid #f0f0f0;
   border-radius: 20px;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--mw-control-bg);
 }
 
 .profileIdentity {

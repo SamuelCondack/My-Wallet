@@ -34,7 +34,7 @@ const ConfirmationModal = ({
           {!isEditModal && (
             <>
               {` `}
-              <b style={{ whiteSpace: "nowrap" }}>
+              <b className={styles.identifier}>
                 &rdquo;{expenseName || identifier}&rdquo;
               </b>
               {` `}?

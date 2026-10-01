@@ -33,13 +33,22 @@
 }
 
 .message {
-  margin: 10px;
+  margin: 10px 0;
+  max-width: 100%;
   color: $inkSoft;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  box-sizing: border-box;
+}
 
-  b {
-    white-space: nowrap;
-    color: $ink;
-  }
+.identifier {
+  display: inline;
+  max-width: 100%;
+  color: $ink;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .buttons {
@@ -67,14 +76,14 @@
 .cancelButton {
   @include glass-button;
   @include focus-ring;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(220, 53, 69, 0.35);
+  background: var(--mw-danger-bg);
+  border: 1px solid rgba(220, 53, 69, 0.45);
   width: 145px;
   border-radius: 999px;
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 700;
-  color: #dc3545;
+  color: #f87171;
   cursor: pointer;
 
   &:hover {

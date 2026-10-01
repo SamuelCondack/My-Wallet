@@ -52,15 +52,16 @@
   max-height: min(92dvh, 760px);
   display: flex;
   flex-direction: column;
-  background: #f8fbff;
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: var(--mw-sheet);
+  border: 1px solid var(--mw-glass-border);
   border-bottom: none;
   border-radius: 28px 28px 0 0;
   box-shadow:
     0 -18px 50px rgba(15, 23, 42, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    inset 0 1px 0 var(--mw-inset-highlight);
   color: $ink;
   overflow: hidden;
+  overscroll-behavior: contain;
   box-sizing: border-box;
   pointer-events: auto;
   transform: translateY(100%);
@@ -110,7 +111,7 @@
   width: 42px;
   height: 5px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.16);
+  background: var(--mw-handle);
   pointer-events: none;
 }
 
@@ -138,9 +139,9 @@
 .iconBtn {
   width: 40px;
   height: 40px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--mw-line);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--mw-control-bg);
   color: $inkSoft;
   display: inline-flex;
   align-items: center;
@@ -169,6 +170,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  touch-action: pan-y;
   overflow-anchor: none;
   scroll-behavior: auto;
   padding: 4px 18px 14px;
@@ -178,8 +180,8 @@
 .footer {
   flex-shrink: 0;
   padding: 10px 18px calc(14px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
-  background: #f8fbff;
+  border-top: 1px solid var(--mw-line);
+  background: var(--mw-sheet);
 }
 
 .actions {
@@ -219,9 +221,9 @@
 }
 
 .secondaryBtn {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(220, 53, 69, 0.35);
-  color: #dc3545;
+  background: var(--mw-danger-bg);
+  border: 1px solid rgba(220, 53, 69, 0.45);
+  color: #f87171;
 
   &:hover:not(:disabled) {
     color: #fff;
@@ -235,7 +237,7 @@
   margin: 0 0 6px;
   font-size: 11px;
   font-weight: 700;
-  color: #71717a;
+  color: var(--mw-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -243,7 +245,7 @@
 .textInput {
   width: 100%;
   border: none;
-  border-bottom: 1px solid #d4d4d8;
+  border-bottom: 1px solid var(--mw-field-line);
   outline: none;
   font-size: 16px;
   padding: 8px 0;
@@ -269,13 +271,13 @@
   align-items: center;
   gap: 6px;
   margin-bottom: 14px;
-  border-bottom: 2px solid #18181b;
+  border-bottom: 2px solid var(--mw-amount-line);
   padding-bottom: 4px;
 
   span {
     font-size: 26px;
     font-weight: 700;
-    color: #111;
+    color: var(--mw-ink);
     line-height: 1;
     flex-shrink: 0;
   }
@@ -308,12 +310,12 @@
 
 .selectInput {
   width: 100%;
-  border: 1.5px solid #e4e4e7;
+  border: 1.5px solid var(--mw-input-border);
   border-radius: 14px;
   padding: 12px 14px;
   font-size: 15px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--mw-control-bg);
   margin-bottom: 12px;
   outline: none;
   color: $ink;
@@ -338,11 +340,11 @@
 
 .textarea {
   width: 100%;
-  border: 1.5px solid #e4e4e7;
+  border: 1.5px solid var(--mw-input-border);
   border-radius: 14px;
   padding: 12px;
   font-size: 15px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--mw-control-bg);
   margin-bottom: 8px;
   outline: none;
   resize: vertical;
@@ -369,9 +371,9 @@
 }
 
 .statusChip {
-  border: 1px solid #e4e4e7;
-  background: #fafafa;
-  color: #222;
+  border: 1px solid var(--mw-input-border);
+  background: var(--mw-input-bg);
+  color: var(--mw-ink);
   border-radius: 12px;
   padding: 10px 8px;
   font-size: 13px;

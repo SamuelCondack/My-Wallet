@@ -712,7 +712,6 @@ export default function ExpenseFormModal({
           setCategorySearch("");
         }}
         labelledBy="category-picker-title"
-        lockScroll={false}
         zIndex={50}
         className={styles.categorySheet}
       >

@@ -30,13 +30,13 @@
   max-height: min(92dvh, 760px);
   display: flex;
   flex-direction: column;
-  background: #f8fbff;
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: var(--mw-sheet);
+  border: 1px solid var(--mw-glass-border);
   border-bottom: none;
   border-radius: 28px 28px 0 0;
   box-shadow:
     0 -18px 50px rgba(15, 23, 42, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    inset 0 1px 0 var(--mw-inset-highlight);
   color: $ink;
   overflow: hidden;
   box-sizing: border-box;
@@ -47,7 +47,7 @@
   width: 42px;
   height: 5px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.16);
+  background: var(--mw-handle);
   margin: 10px auto 0;
   flex-shrink: 0;
 }
@@ -76,9 +76,9 @@
   @include glass-button;
   width: 40px;
   height: 40px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--mw-line);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--mw-control-bg);
   color: $inkSoft;
   display: inline-flex;
   align-items: center;
@@ -127,7 +127,7 @@
   margin: 0 0 6px;
   font-size: 11px;
   font-weight: 700;
-  color: #71717a;
+  color: var(--mw-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -153,9 +153,9 @@
   align-items: center;
   gap: 6px;
   max-width: 220px;
-  border: 1px solid #e4e4e7;
-  background: #fafafa;
-  color: #222;
+  border: 1px solid var(--mw-input-border);
+  background: var(--mw-input-bg);
+  color: var(--mw-ink);
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 13px;
@@ -171,14 +171,14 @@
 
   em {
     font-style: normal;
-    color: #666;
+    color: var(--mw-muted);
     font-weight: 600;
   }
 }
 
 .favoriteChip {
   border-color: #fde68a;
-  background: #fffbeb;
+  background: rgba(251, 191, 36, 0.14);
 }
 
 .chipStar {
@@ -203,11 +203,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border: 1.5px solid #e4e4e7;
+  border: 1.5px solid var(--mw-input-border);
   border-radius: 14px;
   padding: 12px 14px;
   margin-bottom: 8px;
-  background: #fafafa;
+  background: var(--mw-input-bg);
   cursor: pointer;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
@@ -220,7 +220,7 @@
   min-width: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #18181b;
+  color: var(--mw-ink);
 
   span:last-child {
     overflow: hidden;
@@ -235,7 +235,7 @@
 }
 
 .categoryChevron {
-  color: #a1a1aa;
+  color: var(--mw-muted);
   font-size: 12px;
   flex-shrink: 0;
 }
@@ -255,9 +255,9 @@
 
 .quickCategoryChip {
   flex: 0 0 auto;
-  border: 1px solid #e4e4e7;
-  background: #fff;
-  color: #333;
+  border: 1px solid var(--mw-input-border);
+  background: var(--mw-card);
+  color: var(--mw-ink);
   border-radius: 999px;
   padding: 6px 10px;
   font-size: 12px;
@@ -293,7 +293,7 @@
   max-height: min(72dvh, 520px);
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--mw-card);
   border-radius: 18px 18px 0 0;
   overflow: hidden;
   box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18);
@@ -333,7 +333,7 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #a1a1aa;
+  color: var(--mw-muted);
   font-size: 13px;
   pointer-events: none;
 }
@@ -341,16 +341,16 @@
 .categorySearchInput {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--mw-input-border);
   border-radius: 12px;
   padding: 11px 12px 11px 34px;
   font-size: 16px;
   outline: none;
-  background: #fafafa;
+  background: var(--mw-input-bg);
 
   &:focus {
     border-color: $defaultBlue;
-    background: #fff;
+    background: var(--mw-card);
   }
 }
 
@@ -359,13 +359,15 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 0 8px calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
 .categoryEmpty {
   margin: 18px 8px;
   text-align: center;
-  color: #71717a;
+  color: var(--mw-muted);
   font-size: 14px;
 }
 
@@ -383,12 +385,12 @@
   -webkit-tap-highlight-color: transparent;
 
   &:active {
-    background: #f4f4f5;
+    background: var(--mw-chip-bg);
   }
 }
 
 .categoryOptionActive {
-  background: #f5f9ff;
+  background: var(--mw-chip-bg);
 }
 
 .categoryOptionDot {
@@ -406,7 +408,7 @@
   flex: 1;
   font-size: 15px;
   font-weight: 600;
-  color: #18181b;
+  color: var(--mw-ink);
 }
 
 .categoryCheck {
@@ -420,13 +422,13 @@
   align-items: center;
   gap: 6px;
   margin-bottom: 12px;
-  border-bottom: 2px solid #18181b;
+  border-bottom: 2px solid var(--mw-amount-line);
   padding-bottom: 4px;
 
   span {
     font-size: 26px;
     font-weight: 700;
-    color: #111;
+    color: var(--mw-ink);
     line-height: 1;
     flex-shrink: 0;
   }
@@ -456,7 +458,7 @@
 .textInput {
   width: 100%;
   border: none;
-  border-bottom: 1px solid #d4d4d8;
+  border-bottom: 1px solid var(--mw-field-line);
   outline: none;
   font-size: 16px;
   padding: 8px 0;
@@ -497,7 +499,7 @@
 .stepperInput {
   width: 56px;
   border: none;
-  border-bottom: 1px solid #d4d4d8;
+  border-bottom: 1px solid var(--mw-field-line);
   outline: none;
   background: transparent;
   text-align: center;
@@ -526,9 +528,9 @@
 .stepperBtn {
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--mw-line);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--mw-card);
   color: $inkSoft;
   display: inline-flex;
   align-items: center;
@@ -558,7 +560,7 @@
   &:focus:not(:focus-visible) {
     border-color: rgba(15, 23, 42, 0.1);
     color: $inkSoft;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--mw-card);
     box-shadow: none;
   }
 
@@ -586,7 +588,7 @@
     box-shadow: 0 0 0 6px rgba(62, 146, 235, 0);
   }
   100% {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--mw-card);
     border-color: rgba(15, 23, 42, 0.1);
     color: $inkSoft;
     box-shadow: none;
@@ -601,7 +603,7 @@
   margin: 2px 0 14px;
   font-size: 14px;
   font-weight: 600;
-  color: #222;
+  color: var(--mw-ink);
 }
 
 .switch {
@@ -610,7 +612,7 @@
   height: 28px;
   border-radius: 999px;
   border: none;
-  background: #d4d4d8;
+  background: var(--mw-field-line);
   padding: 0;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -628,7 +630,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--mw-card);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
 }
@@ -642,7 +644,7 @@
   margin: 0 0 12px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: #eef6ff;
+  background: var(--mw-chip-bg);
   color: $defaultBlue;
   font-size: 12px;
   font-weight: 700;
@@ -656,9 +658,9 @@
 }
 
 .paymentChip {
-  border: 1px solid #e4e4e7;
-  background: #fafafa;
-  color: #222;
+  border: 1px solid var(--mw-input-border);
+  background: var(--mw-input-bg);
+  color: var(--mw-ink);
   border-radius: 12px;
   padding: 10px 8px;
   font-size: 13px;
@@ -676,8 +678,8 @@
 .footer {
   flex-shrink: 0;
   padding: 10px 14px calc(14px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
-  background: #f8fbff;
+  border-top: 1px solid var(--mw-line);
+  background: var(--mw-sheet);
 }
 
 .modalButtons {
@@ -715,7 +717,7 @@
 .cancelButton {
   @include glass-button;
   @include focus-ring;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--mw-danger-bg);
   border: 1px solid rgba(220, 53, 69, 0.35);
   width: min(145px, 42%);
   border-radius: 999px;

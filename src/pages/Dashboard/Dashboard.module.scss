@@ -87,7 +87,7 @@
 .selectFilters {
   border-radius: 999px;
   text-align: center !important;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--mw-line);
   padding: 8px 16px;
   color: $defaultBlue;
   appearance: none;
@@ -97,8 +97,8 @@
   -webkit-appearance: none;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: var(--mw-card);
+  box-shadow: inset 0 1px 0 var(--mw-inset-highlight);
   transition: 0.18s $easeOut;
   outline: none;
 
@@ -122,8 +122,8 @@
 
   &:disabled {
     cursor: not-allowed;
-    background-color: #f0f0f0;
-    color: #a0a0a0;
+    background-color: var(--mw-chip-bg);
+    color: var(--mw-muted);
     border-color: #d0d0d0;
     transform: none;
   }
@@ -169,7 +169,7 @@
 }
 
 .overviewPeriod {
-  color: #666;
+  color: var(--mw-muted);
   font-size: 14px;
   margin: 0 0 12px;
 }
@@ -184,25 +184,25 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: #f8fafc;
+  background: var(--mw-card);
   border-radius: 12px;
   padding: 12px;
 
   span {
-    color: #666;
+    color: var(--mw-muted);
     font-size: 12px;
   }
 
   strong {
     font-size: 18px;
-    color: #111;
+    color: var(--mw-ink);
   }
 }
 
 .overviewHint {
   margin: 12px 0 0;
   font-size: 12px;
-  color: #888;
+  color: var(--mw-muted);
 }
 
 .received {
@@ -219,7 +219,7 @@
 
 .forecastLead {
   margin: 0 0 14px;
-  color: #555;
+  color: var(--mw-muted);
   font-size: 14px;
   line-height: 1.4;
 }
@@ -245,7 +245,7 @@
   display: block;
   font-size: 12px;
   font-weight: 700;
-  color: #666;
+  color: var(--mw-muted);
   margin-bottom: 6px;
 }
 
@@ -257,8 +257,8 @@
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 700;
-  color: #111;
-  background: #fff;
+  color: var(--mw-ink);
+  background: var(--mw-card);
   outline: none;
   box-sizing: border-box;
   cursor: pointer;
@@ -280,7 +280,7 @@
 
 .forecastCurrency {
   font-weight: 700;
-  color: #333;
+  color: var(--mw-ink);
   font-size: 16px;
   flex-shrink: 0;
 }
@@ -293,7 +293,7 @@
   padding: 10px 12px;
   font-size: 16px;
   font-weight: 700;
-  color: #111;
+  color: var(--mw-ink);
   outline: none;
   box-sizing: border-box;
 
@@ -305,7 +305,7 @@
 
 .forecastResetBtn {
   border: 1px solid $defaultBlue;
-  background: #fff;
+  background: var(--mw-card);
   color: $defaultBlue;
   border-radius: 12px;
   padding: 10px 12px;
@@ -329,7 +329,7 @@
 .forecastHint {
   margin: 8px 0 12px;
   font-size: 12px;
-  color: #888;
+  color: var(--mw-muted);
 }
 
 .forecastChart {
@@ -387,7 +387,7 @@
   background: transparent;
   padding: 0 1px;
   font-size: 9px;
-  color: #666;
+  color: var(--mw-muted);
   text-align: center;
   line-height: 1.05;
   width: 100%;
@@ -442,7 +442,7 @@
   white-space: nowrap;
   font-size: 7px;
   font-weight: 600;
-  color: #8a9bb0;
+  color: var(--mw-muted);
   line-height: 1;
 }
 
@@ -472,8 +472,8 @@
   font-size: 16px;
   font-weight: 700;
   text-align: center;
-  color: #111;
-  background: #fff;
+  color: var(--mw-ink);
+  background: var(--mw-card);
   outline: none;
   box-sizing: content-box;
   box-shadow:
@@ -547,7 +547,7 @@
   flex: 0 0 28px;
   font-size: 10px;
   font-weight: 700;
-  color: #444;
+  color: var(--mw-ink-soft);
   text-transform: uppercase;
   letter-spacing: 0;
   text-align: center;
@@ -568,7 +568,7 @@
   display: block;
   font-size: 8px;
   font-weight: 700;
-  color: #888;
+  color: var(--mw-muted);
   line-height: 1.1;
   min-height: 1.1em;
 }
@@ -582,16 +582,16 @@
 .forecastTotal {
   margin: 14px 0 0;
   font-size: 14px;
-  color: #444;
+  color: var(--mw-ink-soft);
 
   span {
-    color: #888;
+    color: var(--mw-muted);
     font-size: 12px;
   }
 }
 
 .section {
-  background: #fff;
+  background: var(--mw-card);
   border: 1px solid #eee;
   border-radius: 14px;
   padding: 16px;
@@ -619,7 +619,7 @@
 
 .proPreviewLead {
   margin: 0;
-  color: #555;
+  color: var(--mw-muted);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -633,7 +633,7 @@
   gap: 8px;
 
   li {
-    background: #f5f9ff;
+    background: var(--mw-chip-bg);
     border: 1px solid #d8e8fb;
     border-radius: 12px;
     padding: 12px;
@@ -647,7 +647,7 @@
     span {
       display: block;
       font-size: 12px;
-      color: #666;
+      color: var(--mw-muted);
       line-height: 1.4;
     }
   }

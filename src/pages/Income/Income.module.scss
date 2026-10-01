@@ -33,7 +33,7 @@
 
   h2 {
     text-align: center;
-    color: #000;
+    color: var(--mw-ink);
     margin: 16px 0;
   }
 }
@@ -71,14 +71,14 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  color: #000;
+  color: var(--mw-ink);
   font-size: 13px;
 }
 
 .selectFilters {
   border-radius: 999px;
   text-align: center !important;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--mw-line);
   padding: 8px 16px;
   color: $defaultBlue;
   appearance: none;
@@ -86,8 +86,8 @@
   -webkit-appearance: none;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: var(--mw-card);
+  box-shadow: inset 0 1px 0 var(--mw-inset-highlight);
   transition: 0.18s $easeOut;
   outline: none;
 
@@ -102,8 +102,8 @@
 
   &:disabled {
     cursor: not-allowed;
-    background-color: #f0f0f0;
-    color: #a0a0a0;
+    background-color: var(--mw-chip-bg);
+    color: var(--mw-muted);
     border-color: #d0d0d0;
     transform: none;
   }
@@ -111,7 +111,7 @@
 
 .summary {
   text-align: left;
-  color: #000;
+  color: var(--mw-ink);
   margin: 8px 0 20px;
   width: calc(100% - 10%);
   margin-left: 10%;
@@ -188,7 +188,7 @@
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: #9a9a9a;
+  color: var(--mw-muted);
   pointer-events: none;
   animation: metricCopyPop 0.22s ease-out;
 }
@@ -221,7 +221,7 @@
 }
 
 .summaryEarned {
-  color: #000;
+  color: var(--mw-ink);
 }
 
 .summaryReceived {
@@ -241,10 +241,10 @@
 }
 
 .summaryPendingZero {
-  color: #888;
+  color: var(--mw-muted);
 
   .metricValue {
-    color: #888;
+    color: var(--mw-muted);
   }
 }
 
@@ -252,7 +252,7 @@
   margin: 10px 0 24px;
 
   h3 {
-    color: #000;
+    color: var(--mw-ink);
     text-align: left;
     margin: 0 0 12px 10%;
   }
@@ -277,11 +277,12 @@
   flex-direction: column;
   align-items: center;
   position: relative;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1.5px solid rgba(15, 23, 42, 0.08);
+  background: var(--mw-card);
+  border: 1.5px solid var(--mw-card-border);
+  color: var(--mw-ink);
   box-shadow:
-    0 12px 28px rgba(15, 23, 42, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    var(--mw-shadow-soft),
+    inset 0 1px 0 var(--mw-inset-highlight);
   transform: translateZ(0);
   transition:
     box-shadow 0.35s $easeOut,
@@ -299,6 +300,7 @@
     margin: 0;
     margin-bottom: 10px;
     overflow-wrap: anywhere;
+    color: inherit;
   }
 }
 
@@ -311,7 +313,7 @@
   box-shadow:
     0 12px 28px rgba(15, 23, 42, 0.06),
     0 10px 28px rgba(235, 171, 61, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 var(--mw-inset-highlight),
     inset 0 0 0 1px rgba(235, 171, 61, 0.08);
 
   .expenseMethod {
@@ -325,7 +327,7 @@
   box-shadow:
     0 12px 28px rgba(15, 23, 42, 0.06),
     0 10px 30px rgba(62, 146, 235, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 var(--mw-inset-highlight),
     inset 0 0 0 1px rgba(62, 146, 235, 0.1);
 
   .expenseMethod {
@@ -341,7 +343,7 @@
 
 .categoryBadge {
   font-size: 12px;
-  color: #666;
+  color: var(--mw-muted);
   margin-top: -6px;
 }
 
@@ -363,7 +365,7 @@
 
 .incomePeriod {
   text-align: center;
-  color: #666;
+  color: var(--mw-muted);
   font-size: 12px;
   text-transform: none !important;
 }
@@ -448,7 +450,7 @@
 
 .emptyState {
   text-align: center;
-  color: #000;
+  color: var(--mw-ink);
   margin-top: 40px;
   display: flex;
   flex-direction: column;
@@ -458,7 +460,7 @@
 
 .emptySection {
   text-align: center;
-  color: #777;
+  color: var(--mw-muted);
   font-size: 14px;
 }
 
@@ -470,8 +472,8 @@
   position: fixed;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   left: calc(10px + env(safe-area-inset-left, 0px));
-  color: #111;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: var(--mw-ink);
+  border: 1px solid var(--mw-line);
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -481,15 +483,15 @@
   cursor: pointer;
   z-index: 2;
   -webkit-tap-highlight-color: transparent;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--mw-card);
   box-shadow:
     0 8px 24px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    inset 0 1px 0 var(--mw-inset-highlight);
   touch-action: manipulation;
 
   &:hover {
-    background: #fff;
-    color: #000;
+    background: var(--mw-card);
+    color: var(--mw-ink);
   }
 }
 

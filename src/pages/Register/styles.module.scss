@@ -246,7 +246,7 @@
   align-items: center;
   padding: 10px 14px;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--mw-danger-bg);
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 999px;
   color: $ink;
@@ -286,7 +286,7 @@
   font-weight: 800;
   font-size: 14px;
   color: $defaultBlue;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--mw-danger-bg);
   border: 1.5px solid rgba(62, 146, 235, 0.45);
   border-radius: 999px;
   padding: 11px 14px;
