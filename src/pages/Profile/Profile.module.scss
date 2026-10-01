@@ -38,6 +38,51 @@
   font-size: 18px;
 }
 
+.shortcutSteps {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--mw-muted);
+  font-size: 13px;
+  line-height: 1.45;
+
+  li + li {
+    margin-top: 4px;
+  }
+}
+
+.shortcutUrl {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--mw-chip-bg);
+  border: 1px solid var(--mw-soft-border);
+  color: var(--mw-ink-soft);
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.shortcutActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+
+  .primaryBtn {
+    flex: 1 1 auto;
+    min-width: 140px;
+  }
+}
+
+.secondaryLink {
+  color: $defaultBlue;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 8px 4px;
+}
+
 .themeSwitch {
   position: relative;
   flex-shrink: 0;

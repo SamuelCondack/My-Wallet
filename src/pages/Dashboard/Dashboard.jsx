@@ -180,6 +180,11 @@ export default function Dashboard() {
     [expensesByMonth, activeMonthKeys]
   );
 
+  const monthPeriod =
+    selectedYear !== "All" && selectedMonth !== "All"
+      ? `${selectedYear}-${selectedMonth}`
+      : null;
+
   const periodExportRows = useMemo(() => {
     const rows = [];
     for (const key of activeMonthKeys) {
@@ -190,6 +195,29 @@ export default function Dashboard() {
     }
     return rows;
   }, [activeMonthKeys, expensesByMonth]);
+
+  const budgetAlert = useMemo(() => {
+    if (!monthPeriod || budgets.length === 0) return null;
+
+    const spentMap = {};
+    categoryTotals.forEach((item) => {
+      spentMap[item.categoryId] = Number(item.value) || 0;
+    });
+
+    let over = 0;
+    let warn = 0;
+    budgets.forEach((budget) => {
+      const limit = Number(budget.amount) || 0;
+      if (!(limit > 0)) return;
+      const spent = spentMap[budget.categoryId] || 0;
+      if (spent >= limit) over += 1;
+      else if (spent >= limit * 0.8) warn += 1;
+    });
+
+    if (over > 0) return { type: "over", count: over };
+    if (warn > 0) return { type: "warn", count: warn };
+    return null;
+  }, [monthPeriod, budgets, categoryTotals]);
 
   const exportPeriodLabel = useMemo(() => {
     if (selectedYear !== "All" && selectedMonth !== "All") {
@@ -204,11 +232,6 @@ export default function Dashboard() {
     const csv = buildMonthExpensesCsv(periodExportRows, categoriesMap);
     downloadTextFile(`mywallet-expenses-${exportPeriodLabel}.csv`, csv);
   };
-
-  const monthPeriod =
-    selectedYear !== "All" && selectedMonth !== "All"
-      ? `${selectedYear}-${selectedMonth}`
-      : null;
 
   const moneyReceived = monthPeriod
     ? getCashReceived(incomes, monthPeriod)
@@ -488,6 +511,52 @@ export default function Dashboard() {
         </div>
       )}
 
+      {budgetAlert && (
+        <button
+          type="button"
+          className={`${styles.budgetAlert} ${
+            budgetAlert.type === "over"
+              ? styles.budgetAlertOver
+              : styles.budgetAlertWarn
+          }`}
+          onClick={() => {
+            document
+              .getElementById("dashboard-budgets")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        >
+          <strong>
+            {budgetAlert.type === "over"
+              ? `${budgetAlert.count} over budget`
+              : `${budgetAlert.count} near limit`}
+          </strong>
+          <span>View budgets</span>
+        </button>
+      )}
+
+      <section id="dashboard-budgets" className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2>Budgets</h2>
+        </div>
+        <ProGate
+          title="Category budgets"
+          description="Set monthly limits per category and see when you’re close to overspending."
+          preview={<BudgetTeaserPreview />}
+        >
+          <CategoryBudgetsPanel
+            monthPeriod={monthPeriod}
+            monthLabel={
+              monthPeriod ? formatPeriodLabel(monthPeriod) : ""
+            }
+            categoryTotals={categoryTotals}
+            categories={expenseCategories}
+            budgets={budgets}
+            onSave={saveBudget}
+            onRemove={removeBudget}
+          />
+        </ProGate>
+      </section>
+
       {savingsForecast && (
         <section className={styles.forecastCard}>
           <h2>Savings forecast</h2>
@@ -731,29 +800,6 @@ export default function Dashboard() {
           categoriesMap={categoriesMap}
           onSliceClick={monthPeriod ? goToCategoryExpenses : undefined}
         />
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2>Budgets</h2>
-        </div>
-        <ProGate
-          title="Category budgets"
-          description="Set monthly limits per category and see when you’re close to overspending."
-          preview={<BudgetTeaserPreview />}
-        >
-          <CategoryBudgetsPanel
-            monthPeriod={monthPeriod}
-            monthLabel={
-              monthPeriod ? formatPeriodLabel(monthPeriod) : ""
-            }
-            categoryTotals={categoryTotals}
-            categories={expenseCategories}
-            budgets={budgets}
-            onSave={saveBudget}
-            onRemove={removeBudget}
-          />
-        </ProGate>
       </section>
 
       <section className={styles.section}>

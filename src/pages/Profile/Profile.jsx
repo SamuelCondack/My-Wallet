@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { toast } from "react-toastify";
 import { auth } from "../../../config/firebase";
@@ -302,6 +302,17 @@ export default function Profile() {
   const showSubscribe = !isPro && !canStartTrial;
   const showTrial = canStartTrial;
   const isDarkMode = getThemeFromProfile(profile) === "dark";
+  const quickAddUrl = `${window.location.origin}/home/expenses?add=1`;
+
+  const handleCopyQuickAdd = async () => {
+    try {
+      await navigator.clipboard.writeText(quickAddUrl);
+      toast.success("Link copied.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not copy link.");
+    }
+  };
 
   const handleToggleTheme = async () => {
     if (!user?.uid || themeBusy) return;
@@ -389,6 +400,33 @@ export default function Profile() {
       </section>
 
       <section className={styles.card}>
+        <p className={styles.label}>Faster logging</p>
+        <h2 className={styles.themeTitle}>iPhone Shortcut</h2>
+        <p className={styles.statusDetail}>
+          One tap opens Add expense. Use Apple Shortcuts with this link — no App
+          Store build needed.
+        </p>
+        <ol className={styles.shortcutSteps}>
+          <li>Copy the link below.</li>
+          <li>Shortcuts app → New → Open URLs → paste.</li>
+          <li>Add to Home Screen or ask Siri.</li>
+        </ol>
+        <p className={styles.shortcutUrl}>{quickAddUrl}</p>
+        <div className={styles.shortcutActions}>
+          <button
+            type="button"
+            className={styles.primaryBtn}
+            onClick={handleCopyQuickAdd}
+          >
+            Copy link
+          </button>
+          <Link to="/home/expenses?add=1" className={styles.secondaryLink}>
+            Try now
+          </Link>
+        </div>
+      </section>
+
+      <section className={styles.card}>
         <div className={styles.planHeader}>
           <div>
             <p className={styles.label}>Current plan</p>
@@ -409,8 +447,7 @@ export default function Profile() {
             <div className={styles.subscribeHero}>
               <p className={styles.subscribeEyebrow}>Try Pro free</p>
               <p className={styles.subscribeLead}>
-                Budgets, receipt capture, AI review, and exports — no charge
-                today.
+                Budgets, CSV export, and more Pro tools — no charge today.
               </p>
               <button
                 type="button"
