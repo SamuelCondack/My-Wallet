@@ -474,11 +474,17 @@ export default function Income() {
     return (
       <motion.div
         key={incomeKey}
+        layout
         className={styles.incomeLayoutItem}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{
+          layout: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
+          opacity: { duration: 0.28 },
+          scale: { duration: 0.28 },
+          y: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+        }}
       >
         <div
           className={`${styles.incomeCard} ${
@@ -694,7 +700,7 @@ export default function Income() {
                   </p>
                 ) : (
                   <div className={styles.cards}>
-                    <AnimatePresence initial={false}>
+                    <AnimatePresence initial={false} mode="popLayout">
                       {pendingList.map(renderCard)}
                     </AnimatePresence>
                   </div>
@@ -712,7 +718,7 @@ export default function Income() {
                   </p>
                 ) : (
                   <div className={styles.cards}>
-                    <AnimatePresence initial={false}>
+                    <AnimatePresence initial={false} mode="popLayout">
                       {confirmedList.map(renderCard)}
                     </AnimatePresence>
                   </div>

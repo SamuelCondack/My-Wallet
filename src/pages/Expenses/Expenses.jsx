@@ -1354,7 +1354,7 @@ export default function Expenses() {
 
               const searchBar =
                 monthIndex === 0 ? (
-                  <>
+                  <div className={styles.searchWrap}>
                     <div className={styles.searchContainer}>
                       <input
                         type="search"
@@ -1386,7 +1386,7 @@ export default function Expenses() {
                           : `No expenses found in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`}
                       </p>
                     )}
-                  </>
+                  </div>
                 ) : null;
 
               // Garantir que o mês seja exibido mesmo sem despesas
@@ -1401,8 +1401,8 @@ export default function Expenses() {
                     </h3>
                     <div className={styles.monthSummary}>
                       {renderSpendingsSummary(monthKey, expenses)}
-                      {searchBar}
                     </div>
+                    {searchBar}
                   </div>
                 );
               }
@@ -1418,12 +1418,12 @@ export default function Expenses() {
 
                   <div className={styles.monthSummary}>
                     {renderSpendingsSummary(monthKey, expenses)}
-                    {searchBar}
                   </div>
+                  {searchBar}
 
                   {visibleExpenses.length > 0 && (
                   <div className={styles.expensesContainer}>
-                    <AnimatePresence initial={false}>
+                    <AnimatePresence initial={false} mode="popLayout">
                       {visibleExpenses
                         .sort(
                           (a, b) =>
@@ -1437,11 +1437,20 @@ export default function Expenses() {
                           return (
                           <motion.div
                             key={expenseKey}
+                            layout
                             className={styles.expenseLayoutItem}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
+                            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{
+                              layout: {
+                                duration: 0.42,
+                                ease: [0.22, 1, 0.36, 1],
+                              },
+                              opacity: { duration: 0.28 },
+                              scale: { duration: 0.28 },
+                              y: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+                            }}
                           >
                             <div
                               className={`${styles.expense} ${getBorderStyle(
