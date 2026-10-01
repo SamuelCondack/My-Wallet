@@ -10,6 +10,7 @@ import {
   getPlanLabel,
   getTrialDaysLeft,
   hasProAccess,
+  canStartTrial as checkCanStartTrial,
   normalizeSubscription,
   subscribeToUserProfile,
 } from "../services/subscriptionService";
@@ -93,6 +94,7 @@ export function useSubscription() {
   const planLabel = getPlanLabel(subscription);
   const isTrialing = subscription.status === SUBSCRIPTION_STATUS.TRIALING;
   const isPastDue = subscription.status === SUBSCRIPTION_STATUS.PAST_DUE;
+  const canStartTrial = checkCanStartTrial(subscription);
 
   /**
    * Gate helper for Pro-only UI.
@@ -116,6 +118,7 @@ export function useSubscription() {
     isPastDue,
     trialDaysLeft,
     planLabel,
+    canStartTrial,
     requirePro,
   };
 }

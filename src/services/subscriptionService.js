@@ -31,6 +31,7 @@ export function normalizeSubscription(raw) {
     ...base,
     planId: base.planId || PLAN_ID.FREE,
     status: base.status || SUBSCRIPTION_STATUS.NONE,
+    cancelAtPeriodEnd: Boolean(base.cancelAtPeriodEnd),
     trialEndsAtMs: toMillis(base.trialEndsAt),
     currentPeriodEndMs: toMillis(base.currentPeriodEnd),
     updatedAtMs: toMillis(base.updatedAt),
@@ -71,8 +72,24 @@ export function getPlanLabel(subscription) {
     return "Pro";
   }
   if (normalized.status === SUBSCRIPTION_STATUS.PAST_DUE) return "Past due";
-  if (normalized.status === SUBSCRIPTION_STATUS.CANCELED) return "Canceled";
   return "Free";
+}
+
+/** True only if this account has never started a Stripe subscription/trial. */
+export function canStartTrial(subscription) {
+  const normalized = normalizeSubscription(subscription);
+  if (hasProAccess(normalized)) return false;
+  if (normalized.status === SUBSCRIPTION_STATUS.PAST_DUE) return false;
+
+  const alreadyUsedTrial = Boolean(
+    normalized.stripeSubscriptionId ||
+      normalized.status === SUBSCRIPTION_STATUS.TRIALING ||
+      normalized.status === SUBSCRIPTION_STATUS.ACTIVE ||
+      normalized.status === SUBSCRIPTION_STATUS.PAST_DUE ||
+      normalized.status === SUBSCRIPTION_STATUS.CANCELED
+  );
+
+  return !alreadyUsedTrial;
 }
 
 export async function ensureUserProfile(user) {
@@ -200,6 +217,48 @@ export async function startCheckout({ successUrl, cancelUrl } = {}) {
 export async function openCustomerPortal({ returnUrl } = {}) {
   const origin = window.location.origin;
   return postBillingFunction("create-portal", {
-    returnUrl: returnUrl || `${origin}/home/profile`,
+    returnUrl: returnUrl || `${origin}/home/profile?billing=updated`,
   });
+}
+
+/**
+ * Opens a Stripe Checkout / Customer Portal URL in a new tab.
+ * The blank tab is opened synchronously on the user gesture so popup
+ * blockers do not swallow the async session create.
+ * Falls back to same-tab redirect if the popup is blocked.
+ */
+export async function openStripeSession(createSession) {
+  const tab = window.open("about:blank", "_blank");
+
+  try {
+    const result = await createSession();
+    const url = result?.url;
+    if (!url) {
+      throw new Error("Billing URL missing.");
+    }
+
+    if (tab && !tab.closed) {
+      try {
+        tab.opener = null;
+      } catch {
+        /* ignore cross-browser opener lock */
+      }
+      tab.location.href = url;
+      return { mode: "tab", url };
+    }
+
+    window.location.assign(url);
+    return { mode: "redirect", url };
+  } catch (error) {
+    try {
+      tab?.close();
+    } catch {
+      /* ignore */
+    }
+    throw error;
+  }
+}
+
+export async function syncSubscription() {
+  return postBillingFunction("sync-subscription", {});
 }

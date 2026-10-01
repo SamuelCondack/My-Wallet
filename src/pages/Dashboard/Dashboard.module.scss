@@ -1,12 +1,50 @@
 @import '../../Global/variables.scss';
 
+.pageWrapper {
+  overflow: scroll;
+  height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #b0b0b0;
+    border-radius: 100px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
+  }
+}
+
 .page {
-  padding: 16px;
+  padding: 16px 16px 80px;
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
   overflow-x: clip;
+}
+
+@media (max-width: 768px) {
+  .pageWrapper {
+    overflow: visible;
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .page {
+    overflow: visible;
+    height: auto;
+  }
 }
 
 .header {
@@ -18,18 +56,23 @@
   h1 {
     margin: 0;
     text-align: center;
+    font-size: clamp(26px, 4vw, 34px);
+    letter-spacing: -0.03em;
   }
 }
 
 .linkBtn {
-  background: #3e92eb;
+  @include glass-button;
+  background: linear-gradient(135deg, $defaultBlue, #2563eb);
   color: #fff;
   text-decoration: none;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 9px 14px;
+  border-radius: 999px;
   white-space: nowrap;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 24px rgba(62, 146, 235, 0.28);
 }
 
 .filterContainer {
@@ -42,9 +85,9 @@
 }
 
 .selectFilters {
-  border-radius: 20px;
+  border-radius: 999px;
   text-align: center !important;
-  border: 1px #000 solid;
+  border: 1px solid rgba(15, 23, 42, 0.1);
   padding: 8px 16px;
   color: $defaultBlue;
   appearance: none;
@@ -53,8 +96,10 @@
   -webkit-text-align-last: center;
   -webkit-appearance: none;
   font-size: 12px;
-  background-color: #fff;
-  transition: .4s;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: 0.18s $easeOut;
   outline: none;
 
   option {
@@ -68,13 +113,11 @@
 
   &:hover {
     cursor: pointer;
-    transform: scale(1.05);
     border-color: $defaultBlue;
   }
 
   &:focus {
     border-color: $defaultBlue;
-    transform: scale(1.05);
   }
 
   &:disabled {
@@ -87,34 +130,33 @@
 }
 
 .totalCard {
-  background: #f5f9ff;
-  border: 1px solid #d8e8fb;
-  border-radius: 14px;
-  padding: 16px;
+  @include glass-panel(20px);
+  padding: 18px 16px;
   margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 
   span {
-    color: #666;
+    color: $inkSoft;
     font-size: 13px;
+    font-weight: 600;
   }
 
   strong {
-    font-size: 24px;
-    color: #3e92eb;
+    font-size: 26px;
+    color: $defaultBlue;
+    font-family: "Manrope", "Quicksand", sans-serif;
+    letter-spacing: -0.03em;
   }
 }
 
 .overviewCard,
 .forecastCard {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  padding: 16px;
+  @include glass-panel(20px);
+  padding: 18px 16px;
   margin-bottom: 16px;
-  color: #000;
+  color: $ink;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;

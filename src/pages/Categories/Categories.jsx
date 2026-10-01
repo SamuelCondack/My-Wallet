@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
-import { FaPencilAlt } from "react-icons/fa";
+import { FaPencilAlt, FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";
 import bin from "../../assets/bin.png";
 import styles from "./Categories.module.scss";
+import sheetStyles from "../../components/BottomSheet/BottomSheet.module.scss";
+import BottomSheet from "../../components/BottomSheet/BottomSheet";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import ExpenseIncomeToggle from "../../components/ExpenseIncomeToggle/ExpenseIncomeToggle";
@@ -339,27 +341,21 @@ export default function Categories() {
           </div>
         ) : (
           <div className={styles.cards}>
-            <AnimatePresence initial={false} mode="popLayout">
+            <AnimatePresence initial={false}>
               {visibleCategories.map((category) => (
                 <motion.div
                   key={category.id}
-                  layout
                   className={styles.categoryLayoutItem}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
                 >
-                  <motion.div
-                    className={styles.categoryCard}
+                  <div
+                    className={`${styles.categoryCard} ${
+                      pressedKey === category.id ? styles.categoryPressed : ""
+                    }`}
                     style={{ borderColor: category.color || undefined }}
-                    animate={{
-                      scale: pressedKey === category.id ? 1.05 : 1,
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{
-                      scale: { duration: 0.4, ease: "easeOut" },
-                    }}
                     onTouchStart={(event) =>
                       handleTouchStart(event, category.id)
                     }
@@ -397,7 +393,7 @@ export default function Categories() {
                         alt="delete button"
                       />
                     </button>
-                  </motion.div>
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -412,254 +408,258 @@ export default function Categories() {
         aria-label="Add category"
         title="Add category"
       >
-        +
+        <span className={styles.fabIcon} aria-hidden="true">
+          +
+        </span>
+        <span className={styles.fabLabel}>Add category</span>
       </button>
 
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            className={styles.modalOverlay}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeModal}
-          >
-            <motion.div
-              className={styles.modal}
-              initial={{ opacity: 0, scale: 0.92, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 8 }}
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              onClick={(event) => event.stopPropagation()}
+      <BottomSheet
+        isOpen={modalOpen}
+        onClose={closeModal}
+        labelledBy="category-form-title"
+      >
+        <header className={sheetStyles.header}>
+          <h2 id="category-form-title">
+            {editingId ? "Edit category" : "Add category"}
+          </h2>
+          <div className={sheetStyles.headerActions}>
+            <button
+              type="button"
+              className={sheetStyles.iconBtn}
+              onClick={closeModal}
+              aria-label="Close"
+              disabled={isSubmitting}
             >
-              <h3 className={styles.modalTitle}>
-                {editingId ? "Edit category" : "Add category"}
-              </h3>
-              <form className={styles.modalForm} onSubmit={handleSubmit}>
-                <label className={styles.modalLabel} htmlFor="categoryName">
-                  Name
-                </label>
+              <FaTimes />
+            </button>
+          </div>
+        </header>
+
+        <form className={sheetStyles.form} onSubmit={handleSubmit}>
+          <div className={sheetStyles.scrollBody}>
+            <label className={sheetStyles.fieldLabel} htmlFor="categoryName">
+              Name
+            </label>
+            <input
+              id="categoryName"
+              className={sheetStyles.textInput}
+              placeholder="Category name"
+              value={form.name}
+              onChange={(e) =>
+                setForm((current) => ({
+                  ...current,
+                  name: e.target.value,
+                }))
+              }
+              disabled={isSubmitting}
+              required
+              autoFocus
+              autoComplete="off"
+            />
+
+            <label className={sheetStyles.fieldLabel} htmlFor="categoryIcon">
+              Icon
+            </label>
+            {isDesktop ? (
+              <div className={styles.desktopPickers}>
+                <button
+                  type="button"
+                  className={styles.emojiTrigger}
+                  onClick={() => {
+                    setShowEmojiPanel((open) => {
+                      const next = !open;
+                      if (next) {
+                        requestAnimationFrame(() => {
+                          emojiSearchRef.current?.focus();
+                        });
+                      } else {
+                        setEmojiSearch("");
+                      }
+                      return next;
+                    });
+                  }}
+                  disabled={isSubmitting}
+                  aria-expanded={showEmojiPanel}
+                  aria-label="Choose emoji"
+                >
+                  <span className={styles.emojiTriggerPreview}>
+                    {form.icon || "📦"}
+                  </span>
+                  <span>Choose emoji</span>
+                </button>
+
+                <AnimatePresence>
+                  {showEmojiPanel && (
+                    <motion.div
+                      className={styles.emojiPanel}
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <input
+                        ref={emojiSearchRef}
+                        type="text"
+                        className={styles.emojiSearch}
+                        placeholder="Search or paste any emoji…"
+                        value={emojiSearch}
+                        onChange={(e) =>
+                          handleEmojiSearchChange(e.target.value)
+                        }
+                        onKeyDown={handleEmojiSearchKeyDown}
+                        disabled={isSubmitting}
+                        aria-label="Search emoji"
+                      />
+                      <div className={styles.emojiGrid}>
+                        {filteredEmojis.length === 0 ? (
+                          <p className={styles.emojiEmpty}>
+                            No matches. Paste an emoji above
+                          </p>
+                        ) : (
+                          filteredEmojis.map(({ emoji }) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              className={`${styles.emojiOption} ${
+                                form.icon === emoji
+                                  ? styles.emojiOptionActive
+                                  : ""
+                              }`}
+                              onClick={() => applyEmoji(emoji)}
+                              aria-label={`Select ${emoji}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                      <p className={styles.emojiHint}>
+                        Tip: Win + . (Windows) or Ctrl + Cmd + Space (Mac)
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <p className={sheetStyles.fieldLabel}>Color</p>
+                <div className={styles.colorGrid}>
+                  {DESKTOP_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className={`${styles.colorSwatch} ${
+                        form.color.toLowerCase() === color.toLowerCase()
+                          ? styles.colorSwatchActive
+                          : ""
+                      }`}
+                      style={{ backgroundColor: color }}
+                      onClick={() =>
+                        setForm((current) => ({ ...current, color }))
+                      }
+                      disabled={isSubmitting}
+                      aria-label={`Select color ${color}`}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className={styles.customColorBtn}
+                    onClick={() => customColorRef.current?.click()}
+                    disabled={isSubmitting}
+                    title="Custom color"
+                    aria-label="Custom color"
+                  >
+                    <span
+                      className={styles.customColorPreview}
+                      style={{ backgroundColor: form.color }}
+                    />
+                    +
+                  </button>
+                  <input
+                    ref={customColorRef}
+                    type="color"
+                    className={styles.hiddenColorInput}
+                    value={form.color}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        color: e.target.value,
+                      }))
+                    }
+                    disabled={isSubmitting}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className={styles.modalRow}>
                 <input
-                  id="categoryName"
-                  className={styles.modalInput}
-                  placeholder="Category name"
-                  value={form.name}
+                  id="categoryIcon"
+                  className={sheetStyles.textInput}
+                  placeholder="Icon"
+                  value={form.icon}
                   onChange={(e) =>
                     setForm((current) => ({
                       ...current,
-                      name: e.target.value,
+                      icon: e.target.value,
                     }))
                   }
+                  maxLength={4}
                   disabled={isSubmitting}
-                  required
-                  autoFocus
+                  style={{ marginBottom: 0 }}
                 />
-
-                <label className={styles.modalLabel} htmlFor="categoryIcon">
-                  Icon
+                <label
+                  className={styles.mobileColorPicker}
+                  title="Category color"
+                >
+                  <span
+                    className={styles.mobileColorPreview}
+                    style={{ backgroundColor: form.color || "#3e92eb" }}
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="color"
+                    className={styles.mobileColorInput}
+                    value={
+                      /^#[0-9A-Fa-f]{6}$/.test(form.color)
+                        ? form.color
+                        : "#3e92eb"
+                    }
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        color: e.target.value,
+                      }))
+                    }
+                    disabled={isSubmitting}
+                    aria-label="Category color"
+                  />
                 </label>
-                {isDesktop ? (
-                  <div className={styles.desktopPickers}>
-                    <button
-                      type="button"
-                      className={styles.emojiTrigger}
-                      onClick={() => {
-                        setShowEmojiPanel((open) => {
-                          const next = !open;
-                          if (next) {
-                            requestAnimationFrame(() => {
-                              emojiSearchRef.current?.focus();
-                            });
-                          } else {
-                            setEmojiSearch("");
-                          }
-                          return next;
-                        });
-                      }}
-                      disabled={isSubmitting}
-                      aria-expanded={showEmojiPanel}
-                      aria-label="Choose emoji"
-                    >
-                      <span className={styles.emojiTriggerPreview}>
-                        {form.icon || "📦"}
-                      </span>
-                      <span>Choose emoji</span>
-                    </button>
+              </div>
+            )}
+          </div>
 
-                    <AnimatePresence>
-                      {showEmojiPanel && (
-                        <motion.div
-                          className={styles.emojiPanel}
-                          initial={{ opacity: 0, y: -6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <input
-                            ref={emojiSearchRef}
-                            type="text"
-                            className={styles.emojiSearch}
-                            placeholder="Search or paste any emoji…"
-                            value={emojiSearch}
-                            onChange={(e) =>
-                              handleEmojiSearchChange(e.target.value)
-                            }
-                            onKeyDown={handleEmojiSearchKeyDown}
-                            disabled={isSubmitting}
-                            aria-label="Search emoji"
-                          />
-                          <div className={styles.emojiGrid}>
-                            {filteredEmojis.length === 0 ? (
-                              <p className={styles.emojiEmpty}>
-                                No matches — paste an emoji above
-                              </p>
-                            ) : (
-                              filteredEmojis.map(({ emoji }) => (
-                                <button
-                                  key={emoji}
-                                  type="button"
-                                  className={`${styles.emojiOption} ${
-                                    form.icon === emoji
-                                      ? styles.emojiOptionActive
-                                      : ""
-                                  }`}
-                                  onClick={() => applyEmoji(emoji)}
-                                  aria-label={`Select ${emoji}`}
-                                >
-                                  {emoji}
-                                </button>
-                              ))
-                            )}
-                          </div>
-                          <p className={styles.emojiHint}>
-                            Tip: Win + . (Windows) or Ctrl + Cmd + Space (Mac)
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <label className={styles.modalLabel}>Color</label>
-                    <div className={styles.colorGrid}>
-                      {DESKTOP_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          className={`${styles.colorSwatch} ${
-                            form.color.toLowerCase() === color.toLowerCase()
-                              ? styles.colorSwatchActive
-                              : ""
-                          }`}
-                          style={{ backgroundColor: color }}
-                          onClick={() =>
-                            setForm((current) => ({ ...current, color }))
-                          }
-                          disabled={isSubmitting}
-                          aria-label={`Select color ${color}`}
-                        />
-                      ))}
-                      <button
-                        type="button"
-                        className={styles.customColorBtn}
-                        onClick={() => customColorRef.current?.click()}
-                        disabled={isSubmitting}
-                        title="Custom color"
-                        aria-label="Custom color"
-                      >
-                        <span
-                          className={styles.customColorPreview}
-                          style={{ backgroundColor: form.color }}
-                        />
-                        +
-                      </button>
-                      <input
-                        ref={customColorRef}
-                        type="color"
-                        className={styles.hiddenColorInput}
-                        value={form.color}
-                        onChange={(e) =>
-                          setForm((current) => ({
-                            ...current,
-                            color: e.target.value,
-                          }))
-                        }
-                        disabled={isSubmitting}
-                        tabIndex={-1}
-                        aria-hidden="true"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.modalRow}>
-                    <input
-                      id="categoryIcon"
-                      className={styles.modalInput}
-                      placeholder="Icon"
-                      value={form.icon}
-                      onChange={(e) =>
-                        setForm((current) => ({
-                          ...current,
-                          icon: e.target.value,
-                        }))
-                      }
-                      maxLength={4}
-                      disabled={isSubmitting}
-                    />
-                    <label
-                      className={styles.mobileColorPicker}
-                      title="Category color"
-                    >
-                      <span
-                        className={styles.mobileColorPreview}
-                        style={{ backgroundColor: form.color || "#3e92eb" }}
-                        aria-hidden="true"
-                      />
-                      <input
-                        type="color"
-                        className={styles.mobileColorInput}
-                        value={
-                          /^#[0-9A-Fa-f]{6}$/.test(form.color)
-                            ? form.color
-                            : "#3e92eb"
-                        }
-                        onChange={(e) =>
-                          setForm((current) => ({
-                            ...current,
-                            color: e.target.value,
-                          }))
-                        }
-                        disabled={isSubmitting}
-                        aria-label="Category color"
-                      />
-                    </label>
-                  </div>
-                )}
-
-                <div className={styles.modalActions}>
-                  <button
-                    type="submit"
-                    className={styles.modalPrimary}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting
-                      ? "Saving..."
-                      : editingId
-                      ? "Edit"
-                      : "Add"}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.modalSecondary}
-                    onClick={closeModal}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <div className={sheetStyles.footer}>
+            <div className={sheetStyles.actions}>
+              <button
+                type="submit"
+                className={sheetStyles.primaryBtn}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Saving…" : editingId ? "Edit" : "Add"}
+              </button>
+              <button
+                type="button"
+                className={sheetStyles.secondaryBtn}
+                onClick={closeModal}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </form>
+      </BottomSheet>
 
       <ConfirmationModal
         isOpen={showDeleteModal}

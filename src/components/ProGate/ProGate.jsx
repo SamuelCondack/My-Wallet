@@ -15,7 +15,7 @@ export default function ProGate({
   description = "Available on MyWallet Pro.",
   fallback = null,
 }) {
-  const { requirePro, loading } = useSubscription();
+  const { requirePro, loading, canStartTrial } = useSubscription();
   const [paywallOpen, setPaywallOpen] = useState(false);
   const gate = requirePro();
 
@@ -51,6 +51,7 @@ export default function ProGate({
         onClose={() => setPaywallOpen(false)}
         title={title}
         message={description}
+        canStartTrial={canStartTrial}
       />
     </>
   );

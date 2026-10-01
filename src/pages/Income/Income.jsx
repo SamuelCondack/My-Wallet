@@ -456,24 +456,16 @@ export default function Income() {
     return (
       <motion.div
         key={incomeKey}
-        layout
         className={styles.incomeLayoutItem}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
-        <motion.div
+        <div
           className={`${styles.incomeCard} ${
             isPending ? styles.pendingCard : styles.confirmedCard
-          }`}
-          animate={{
-            scale: pressedIncomeKey === incomeKey ? 1.05 : 1,
-          }}
-          whileHover={{ scale: 1.05 }}
-          transition={{
-            scale: { duration: 0.4, ease: "easeOut" },
-          }}
+          } ${pressedIncomeKey === incomeKey ? styles.incomePressed : ""}`}
           onTouchStart={(event) => handleIncomeTouchStart(event, incomeKey)}
         >
           <button
@@ -533,7 +525,7 @@ export default function Income() {
               />
             </button>
           </div>
-        </motion.div>
+        </div>
       </motion.div>
     );
   };
@@ -684,7 +676,7 @@ export default function Income() {
                   </p>
                 ) : (
                   <div className={styles.cards}>
-                    <AnimatePresence initial={false} mode="popLayout">
+                    <AnimatePresence initial={false}>
                       {pendingList.map(renderCard)}
                     </AnimatePresence>
                   </div>
@@ -702,7 +694,7 @@ export default function Income() {
                   </p>
                 ) : (
                   <div className={styles.cards}>
-                    <AnimatePresence initial={false} mode="popLayout">
+                    <AnimatePresence initial={false}>
                       {confirmedList.map(renderCard)}
                     </AnimatePresence>
                   </div>
@@ -738,7 +730,10 @@ export default function Income() {
         aria-label="Add income"
         title="Add income"
       >
-        +
+        <span className={styles.fabIcon} aria-hidden="true">
+          +
+        </span>
+        <span className={styles.fabLabel}>Add income</span>
       </button>
 
       <IncomeModal

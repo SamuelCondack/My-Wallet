@@ -2,33 +2,46 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { PRO_FEATURES, PRO_PRICE_LABEL, TRIAL_DAYS } from "../../constants/subscription";
-import { startCheckout } from "../../services/subscriptionService";
+import { startCheckout, openStripeSession } from "../../services/subscriptionService";
 import styles from "./PaywallModal.module.scss";
 
 export default function PaywallModal({
   isOpen,
   onClose,
   title = "Unlock MyWallet Pro",
-  message = "Start a free trial and get the tools that make tracking effortless.",
+  message,
+  canStartTrial = true,
 }) {
   const [isStarting, setIsStarting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleStartTrial = async () => {
+  const resolvedMessage =
+    message ||
+    (canStartTrial
+      ? "Get the tools that make tracking effortless — no charge today."
+      : "Get the tools that make tracking effortless.");
+
+  const trustLine = canStartTrial
+    ? `Then ${PRO_PRICE_LABEL}. Cancel anytime.`
+    : "Secure checkout · Cancel anytime";
+
+  const ctaLabel = canStartTrial
+    ? `Start ${TRIAL_DAYS}-day free trial`
+    : `Get Pro — ${PRO_PRICE_LABEL}`;
+
+  const handleCheckout = async () => {
     setIsStarting(true);
     try {
-      const { url } = await startCheckout();
-      if (!url) {
-        throw new Error("Checkout URL missing.");
-      }
-      window.location.assign(url);
+      await openStripeSession(() => startCheckout());
+      onClose();
     } catch (err) {
       console.error(err);
       toast.error(
         err.message ||
           "Billing is not configured yet. Add Stripe keys to enable checkout."
       );
+    } finally {
       setIsStarting(false);
     }
   };
@@ -53,7 +66,7 @@ export default function PaywallModal({
 
         <p className={styles.eyebrow}>MyWallet Pro</p>
         <h2 id="paywall-title">{title}</h2>
-        <p className={styles.message}>{message}</p>
+        <p className={styles.message}>{resolvedMessage}</p>
 
         <ul className={styles.featureList}>
           {PRO_FEATURES.map((feature) => (
@@ -64,19 +77,16 @@ export default function PaywallModal({
           ))}
         </ul>
 
-        <p className={styles.price}>
-          {TRIAL_DAYS}-day free trial, then {PRO_PRICE_LABEL}
-        </p>
-
         <div className={styles.actions}>
           <button
             type="button"
             className={styles.primaryBtn}
-            onClick={handleStartTrial}
+            onClick={handleCheckout}
             disabled={isStarting}
           >
-            {isStarting ? "Redirecting…" : `Start ${TRIAL_DAYS}-day free trial`}
+            {isStarting ? "Opening…" : ctaLabel}
           </button>
+          <p className={styles.price}>{trustLine}</p>
           <button
             type="button"
             className={styles.secondaryBtn}
@@ -96,4 +106,5 @@ PaywallModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   title: PropTypes.string,
   message: PropTypes.string,
+  canStartTrial: PropTypes.bool,
 };

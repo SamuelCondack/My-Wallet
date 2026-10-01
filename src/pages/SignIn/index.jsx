@@ -53,7 +53,7 @@ export default function SignIn() {
   };
 
   return (
-    <>
+    <div className={styles.authPage}>
       <div className={styles.header}>
         <Link to="/" className={styles.backButton}>
           <p className={styles.backText}>Home</p>
@@ -144,16 +144,13 @@ export default function SignIn() {
             </div>
             <div className={styles.createAccountDiv}>
               <p>Don't have an account?</p>
-              <Link
-                to="/signup"
-                className={`${styles.signUpBtn} ${styles.createAccountBtn}`}
-              >
+              <Link to="/signup" className={styles.createAccountBtn}>
                 Create free account
               </Link>
             </div>
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 }

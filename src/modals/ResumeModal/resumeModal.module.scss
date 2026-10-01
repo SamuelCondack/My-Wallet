@@ -6,7 +6,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(8, 12, 20, 0.48);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -14,9 +16,8 @@
 }
 
 .modalContent {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
+    @include glass-panel(22px);
+    padding: 22px 20px;
     width: 90%;
     max-width: 500px;
     max-height: 90vh;
@@ -24,12 +25,12 @@
 
     h2 {
         margin-bottom: 20px;
-        color: #000;
+        color: $ink;
     }
 
     p {
         margin-bottom: 20px;
-        color: #000;
+        color: $inkSoft;
     }
 }
 

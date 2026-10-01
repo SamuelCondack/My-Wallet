@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap');
+@import './variables.scss';
 
 html {
   height: 100%;
@@ -8,17 +9,59 @@ html {
 body {
   min-height: 100%;
   margin: 0;
+  color: $ink;
+  background: $surface;
+  overscroll-behavior-y: none;
 }
 
 * {
-    font-family: "Quicksand", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
-    -webkit-tap-highlight-color: transparent;
+  font-family: "Quicksand", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a,
+button,
+[role="button"],
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
 }
 
 input,
 select,
 textarea {
+  scroll-margin: 0;
+}
+
+h1,
+h2,
+h3,
+.displayFont {
+  font-family: "Manrope", "Quicksand", sans-serif;
+  letter-spacing: -0.03em;
+}
+
+input,
+select,
+textarea,
+button {
   font-size: 16px;
+}
+
+::selection {
+  background: rgba(62, 146, 235, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

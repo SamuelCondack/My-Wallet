@@ -13,8 +13,8 @@ export const SUBSCRIPTION_STATUS = {
 };
 
 export const TRIAL_DAYS = 7;
-export const PRO_PRICE_LABEL = "$5/month";
-export const PRO_PRICE_CENTS = 500;
+export const PRO_PRICE_LABEL = "$4.99/month";
+export const PRO_PRICE_CENTS = 499;
 
 export const DEFAULT_SUBSCRIPTION = {
   status: SUBSCRIPTION_STATUS.NONE,

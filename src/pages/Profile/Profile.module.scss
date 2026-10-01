@@ -20,12 +20,10 @@
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  padding: 16px;
+  @include glass-panel(20px);
+  padding: 18px 16px;
   margin-bottom: 14px;
-  color: #111;
+  color: $ink;
 }
 
 .identity {
@@ -46,26 +44,94 @@
   }
 }
 
+.identityCopy {
+  flex: 1;
+  min-width: 0;
+}
+
+.logoutBtn {
+  @include glass-button;
+  @include focus-ring;
+  flex-shrink: 0;
+  align-self: center;
+  background: rgba(220, 53, 69, 0.06);
+  border: 1px solid rgba(220, 53, 69, 0.35);
+  color: #dc3545;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    color: #fff;
+    background: rgba(220, 38, 38, 0.9);
+    border-color: transparent;
+  }
+}
+
+.avatarWrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.avatarSlot {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
 .avatar,
 .avatarFallback {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .avatar {
+  position: absolute;
+  inset: 0;
   object-fit: cover;
   border: 2px solid #d8e8fb;
+  box-sizing: border-box;
+  z-index: 1;
 }
 
 .avatarFallback {
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
   background: $defaultBlue;
   color: #fff;
   font-weight: 700;
   font-size: 18px;
+}
+
+.proChip {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  z-index: 2;
+  min-width: 34px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3e92eb, #4f46e5);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border: 2px solid #fff;
+  box-shadow: 0 6px 14px rgba(62, 146, 235, 0.35);
+  pointer-events: none;
 }
 
 .planHeader {
@@ -122,19 +188,61 @@
   margin-bottom: 10px;
 }
 
-.primaryBtn,
-.secondaryBtn {
-  border-radius: 12px;
-  padding: 12px 14px;
+.subscribeHero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  margin-bottom: 2px;
+  border-radius: 18px;
+  background:
+    linear-gradient(160deg, rgba(62, 146, 235, 0.14), rgba(37, 99, 235, 0.06));
+  border: 1px solid rgba(62, 146, 235, 0.22);
+}
+
+.subscribeEyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $defaultBlue;
+}
+
+.subscribeLead {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
+  color: $ink;
+  line-height: 1.4;
+}
+
+.subscribeFoot {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  @include glass-button;
+  @include focus-ring;
+  border-radius: 999px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .primaryBtn {
-  background: $defaultBlue;
+  background: linear-gradient(135deg, $defaultBlue, #2563eb);
   color: #fff;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 28px rgba(62, 146, 235, 0.34);
+  font-size: 15px;
+  padding: 14px 16px;
 
   &:disabled {
     opacity: 0.7;
@@ -143,9 +251,9 @@
 }
 
 .secondaryBtn {
-  background: #fff;
-  color: #222;
-  border: 1px solid #ddd;
+  background: rgba(255, 255, 255, 0.72);
+  color: $ink;
+  border: 1px solid rgba(15, 23, 42, 0.1);
 
   &:disabled {
     opacity: 0.7;
@@ -204,4 +312,14 @@
   font-size: 11px !important;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+@media (max-width: 520px) {
+  .identity {
+    flex-wrap: wrap;
+  }
+
+  .logoutBtn {
+    margin-left: auto;
+  }
 }

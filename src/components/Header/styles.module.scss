@@ -1,115 +1,145 @@
 @import "../../Global/variables.scss";
 
 .header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-top: calc(12px + env(safe-area-inset-top, 0px));
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 .headerContent {
-    display: flex;
-    flex-direction: row;
-    width: 90%;
-    padding: 10px 0;
-    justify-content: space-around;
-    align-items: center;
-    gap: 10px;
-    background-color: rgba(0, 0, 0, 0.888);
-    border-radius: 50px;
-    color: #fff;
+  display: flex;
+  flex-direction: row;
+  width: min(960px, 92%);
+  padding: 10px 14px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  @include glass-dark(999px);
+  color: #fff;
 }
 
 .headerLinks {
-    color: #fff;
-    text-decoration: none;
-    padding: 10px;
-    border-radius: 10px;
-    transition: .4s;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  margin: 0;
+  font: inherit;
+  color: rgba(255, 255, 255, 0.86);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  transition: 0.35s $easeOut;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  line-height: 1.2;
 
-    &:hover {
-        background-color: $defaultBlue;
-        font-weight: 800;
-        transform: scale(1.1);
-        border-radius: 500px;
-        cursor: pointer;
-    }
+  &:hover {
+    background: rgba(62, 146, 235, 0.9);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .logoDiv {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    width: fit-content;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  text-decoration: none;
+  color: #fff;
 
-    p {
-        margin: 0;
-        font-weight: 800;
-
-        -webkit-user-select: none!important;
-        -moz-user-select: none!important;
-        -ms-user-select: none!important;
-        user-select: none!important;
-    }
+  p {
+    margin: 0;
+    font-family: "Manrope", "Quicksand", sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    user-select: none;
+  }
 }
 
 .logoImg {
-    width: 50px;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 
 .authButtons {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.headerSignIn,
+.headerSignUp {
+  @include glass-button;
+  @include focus-ring;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
 }
 
 .headerSignIn {
-    border: 1px solid #fff;
-    padding: 5px 20px 5px 20px !important;
-    text-align: center;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 50px;
-    transition: .4s;
-    font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
 
-    &:hover {
-        border-color: $defaultBlue;
-        color: $defaultBlue;
-    }
+  &:hover {
+    border-color: rgba(62, 146, 235, 0.9);
+    color: #fff;
+    background: rgba(62, 146, 235, 0.2);
+  }
 }
 
 .headerSignUp {
-    @extend .headerSignIn;
-    background-color: #fff;
-    color: #000;
+  background: linear-gradient(135deg, #fff, #e8f3ff);
+  color: $ink;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
 }
 
 @media (max-width: 920px) {
-    .headerLinks {
-        display: none;
-    }
+  .headerLinks {
+    display: none;
+  }
 }
 
 @media (max-width: 570px) {
-    .logoDiv {
-        p {
-            display: none;
-        }
-    }
+  .logoDiv p {
+    display: none;
+  }
 }
 
 @media (max-width: 390px) {
-    .logoImg {
-        width: 30px;
-        padding-left: 5px;
-    }
+  .logoImg {
+    width: 28px;
+    height: 28px;
+  }
 
-    .headerSignIn {
-        font-size: 13px;
-        padding: 5px 5px 5px 5px !important;
-    }
+  .headerSignIn,
+  .headerSignUp {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
 }

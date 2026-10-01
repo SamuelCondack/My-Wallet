@@ -112,6 +112,58 @@ function FormSkeleton() {
   );
 }
 
+function ProfileSkeleton() {
+  return (
+    <div className={styles.skeletonWrapper}>
+      <div className={styles.profileSection}>
+        <Shimmer className={styles.pageTitle} />
+
+        <div className={styles.profileCard}>
+          <div className={styles.profileIdentity}>
+            <Shimmer className={styles.profileAvatar} />
+            <div className={styles.profileIdentityCopy}>
+              <Shimmer className={styles.profileName} />
+              <Shimmer className={styles.profileEmail} />
+            </div>
+            <Shimmer className={styles.profileLogout} />
+          </div>
+        </div>
+
+        <div className={styles.profileCard}>
+          <div className={styles.profilePlanHeader}>
+            <div className={styles.profilePlanCopy}>
+              <Shimmer className={styles.profileLabel} />
+              <Shimmer className={styles.profilePlanName} />
+              <Shimmer className={styles.profileStatus} />
+            </div>
+            <Shimmer className={styles.profileBadge} />
+          </div>
+          <div className={styles.profileActions}>
+            <Shimmer className={styles.profilePrimaryBtn} />
+            <Shimmer className={styles.profileSecondaryBtn} />
+          </div>
+          <Shimmer className={styles.profilePriceNote} />
+        </div>
+
+        <div className={styles.profileCard}>
+          <Shimmer className={styles.profileSectionTitle} />
+          <div className={styles.profileFeatureList}>
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className={styles.profileFeatureRow}>
+                <div className={styles.profileFeatureCopy}>
+                  <Shimmer className={styles.profileFeatureTitle} />
+                  <Shimmer className={styles.profileFeatureDesc} />
+                </div>
+                <Shimmer className={styles.profileFeatureTag} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LandingSkeleton() {
   return (
     <div className={styles.skeletonWrapper}>
@@ -130,6 +182,7 @@ const VARIANTS = {
   categories: CategoriesSkeleton,
   form: FormSkeleton,
   landing: LandingSkeleton,
+  profile: ProfileSkeleton,
 };
 
 function Loading({ variant = "expenses" }) {

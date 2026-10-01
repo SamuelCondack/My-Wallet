@@ -13,6 +13,7 @@ export default function TrialBanner() {
     isPastDue,
     trialDaysLeft,
     subscription,
+    canStartTrial,
   } = useSubscription();
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -88,7 +89,11 @@ export default function TrialBanner() {
     return null;
   }
 
-  // Free users
+  // Free users eligible for trial
+  if (!canStartTrial) {
+    return null;
+  }
+
   return (
     <>
       <div className={`${styles.banner} ${styles.promo}`}>
@@ -120,6 +125,7 @@ export default function TrialBanner() {
       <PaywallModal
         isOpen={paywallOpen}
         onClose={() => setPaywallOpen(false)}
+        canStartTrial={canStartTrial}
       />
     </>
   );

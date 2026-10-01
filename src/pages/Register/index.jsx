@@ -65,7 +65,7 @@ export default function Register() {
   };
 
   return (
-    <>
+    <div className={styles.authPage}>
       <div className={styles.header}>
         <Link to="/" className={styles.backButton}>
           <p className={styles.backText}>Home</p>
@@ -172,6 +172,6 @@ export default function Register() {
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 }

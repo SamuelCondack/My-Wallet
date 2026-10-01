@@ -73,7 +73,10 @@ export default function Expenses() {
     searchParams.get("category") || "All"
   );
   const { categories } = useCategories(userId);
-  const expenseCategories = getExpenseCategories(categories);
+  const expenseCategories = useMemo(
+    () => getExpenseCategories(categories),
+    [categories]
+  );
   const categoriesMap = getCategoryMap(categories);
   const { favorites, addFavorite, removeFavorite } = useExpenseFavorites(userId);
   const { isPro } = useSubscription();
@@ -870,7 +873,10 @@ export default function Expenses() {
         }
       }
     } else {
-      updateData.installments = payload.installments || "1";
+      updateData.installments =
+        payload.installments && Number(payload.installments) > 0
+          ? payload.installments
+          : "";
       updateData.isPaused = false;
       updateData.pauseDate = null;
       if (wasMonthly) {
@@ -1398,7 +1404,7 @@ export default function Expenses() {
 
                   {visibleExpenses.length > 0 && (
                   <div className={styles.expensesContainer}>
-                    <AnimatePresence initial={false} mode="popLayout">
+                    <AnimatePresence initial={false}>
                       {visibleExpenses
                         .sort(
                           (a, b) =>
@@ -1412,24 +1418,20 @@ export default function Expenses() {
                           return (
                           <motion.div
                             key={expenseKey}
-                            layout
                             className={styles.expenseLayoutItem}
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
+                            exit={{ opacity: 0 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                           >
-                            <motion.div
+                            <div
                               className={`${styles.expense} ${getBorderStyle(
                                 expense.method
-                              )}`}
-                              animate={{
-                                scale: pressedExpenseKey === expenseKey ? 1.05 : 1,
-                              }}
-                              whileHover={{ scale: 1.05 }}
-                              transition={{
-                                scale: { duration: 0.4, ease: "easeOut" },
-                              }}
+                              )} ${
+                                pressedExpenseKey === expenseKey
+                                  ? styles.expensePressed
+                                  : ""
+                              }`}
                               onTouchStart={(event) =>
                                 handleExpenseTouchStart(event, expenseKey)
                               }
@@ -1499,7 +1501,7 @@ export default function Expenses() {
                                 />
                               </button>
                             </div>
-                            </motion.div>
+                            </div>
                           </motion.div>
                           );
                         })}
@@ -1545,7 +1547,10 @@ export default function Expenses() {
             aria-label="Add expense"
             title="Add expense"
           >
-            +
+            <span className={styles.fabIcon} aria-hidden="true">
+              +
+            </span>
+            <span className={styles.fabLabel}>Add expense</span>
           </button>
         )}
         {showPauseModal && (
@@ -1570,34 +1575,32 @@ export default function Expenses() {
             expenseName={expenseToDeleteName}
           />
         )}
-        {showExpenseModal && (
-          <ExpenseFormModal
-            isOpen={showExpenseModal}
-            mode={expenseModalMode}
-            onClose={closeExpenseModal}
-            onSave={async (payload) => {
-              try {
-                await handleExpenseFormSave(payload);
-              } catch (error) {
-                console.error("Expense save failed:", error);
-                toast.error(
-                  error.message ||
-                    (expenseModalMode === "create"
-                      ? "Failed to register expense"
-                      : "Falha ao atualizar despesa")
-                );
-              }
-            }}
-            categories={expenseCategories}
-            favorites={favorites}
-            recent={recentTemplates}
-            isPro={isPro}
-            onAddFavorite={addFavorite}
-            onRemoveFavorite={removeFavorite}
-            initialValues={expenseFormInitial}
-            editingExpense={editingExpense}
-          />
-        )}
+        <ExpenseFormModal
+          isOpen={showExpenseModal}
+          mode={expenseModalMode}
+          onClose={closeExpenseModal}
+          onSave={async (payload) => {
+            try {
+              await handleExpenseFormSave(payload);
+            } catch (error) {
+              console.error("Expense save failed:", error);
+              toast.error(
+                error.message ||
+                  (expenseModalMode === "create"
+                    ? "Failed to register expense"
+                    : "Falha ao atualizar despesa")
+              );
+            }
+          }}
+          categories={expenseCategories}
+          favorites={favorites}
+          recent={recentTemplates}
+          isPro={isPro}
+          onAddFavorite={addFavorite}
+          onRemoveFavorite={removeFavorite}
+          initialValues={expenseFormInitial}
+          editingExpense={editingExpense}
+        />
       </div>
     </>
   );

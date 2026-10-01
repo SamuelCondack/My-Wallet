@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { FaStar, FaRegStar, FaTimes, FaChevronRight, FaSearch } from "react-icons/fa";
-import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import BottomSheet from "../../components/BottomSheet/BottomSheet";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 import {
   FREE_FAVORITE_LIMIT,
@@ -33,6 +32,36 @@ function shortLabel(text, max = 18) {
   return `${value.slice(0, max - 1)}…`;
 }
 
+function HorizontalChipRow({ className, children }) {
+  const rowRef = useRef(null);
+
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return undefined;
+
+    const onWheel = (event) => {
+      if (el.scrollWidth <= el.clientWidth) return;
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      event.preventDefault();
+      el.scrollLeft += event.deltaY;
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  return (
+    <div ref={rowRef} className={className}>
+      {children}
+    </div>
+  );
+}
+
+HorizontalChipRow.propTypes = {
+  className: PropTypes.string,
+  children: PropTypes.node,
+};
+
 export default function ExpenseFormModal({
   isOpen,
   mode = "create",
@@ -56,8 +85,6 @@ export default function ExpenseFormModal({
   const valueRef = useRef(null);
   const categorySearchRef = useRef(null);
 
-  useBodyScrollLock(isOpen);
-
   useEffect(() => {
     if (!isOpen) return;
 
@@ -80,22 +107,29 @@ export default function ExpenseFormModal({
     });
     setCategoryPickerOpen(false);
     setCategorySearch("");
+    setIsSaving(false);
+    setIsSavingFavorite(false);
 
-    const timer = window.setTimeout(() => {
-      if (isCreate) {
+    let timer = 0;
+    if (isCreate) {
+      timer = window.setTimeout(() => {
         const nameInput = document.getElementById("expenseName");
         nameInput?.focus({ preventScroll: true });
-      }
-    }, 120);
+      }, 40);
+    }
 
-    return () => window.clearTimeout(timer);
-  }, [isOpen, initialValues, categories, isCreate]);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+    // Only reset when the modal opens — not when parent re-renders categories/initialValues.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   useEffect(() => {
     if (!categoryPickerOpen) return;
     const timer = window.setTimeout(() => {
       categorySearchRef.current?.focus({ preventScroll: true });
-    }, 80);
+    }, 40);
     return () => window.clearTimeout(timer);
   }, [categoryPickerOpen]);
 
@@ -158,8 +192,6 @@ export default function ExpenseFormModal({
     form.paymentMethod,
   ]);
 
-  if (!isOpen) return null;
-
   const applyTemplate = (template) => {
     setForm((prev) => ({
       ...prev,
@@ -196,10 +228,14 @@ export default function ExpenseFormModal({
 
     if (!isMonthly) {
       const installmentsRaw = String(form.installments || "").trim();
-      if (!isCreate || installmentsRaw !== "") {
-        const installments = Number(installmentsRaw || 1);
-        if (!Number.isFinite(installments) || installments < 1) {
-          toast.error("Installments must be at least 1.");
+      if (installmentsRaw !== "") {
+        const installments = Number(installmentsRaw);
+        if (
+          !Number.isFinite(installments) ||
+          installments < 0 ||
+          !Number.isInteger(installments)
+        ) {
+          toast.error("Installments must be 0 or a whole number.");
           return;
         }
       }
@@ -225,7 +261,11 @@ export default function ExpenseFormModal({
         isMonthly,
         installments: isMonthly
           ? ""
-          : String(form.installments || "").trim() || (isCreate ? "" : "1"),
+          : (() => {
+              const raw = String(form.installments || "").trim();
+              if (raw === "" || Number(raw) === 0) return "";
+              return raw;
+            })(),
         pauseDate: form.pauseDate || "",
       });
     } finally {
@@ -274,27 +314,13 @@ export default function ExpenseFormModal({
   };
 
   return (
-    <div className={styles.root} role="presentation">
-      <button
-        type="button"
-        className={styles.backdrop}
-        aria-label="Close"
-        onClick={onClose}
-      />
-
-      <motion.div
-        className={styles.sheet}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="expense-form-title"
-        initial={{ opacity: 0, y: 28 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 18 }}
-        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        onClick={(event) => event.stopPropagation()}
+    <>
+      <BottomSheet
+        isOpen={isOpen}
+        onClose={onClose}
+        labelledBy="expense-form-title"
+        lockScroll
       >
-        <div className={styles.handle} aria-hidden="true" />
-
         <header className={styles.header}>
           <h2 id="expense-form-title">
             {isCreate ? "Add expense" : "Edit expense"}
@@ -330,9 +356,9 @@ export default function ExpenseFormModal({
             {isCreate && (favorites.length > 0 || recent.length > 0) && (
               <div className={styles.shortcuts}>
                 {favorites.length > 0 && (
-                  <div className={styles.shortcutBlock}>
+                    <div className={styles.shortcutBlock}>
                     <p className={styles.shortcutLabel}>Favorites</p>
-                    <div className={styles.chipRow}>
+                    <HorizontalChipRow className={styles.chipRow}>
                       {favorites.map((item) => (
                         <button
                           key={item.id}
@@ -350,14 +376,14 @@ export default function ExpenseFormModal({
                           )}
                         </button>
                       ))}
-                    </div>
+                    </HorizontalChipRow>
                   </div>
                 )}
 
                 {recent.length > 0 && (
                   <div className={styles.shortcutBlock}>
                     <p className={styles.shortcutLabel}>Repeat recent</p>
-                    <div className={styles.chipRow}>
+                    <HorizontalChipRow className={styles.chipRow}>
                       {recent.map((item) => (
                         <button
                           key={`recent-${item.id}`}
@@ -369,7 +395,7 @@ export default function ExpenseFormModal({
                           <em>${Number(item.value).toFixed(0)}</em>
                         </button>
                       ))}
-                    </div>
+                    </HorizontalChipRow>
                   </div>
                 )}
               </div>
@@ -556,31 +582,72 @@ export default function ExpenseFormModal({
             )}
 
             {!isMonthly && (
-              <>
+              <div className={styles.stepperField}>
                 <label
                   className={styles.fieldLabel}
                   htmlFor="expenseInstallments"
                 >
                   Installments
                 </label>
-                <input
-                  id="expenseInstallments"
-                  name="installments"
-                  type="number"
-                  inputMode="numeric"
-                  min="1"
-                  placeholder={isCreate ? "1 (optional)" : "1"}
-                  value={form.installments}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      installments: e.target.value,
-                    }))
-                  }
-                  className={styles.textInput}
-                  required={!isCreate}
-                />
-              </>
+                <div className={styles.stepperRow}>
+                  <button
+                    type="button"
+                    className={styles.stepperBtn}
+                    aria-label="Decrease installments"
+                    disabled={isSaving}
+                    onClick={() =>
+                      setForm((prev) => {
+                        const raw = String(prev.installments ?? "").trim();
+                        const current = Number(raw);
+                        const base =
+                          raw === "" || !Number.isFinite(current) ? 1 : current;
+                        return {
+                          ...prev,
+                          installments: String(Math.max(0, base - 1)),
+                        };
+                      })
+                    }
+                  >
+                    −
+                  </button>
+                  <input
+                    id="expenseInstallments"
+                    name="installments"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value={form.installments}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        installments: e.target.value,
+                      }))
+                    }
+                    className={styles.stepperInput}
+                  />
+                  <button
+                    type="button"
+                    className={styles.stepperBtn}
+                    aria-label="Increase installments"
+                    disabled={isSaving}
+                    onClick={() =>
+                      setForm((prev) => {
+                        const raw = String(prev.installments ?? "").trim();
+                        const current = Number(raw);
+                        const next =
+                          raw === "" || !Number.isFinite(current)
+                            ? 1
+                            : current + 1;
+                        return { ...prev, installments: String(next) };
+                      })
+                    }
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
@@ -608,97 +675,84 @@ export default function ExpenseFormModal({
             </div>
           </div>
         </form>
-      </motion.div>
+      </BottomSheet>
 
-      {categoryPickerOpen && (
-        <div className={styles.categoryPickerRoot}>
+      <BottomSheet
+        isOpen={isOpen && categoryPickerOpen}
+        onClose={() => {
+          setCategoryPickerOpen(false);
+          setCategorySearch("");
+        }}
+        labelledBy="category-picker-title"
+        lockScroll={false}
+        zIndex={50}
+      >
+        <header className={styles.categoryPickerHeader}>
+          <h3 id="category-picker-title">Category</h3>
           <button
             type="button"
-            className={styles.categoryPickerBackdrop}
-            aria-label="Close categories"
+            className={styles.iconBtn}
+            aria-label="Close"
             onClick={() => {
               setCategoryPickerOpen(false);
               setCategorySearch("");
             }}
-          />
-          <motion.div
-            className={styles.categoryPickerSheet}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="category-picker-title"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.18 }}
           >
-            <div className={styles.handle} aria-hidden="true" />
-            <header className={styles.categoryPickerHeader}>
-              <h3 id="category-picker-title">Category</h3>
+            <FaTimes />
+          </button>
+        </header>
+
+        <div className={styles.categorySearchWrap}>
+          <FaSearch className={styles.categorySearchIcon} aria-hidden="true" />
+          <input
+            ref={categorySearchRef}
+            type="search"
+            className={styles.categorySearchInput}
+            placeholder="Search categories…"
+            value={categorySearch}
+            onChange={(e) => setCategorySearch(e.target.value)}
+            autoComplete="off"
+          />
+        </div>
+
+        <div className={styles.categoryList}>
+          {filteredCategories.length === 0 && (
+            <p className={styles.categoryEmpty}>No categories found</p>
+          )}
+          {filteredCategories.map((category) => {
+            const active = form.categoryId === category.id;
+            return (
               <button
+                key={category.id}
                 type="button"
-                className={styles.iconBtn}
-                aria-label="Close"
+                className={`${styles.categoryOption} ${
+                  active ? styles.categoryOptionActive : ""
+                }`}
                 onClick={() => {
+                  setForm((prev) => ({
+                    ...prev,
+                    categoryId: category.id,
+                  }));
                   setCategoryPickerOpen(false);
                   setCategorySearch("");
                 }}
               >
-                <FaTimes />
+                <span
+                  className={styles.categoryOptionDot}
+                  style={{ backgroundColor: category.color || "#3e92eb" }}
+                  aria-hidden="true"
+                />
+                <span className={styles.categoryOptionLabel}>
+                  <span>{category.icon}</span>
+                  <span>{category.name}</span>
+                </span>
+                {active && <span className={styles.categoryCheck}>✓</span>}
               </button>
-            </header>
-
-            <div className={styles.categorySearchWrap}>
-              <FaSearch className={styles.categorySearchIcon} aria-hidden="true" />
-              <input
-                ref={categorySearchRef}
-                type="search"
-                className={styles.categorySearchInput}
-                placeholder="Search categories…"
-                value={categorySearch}
-                onChange={(e) => setCategorySearch(e.target.value)}
-                autoComplete="off"
-              />
-            </div>
-
-            <div className={styles.categoryList}>
-              {filteredCategories.length === 0 && (
-                <p className={styles.categoryEmpty}>No categories found</p>
-              )}
-              {filteredCategories.map((category) => {
-                const active = form.categoryId === category.id;
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    className={`${styles.categoryOption} ${
-                      active ? styles.categoryOptionActive : ""
-                    }`}
-                    onClick={() => {
-                      setForm((prev) => ({
-                        ...prev,
-                        categoryId: category.id,
-                      }));
-                      setCategoryPickerOpen(false);
-                      setCategorySearch("");
-                    }}
-                  >
-                    <span
-                      className={styles.categoryOptionDot}
-                      style={{ backgroundColor: category.color || "#3e92eb" }}
-                      aria-hidden="true"
-                    />
-                    <span className={styles.categoryOptionLabel}>
-                      <span>{category.icon}</span>
-                      <span>{category.name}</span>
-                    </span>
-                    {active && <span className={styles.categoryCheck}>✓</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
+            );
+          })}
         </div>
-      )}
-    </div>
+      </BottomSheet>
+    </>
   );
 }
 

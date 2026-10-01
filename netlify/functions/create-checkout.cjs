@@ -78,16 +78,28 @@ exports.handler = async (event) => {
     const cancelUrl =
       body.cancelUrl || `${origin}/home/profile?checkout=cancel`;
 
+    // One trial per account: skip trial if they already started/had a subscription.
+    const alreadyUsedTrial = Boolean(
+      subscription.stripeSubscriptionId ||
+        ["trialing", "active", "past_due", "canceled"].includes(
+          subscription.status || ""
+        )
+    );
+
+    const subscriptionData = {
+      metadata: { firebaseUid: decoded.uid },
+    };
+    if (!alreadyUsedTrial && trialDays > 0) {
+      subscriptionData.trial_period_days = trialDays;
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customer.id,
       client_reference_id: decoded.uid,
       allow_promotion_codes: true,
       line_items: [{ price: priceId, quantity: 1 }],
-      subscription_data: {
-        trial_period_days: trialDays,
-        metadata: { firebaseUid: decoded.uid },
-      },
+      subscription_data: subscriptionData,
       metadata: { firebaseUid: decoded.uid },
       success_url: successUrl,
       cancel_url: cancelUrl,

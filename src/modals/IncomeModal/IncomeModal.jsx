@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { motion } from "framer-motion";
-import styles from "./IncomeModal.module.scss";
-import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { FaTimes } from "react-icons/fa";
+import BottomSheet from "../../components/BottomSheet/BottomSheet";
+import sheetStyles from "../../components/BottomSheet/BottomSheet.module.scss";
 import {
   dateInputToPeriod,
   formatDisplayDate,
@@ -35,12 +35,8 @@ export default function IncomeModal({
   const [form, setForm] = useState(EMPTY_FORM);
   const nameInputRef = useRef(null);
 
-  useBodyScrollLock(isOpen);
-
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
+    if (!isOpen) return;
 
     if (initialValues) {
       setForm({
@@ -49,7 +45,10 @@ export default function IncomeModal({
           initialValues.amount === 0 || initialValues.amount
             ? String(initialValues.amount)
             : "",
-        categoryId: initialValues.categoryId || categories[0]?.id || DEFAULT_INCOME_CATEGORY_ID,
+        categoryId:
+          initialValues.categoryId ||
+          categories[0]?.id ||
+          DEFAULT_INCOME_CATEGORY_ID,
         incomePeriodDate: periodToDateInput(
           initialValues.incomePeriodDate || initialValues.incomePeriod
         ),
@@ -68,25 +67,27 @@ export default function IncomeModal({
         status: INCOME_STATUS.PENDING,
       });
     }
-  }, [isOpen, initialValues, categories]);
 
-  useEffect(() => {
-    if (!isOpen || mode !== "create") {
-      return;
+    let timer = 0;
+    if (mode === "create") {
+      timer = window.setTimeout(() => {
+        nameInputRef.current?.focus({ preventScroll: true });
+      }, 40);
     }
-    const focusTimer = window.setTimeout(() => {
-      nameInputRef.current?.focus({ preventScroll: true });
-    }, 50);
-    return () => window.clearTimeout(focusTimer);
-  }, [isOpen, mode]);
 
-  if (!isOpen) {
-    return null;
-  }
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const isConfirmMode = mode === "confirm";
   const title =
-    mode === "edit" ? "Edit Income" : mode === "confirm" ? "Confirm Income" : "Add Income";
+    mode === "edit"
+      ? "Edit income"
+      : mode === "confirm"
+        ? "Confirm income"
+        : "Add income";
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -124,35 +125,51 @@ export default function IncomeModal({
   };
 
   return (
-    <>
-      <div className={styles.modalOverlay} onClick={onRequestClose} />
-      <motion.div
-        className={styles.modalContent}
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-      >
-        <h2>{title}</h2>
-        <form onSubmit={handleSubmit} className={styles.editForm}>
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={onRequestClose}
+      labelledBy="income-form-title"
+    >
+      <header className={sheetStyles.header}>
+        <h2 id="income-form-title">{title}</h2>
+        <div className={sheetStyles.headerActions}>
+          <button
+            type="button"
+            className={sheetStyles.iconBtn}
+            onClick={onRequestClose}
+            aria-label="Close"
+            disabled={isSubmitting}
+          >
+            <FaTimes />
+          </button>
+        </div>
+      </header>
+
+      <form onSubmit={handleSubmit} className={sheetStyles.form}>
+        <div className={sheetStyles.scrollBody}>
           {!isConfirmMode && (
             <>
-              <div className={styles.formGroup}>
-                <label htmlFor="income-description">Name</label>
-                <input
-                  ref={nameInputRef}
-                  id="income-description"
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  required
-                  disabled={isSubmitting}
-                  autoFocus={mode === "create"}
-                />
-              </div>
+              <label className={sheetStyles.fieldLabel} htmlFor="income-description">
+                Name
+              </label>
+              <input
+                ref={nameInputRef}
+                id="income-description"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className={sheetStyles.textInput}
+                placeholder="Salary, freelance, refund…"
+                autoComplete="off"
+              />
 
-              <div className={styles.formGroup}>
-                <label htmlFor="income-amount">Amount</label>
+              <label className={sheetStyles.amountLabel} htmlFor="income-amount">
+                Amount
+              </label>
+              <div className={sheetStyles.amountRow}>
+                <span aria-hidden="true">$</span>
                 <input
                   id="income-amount"
                   name="amount"
@@ -162,73 +179,105 @@ export default function IncomeModal({
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
+                  className={sheetStyles.amountInput}
+                  placeholder="0.00"
+                  autoComplete="off"
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="income-category">Category</label>
-                <select
-                  id="income-category"
-                  name="categoryId"
-                  value={form.categoryId}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                >
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.icon} {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <label className={sheetStyles.fieldLabel} htmlFor="income-category">
+                Category
+              </label>
+              <select
+                id="income-category"
+                name="categoryId"
+                value={form.categoryId}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className={sheetStyles.selectInput}
+              >
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+              </select>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="income-period">Income Period</label>
-                <input
-                  id="income-period"
-                  name="incomePeriodDate"
-                  type="date"
-                  value={form.incomePeriodDate}
-                  onChange={handleChange}
-                  required
-                  disabled={isSubmitting}
-                />
-                <span className={styles.fieldHint}>
-                  Belongs to {formatPeriodLabel(dateInputToPeriod(form.incomePeriodDate))}
-                </span>
-              </div>
+              <label className={sheetStyles.fieldLabel} htmlFor="income-period">
+                Income period
+              </label>
+              <input
+                id="income-period"
+                name="incomePeriodDate"
+                type="date"
+                value={form.incomePeriodDate}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className={sheetStyles.textInput}
+              />
+              <span className={sheetStyles.fieldHint}>
+                Belongs to {formatPeriodLabel(dateInputToPeriod(form.incomePeriodDate))}
+              </span>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="income-expected">Expected Date</label>
-                <input
-                  id="income-expected"
-                  name="expectedDate"
-                  type="date"
-                  value={form.expectedDate}
-                  onChange={handleChange}
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
+              <label className={sheetStyles.fieldLabel} htmlFor="income-expected">
+                Expected date
+              </label>
+              <input
+                id="income-expected"
+                name="expectedDate"
+                type="date"
+                value={form.expectedDate}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className={sheetStyles.textInput}
+              />
 
-              <div className={styles.formGroup}>
-                <label htmlFor="income-status">Status</label>
-                <select
-                  id="income-status"
-                  name="status"
-                  value={form.status}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                >
-                  <option value={INCOME_STATUS.PENDING}>Pending</option>
-                  <option value={INCOME_STATUS.CONFIRMED}>Confirmed</option>
-                </select>
+              <p className={sheetStyles.fieldLabel}>Status</p>
+              <div className={sheetStyles.statusRow}>
+                {[
+                  { id: INCOME_STATUS.PENDING, label: "Pending", color: "#ebab3d" },
+                  {
+                    id: INCOME_STATUS.CONFIRMED,
+                    label: "Confirmed",
+                    color: "#3e92eb",
+                  },
+                ].map((item) => {
+                  const active = form.status === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`${sheetStyles.statusChip} ${
+                        active ? sheetStyles.statusChipActive : ""
+                      }`}
+                      style={
+                        active
+                          ? {
+                              backgroundColor: item.color,
+                              borderColor: item.color,
+                              color: "#fff",
+                            }
+                          : undefined
+                      }
+                      onClick={() =>
+                        handleChange({
+                          target: { name: "status", value: item.id },
+                        })
+                      }
+                      disabled={isSubmitting}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
 
           {isConfirmMode && (
-            <div className={styles.confirmSummary}>
+            <div className={sheetStyles.confirmSummary}>
               <p>
                 <strong>{form.description}</strong>
               </p>
@@ -242,8 +291,10 @@ export default function IncomeModal({
           )}
 
           {(form.status === INCOME_STATUS.CONFIRMED || isConfirmMode) && (
-            <div className={styles.formGroup}>
-              <label htmlFor="income-received">Received Date</label>
+            <>
+              <label className={sheetStyles.fieldLabel} htmlFor="income-received">
+                Received date
+              </label>
               <input
                 id="income-received"
                 name="receivedDate"
@@ -252,13 +303,16 @@ export default function IncomeModal({
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
+                className={sheetStyles.textInput}
               />
-            </div>
+            </>
           )}
 
           {!isConfirmMode && (
-            <div className={styles.formGroup}>
-              <label htmlFor="income-notes">Notes</label>
+            <>
+              <label className={sheetStyles.fieldLabel} htmlFor="income-notes">
+                Notes
+              </label>
               <textarea
                 id="income-notes"
                 name="notes"
@@ -266,36 +320,40 @@ export default function IncomeModal({
                 onChange={handleChange}
                 rows={3}
                 disabled={isSubmitting}
+                className={sheetStyles.textarea}
+                placeholder="Optional"
               />
-            </div>
+            </>
           )}
+        </div>
 
-          <div className={styles.modalButtons}>
+        <div className={sheetStyles.footer}>
+          <div className={sheetStyles.actions}>
             <button
               type="submit"
-              className={styles.confirmButton}
+              className={sheetStyles.primaryBtn}
               disabled={isSubmitting}
             >
               {isSubmitting
-                ? "Saving..."
+                ? "Saving…"
                 : isConfirmMode
-                ? "Confirm"
-                : mode === "edit"
-                ? "Edit"
-                : "Add"}
+                  ? "Confirm"
+                  : mode === "edit"
+                    ? "Edit"
+                    : "Add"}
             </button>
             <button
               type="button"
-              className={styles.cancelButton}
+              className={sheetStyles.secondaryBtn}
               onClick={onRequestClose}
               disabled={isSubmitting}
             >
               Cancel
             </button>
           </div>
-        </form>
-      </motion.div>
-    </>
+        </div>
+      </form>
+    </BottomSheet>
   );
 }
 

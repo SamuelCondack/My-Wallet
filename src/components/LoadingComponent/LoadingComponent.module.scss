@@ -284,6 +284,180 @@
   border-radius: 12px;
 }
 
+.profileSection {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px 16px 40px;
+  gap: 14px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.profileCard {
+  width: 100%;
+  padding: 18px 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 20px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.profileIdentity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.profileAvatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.profileIdentityCopy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profileName {
+  width: min(180px, 70%);
+  height: 20px;
+  border-radius: 10px;
+}
+
+.profileEmail {
+  width: min(220px, 85%);
+  height: 14px;
+  border-radius: 8px;
+}
+
+.profileLogout {
+  width: 84px;
+  height: 34px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.profilePlanHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.profilePlanCopy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profileLabel {
+  width: 90px;
+  height: 12px;
+  border-radius: 6px;
+}
+
+.profilePlanName {
+  width: 120px;
+  height: 24px;
+  border-radius: 10px;
+}
+
+.profileStatus {
+  width: min(260px, 90%);
+  height: 14px;
+  border-radius: 8px;
+}
+
+.profileBadge {
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.profileActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.profilePrimaryBtn {
+  width: 180px;
+  height: 40px;
+  border-radius: 999px;
+}
+
+.profileSecondaryBtn {
+  width: 140px;
+  height: 40px;
+  border-radius: 999px;
+}
+
+.profilePriceNote {
+  width: min(320px, 95%);
+  height: 14px;
+  border-radius: 8px;
+}
+
+.profileSectionTitle {
+  width: 120px;
+  height: 22px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.profileFeatureList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profileFeatureRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profileFeatureCopy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profileFeatureTitle {
+  width: min(200px, 80%);
+  height: 16px;
+  border-radius: 8px;
+}
+
+.profileFeatureDesc {
+  width: min(280px, 95%);
+  height: 12px;
+  border-radius: 6px;
+}
+
+.profileFeatureTag {
+  width: 64px;
+  height: 24px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 768px) {
   .skeletonSection {
     padding-top: 16px;
@@ -296,5 +470,13 @@
 
   .formRow {
     grid-template-columns: 1fr;
+  }
+
+  .profileIdentity {
+    flex-wrap: wrap;
+  }
+
+  .profileLogout {
+    margin-left: auto;
   }
 }

@@ -1,97 +1,8 @@
-const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 const { getFirestore } = require("./_shared/firebaseAdmin.cjs");
+const {
+  syncSubscriptionFromStripe,
+} = require("./_shared/subscriptionSync.cjs");
 const { getStripe, jsonResponse } = require("./_shared/stripe.cjs");
-
-function toTimestamp(seconds) {
-  if (!seconds) return null;
-  return Timestamp.fromMillis(seconds * 1000);
-}
-
-function mapSubscriptionStatus(stripeStatus) {
-  switch (stripeStatus) {
-    case "trialing":
-      return "trialing";
-    case "active":
-      return "active";
-    case "past_due":
-      return "past_due";
-    case "canceled":
-      return "canceled";
-    case "incomplete":
-    case "incomplete_expired":
-      return "incomplete";
-    case "unpaid":
-      return "past_due";
-    default:
-      return "none";
-  }
-}
-
-async function findUid({ subscription, customerId, clientReferenceId }) {
-  if (subscription?.metadata?.firebaseUid) {
-    return subscription.metadata.firebaseUid;
-  }
-  if (clientReferenceId) return clientReferenceId;
-
-  if (customerId) {
-    const db = getFirestore();
-    const snap = await db
-      .collection("users")
-      .where("subscription.stripeCustomerId", "==", customerId)
-      .limit(1)
-      .get();
-    if (!snap.empty) return snap.docs[0].id;
-  }
-
-  return null;
-}
-
-async function writeSubscription(uid, patch) {
-  const db = getFirestore();
-  await db
-    .collection("users")
-    .doc(uid)
-    .set(
-      {
-        updatedAt: FieldValue.serverTimestamp(),
-        subscription: {
-          ...patch,
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-      },
-      { merge: true }
-    );
-}
-
-async function syncSubscriptionFromStripe(subscription, extra = {}) {
-  const uid = await findUid({
-    subscription,
-    customerId: subscription.customer,
-    clientReferenceId: extra.clientReferenceId,
-  });
-
-  if (!uid) {
-    console.warn(
-      "stripe-webhook: could not resolve firebase uid for subscription",
-      subscription.id
-    );
-    return;
-  }
-
-  const status = mapSubscriptionStatus(subscription.status);
-  const isProLike = status === "active" || status === "trialing";
-
-  await writeSubscription(uid, {
-    status,
-    planId: isProLike ? "pro_monthly" : "free",
-    stripeCustomerId: subscription.customer || null,
-    stripeSubscriptionId: subscription.id || null,
-    priceId: subscription.items?.data?.[0]?.price?.id || null,
-    trialEndsAt: toTimestamp(subscription.trial_end),
-    currentPeriodEnd: toTimestamp(subscription.current_period_end),
-    cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
-  });
-}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -132,6 +43,8 @@ exports.handler = async (event) => {
   }
 
   try {
+    const db = getFirestore();
+
     switch (stripeEvent.type) {
       case "checkout.session.completed": {
         const session = stripeEvent.data.object;
@@ -139,7 +52,7 @@ exports.handler = async (event) => {
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription
           );
-          await syncSubscriptionFromStripe(subscription, {
+          await syncSubscriptionFromStripe(db, subscription, {
             clientReferenceId: session.client_reference_id,
           });
         }
@@ -148,7 +61,7 @@ exports.handler = async (event) => {
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        await syncSubscriptionFromStripe(stripeEvent.data.object);
+        await syncSubscriptionFromStripe(db, stripeEvent.data.object);
         break;
       }
       default:

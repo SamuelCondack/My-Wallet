@@ -5,3 +5,104 @@ $lightYellow: #ebab3dbd;
 $lightCyan: #E6F6FC;
 $lightBrown: #c9aa78;
 $purple: #3D5AEB;
+
+// Premium system (keeps MyWallet blue identity)
+$ink: #0b1220;
+$inkSoft: #334155;
+$surface: #f7fafc;
+$surfaceElevated: rgba(255, 255, 255, 0.72);
+$line: rgba(15, 23, 42, 0.08);
+$blueDeep: #1d4ed8;
+$blueSoft: #60a5fa;
+$easeOut: cubic-bezier(0.16, 1, 0.3, 1);
+$easeSoft: cubic-bezier(0.22, 1, 0.36, 1);
+
+@mixin glass-panel($radius: 24px) {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: $radius;
+  box-shadow:
+    0 14px 36px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  /* No live backdrop-filter — blur during sheet/modal anims causes jank. */
+}
+
+@mixin glass-dark($radius: 24px) {
+  background: linear-gradient(
+    160deg,
+    rgba(20, 24, 33, 0.98) 0%,
+    rgba(8, 10, 16, 0.96) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* Solid enough without backdrop-filter; keeps sidebar scroll/anim smooth. */
+}
+
+/* Soft elevated surface without live blur (safe for long lists / scroll) */
+@mixin soft-panel($radius: 22px) {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: $radius;
+  box-shadow:
+    0 12px 28px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+@mixin glass-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.18s $easeOut, box-shadow 0.18s $easeOut,
+    border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+  touch-action: manipulation;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.35) 45%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.45s $easeOut;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (hover: hover) {
+    &:hover::before {
+      transform: translateX(120%);
+    }
+
+    &:hover {
+      transform: translateY(-1px) scale(1.02);
+    }
+  }
+
+  &:active {
+    transform: scale(0.98);
+    transition-duration: 0.08s;
+  }
+}
+
+@mixin focus-ring {
+  &:focus-visible {
+    outline: 2px solid rgba(62, 146, 235, 0.55);
+    outline-offset: 2px;
+  }
+}

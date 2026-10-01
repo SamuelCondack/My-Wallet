@@ -343,6 +343,7 @@ export default function Dashboard() {
   }
 
   return (
+    <div className={styles.pageWrapper}>
     <div className={styles.page}>
       <header className={styles.header}>
         <h1>Dashboard</h1>
@@ -714,6 +715,7 @@ export default function Dashboard() {
           </div>
         </ProGate>
       </section>
+    </div>
     </div>
   );
 }
