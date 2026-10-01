@@ -48,8 +48,7 @@
 
 .progress {
   height: 2px !important;
-  border-radius: 999px !important;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 :global(html[data-theme="dark"]) {
@@ -101,41 +100,12 @@
   }
 
   .Toastify__progress-bar--bg {
-    opacity: 0.12 !important;
+    opacity: 0.14 !important;
   }
 
+  /* Keep native Slide timing so playToast / autoClose fire reliably */
   .Toastify__slide-enter--top-center {
-    animation-name: mwToastIn !important;
-    animation-duration: 0.55s !important;
-    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-
-  .Toastify__slide-exit--top-center {
-    animation-name: mwToastOut !important;
-    animation-duration: 0.32s !important;
-    animation-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
-  }
-
-  @keyframes mwToastIn {
-    0% {
-      opacity: 0;
-      transform: translate3d(0, -120%, 0) scale(0.96);
-    }
-    100% {
-      opacity: 1;
-      transform: translate3d(0, var(--y, 0), 0) scale(1);
-    }
-  }
-
-  @keyframes mwToastOut {
-    0% {
-      opacity: 1;
-      transform: translate3d(0, var(--y, 0), 0) scale(1);
-    }
-    100% {
-      opacity: 0;
-      transform: translate3d(0, -120%, 0) scale(0.96);
-    }
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @media only screen and (max-width: 480px) {
