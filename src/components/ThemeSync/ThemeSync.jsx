@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { useSubscription } from "../hooks/useSubscription";
+import { useSubscription } from "../../hooks/useSubscription";
 import {
   applyDocumentTheme,
   getThemeFromProfile,
-} from "../services/themeService";
+} from "../../services/themeService";
 
 /**
  * Keeps document theme in sync with the signed-in user's Firestore preference.
