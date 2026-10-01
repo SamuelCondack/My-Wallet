@@ -81,7 +81,14 @@
 
 .backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   z-index: 3;
   background: rgba(8, 12, 20, 0.48);
   opacity: 0;
@@ -104,12 +111,14 @@
   width: 280px;
   min-width: 280px;
   height: 100dvh;
+  max-height: 100dvh;
   gap: 10px;
   @include glass-dark(0 36px 36px 0);
   z-index: 5;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-left: env(safe-area-inset-left, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-shadow:
     18px 0 48px rgba(0, 0, 0, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -130,12 +139,19 @@
   position: fixed;
   left: 0;
   top: 0;
+  bottom: 0;
+  /* Prefer pinning to the viewport edges over 100dvh — on iPhone, dvh alone
+     often leaves a thick empty strip under the drawer. */
+  height: auto;
+  max-height: none;
+  min-height: 0;
   transform: translate3d(-105%, 0, 0);
   transition: transform 0.32s $easeOut;
   will-change: transform;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   border-radius: 0 28px 28px 0;
+  overflow: hidden;
 }
 
 .asideMenuOpen {
@@ -190,6 +206,17 @@
   font-size: 18px;
 }
 
+.profileSlot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
+}
+
 .options {
   display: flex;
   flex-direction: column;
@@ -197,8 +224,11 @@
   padding: 0;
   margin: 22px 0 0;
   gap: 12px;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .menuLinks {
@@ -232,16 +262,6 @@
     transform: none;
     background: linear-gradient(135deg, $defaultBlue, #2563eb);
   }
-}
-
-.profileSlot {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0));
 }
 
 .profileIconBtn {
