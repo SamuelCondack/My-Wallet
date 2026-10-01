@@ -2,13 +2,14 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding:
     max(16px, env(safe-area-inset-top, 0px))
-    max(16px, env(safe-area-inset-right, 0px))
+    max(20px, env(safe-area-inset-right, 0px))
     max(16px, env(safe-area-inset-bottom, 0px))
-    max(16px, env(safe-area-inset-left, 0px));
+    max(20px, env(safe-area-inset-left, 0px));
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -61,11 +62,14 @@
 .stage {
   position: relative;
   z-index: 2;
+  flex: 0 1 auto;
   width: min(420px, 100%);
+  max-width: 100%;
+  min-width: 0;
   max-height: min(88dvh, 100%);
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  // Keep overflow visible so border-radius / shadow aren't clipped on one side.
+  overflow: visible;
   transform-origin: 50% 45%;
   transition:
     transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
@@ -162,9 +166,13 @@
   position: relative;
   z-index: 1;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border-radius: 28px;
   padding: 32px 24px 24px;
   text-align: center;
+  // Card is always light glass — pin ink so dark-mode global h1/h2
+  // (var(--mw-ink) = near-white) cannot wash out the title.
   color: #0b1220;
   background: linear-gradient(
     160deg,
@@ -178,7 +186,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  isolation: isolate;
   animation: cardIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  h1,
+  h2,
+  h3 {
+    color: #0b1220;
+  }
 }
 
 .avatarWrap {
@@ -265,6 +280,7 @@
   line-height: 1.1;
   letter-spacing: -0.03em;
   font-weight: 800;
+  color: #0b1220;
   animation: softIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.34s both;
 }
 

@@ -489,7 +489,7 @@ export default function Profile() {
                 <span>{feature.description}</span>
               </div>
               <span className={styles.coming}>
-                {feature.id === "export"
+                {feature.id === "export" || feature.id === "budgets"
                   ? isPro
                     ? "Included"
                     : "Pro"

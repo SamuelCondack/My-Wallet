@@ -35,6 +35,15 @@
   border-radius: 999px;
 }
 
+.preview {
+  margin: 0 0 14px;
+  text-align: left;
+  pointer-events: none;
+  user-select: none;
+  filter: saturate(0.85);
+  opacity: 0.92;
+}
+
 .actions {
   display: flex;
   flex-direction: column;

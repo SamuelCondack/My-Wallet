@@ -100,8 +100,7 @@ export default function TrialBanner() {
         <div className={styles.copy}>
           <strong>Try MyWallet Pro free</strong>
           <span>
-            {TRIAL_DAYS}-day trial · budgets, OCR, AI review & exports coming to
-            Pro.
+            {TRIAL_DAYS}-day trial · budgets & CSV export live on Pro.
           </span>
         </div>
         <div className={styles.actions}>

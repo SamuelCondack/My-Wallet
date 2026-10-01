@@ -1,0 +1,284 @@
+@import "../../Global/variables.scss";
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hint,
+.empty {
+  margin: 0;
+  color: var(--mw-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.alert {
+  margin: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.alertWarn {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.alertOver {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+:global(html[data-theme="dark"]) {
+  .alertWarn {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+  }
+
+  .alertOver {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.periodNote {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mw-muted);
+
+  strong {
+    color: var(--mw-ink);
+    font-weight: 700;
+  }
+}
+
+.addBtn {
+  @include glass-button;
+  flex-shrink: 0;
+  border: 1px solid $defaultBlue;
+  background: $defaultBlue;
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.list,
+.teaserList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.teaserList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row,
+.rowBtn {
+  width: 100%;
+  border: 1px solid var(--mw-soft-border);
+  background: var(--mw-soft-bg);
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  box-shadow: var(--mw-soft-shadow);
+}
+
+.rowBtn {
+  display: block;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rowMain {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.rowIcon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.rowCopy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: 14px;
+    color: var(--mw-ink);
+    font-weight: 700;
+  }
+
+  span {
+    font-size: 12px;
+    color: var(--mw-muted);
+  }
+}
+
+.pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mw-muted);
+  flex-shrink: 0;
+}
+
+.track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--mw-chip-bg);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: $defaultBlue;
+  }
+
+  &.warn span {
+    background: #f59e0b;
+  }
+
+  &.over span {
+    background: #ef4444;
+  }
+}
+
+.sheetForm {
+  padding: 4px 4px 8px;
+}
+
+.sheetHeader {
+  margin-bottom: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--mw-ink);
+  }
+}
+
+.fieldLabel {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mw-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.select {
+  width: 100%;
+  margin-bottom: 14px;
+  border: 1.5px solid var(--mw-input-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--mw-input-bg);
+  color: var(--mw-ink);
+  font-size: 15px;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.amountRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--mw-amount-line);
+  padding-bottom: 4px;
+
+  > span {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--mw-ink);
+    line-height: 1;
+  }
+}
+
+.amountInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 28px;
+  font-weight: 700;
+  background: transparent;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  color: var(--mw-ink);
+  -webkit-appearance: none;
+  appearance: none;
+
+  &::placeholder {
+    color: var(--mw-muted);
+    opacity: 0.85;
+  }
+}
+
+.saveBtn {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: $defaultBlue;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.removeBtn {
+  width: 100%;
+  margin-top: 8px;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px;
+  cursor: pointer;
+}

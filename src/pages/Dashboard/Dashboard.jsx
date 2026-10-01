@@ -6,7 +6,10 @@ import CategoryPieChart from "../../components/CategoryPieChart/CategoryPieChart
 import { auth, db } from "../../../config/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useCategories } from "../../hooks/useCategories";
-import { getCategoryMap } from "../../services/categoriesService";
+import {
+  getCategoryMap,
+  getExpenseCategories,
+} from "../../services/categoriesService";
 import {
   buildExpensesByMonth,
   getActiveMonthKeys,
@@ -24,6 +27,10 @@ import {
 } from "../../utils/incomeCalculations";
 import TrialBanner from "../../components/TrialBanner/TrialBanner";
 import ProGate from "../../components/ProGate/ProGate";
+import CategoryBudgetsPanel, {
+  BudgetTeaserPreview,
+} from "../../components/CategoryBudgetsPanel/CategoryBudgetsPanel";
+import { useCategoryBudgets } from "../../hooks/useCategoryBudgets";
 import {
   buildMonthExpensesCsv,
   downloadTextFile,
@@ -93,6 +100,12 @@ export default function Dashboard() {
   const monthEditRef = useRef(null);
 
   const { categories, loading: categoriesLoading } = useCategories(userId);
+  const { budgets, saveBudget, removeBudget } = useCategoryBudgets(userId);
+
+  const expenseCategories = useMemo(
+    () => getExpenseCategories(categories),
+    [categories]
+  );
 
   useEffect(() => {
     let active = true;
@@ -718,6 +731,29 @@ export default function Dashboard() {
           categoriesMap={categoriesMap}
           onSliceClick={monthPeriod ? goToCategoryExpenses : undefined}
         />
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2>Budgets</h2>
+        </div>
+        <ProGate
+          title="Category budgets"
+          description="Set monthly limits per category and see when you’re close to overspending."
+          preview={<BudgetTeaserPreview />}
+        >
+          <CategoryBudgetsPanel
+            monthPeriod={monthPeriod}
+            monthLabel={
+              monthPeriod ? formatPeriodLabel(monthPeriod) : ""
+            }
+            categoryTotals={categoryTotals}
+            categories={expenseCategories}
+            budgets={budgets}
+            onSave={saveBudget}
+            onRemove={removeBudget}
+          />
+        </ProGate>
       </section>
 
       <section className={styles.section}>

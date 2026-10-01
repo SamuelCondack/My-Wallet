@@ -14,6 +14,7 @@ export default function ProGate({
   title = "Pro feature",
   description = "Available on MyWallet Pro.",
   fallback = null,
+  preview = null,
 }) {
   const { requirePro, loading, canStartTrial } = useSubscription();
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -33,6 +34,7 @@ export default function ProGate({
         <div className={styles.lockBadge}>Pro</div>
         <h3>{title}</h3>
         <p>{description}</p>
+        {preview ? <div className={styles.preview}>{preview}</div> : null}
         <div className={styles.actions}>
           <button
             type="button"
@@ -62,4 +64,5 @@ ProGate.propTypes = {
   title: PropTypes.string,
   description: PropTypes.string,
   fallback: PropTypes.node,
+  preview: PropTypes.node,
 };
