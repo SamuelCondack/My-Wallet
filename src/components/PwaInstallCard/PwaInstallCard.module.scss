@@ -1,0 +1,91 @@
+@import "../../Global/variables.scss";
+
+.card {
+  @include glass-panel(20px);
+  padding: 18px 16px;
+  margin-bottom: 14px;
+  color: $ink;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mw-muted);
+}
+
+.title {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--mw-ink);
+}
+
+.lead {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--mw-ink-soft);
+}
+
+.dismiss {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--mw-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.steps {
+  margin: 14px 0 0;
+  padding-left: 18px;
+  color: var(--mw-ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+
+  li + li {
+    margin-top: 6px;
+  }
+
+  strong {
+    color: var(--mw-ink);
+    font-weight: 700;
+  }
+}
+
+.primaryBtn,
+.secondaryBtn {
+  @include glass-button;
+  width: 100%;
+  margin-top: 14px;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryBtn {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, $defaultBlue, #2563eb);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(62, 146, 235, 0.28);
+}
+
+.secondaryBtn {
+  border: 1px solid var(--mw-line);
+  background: var(--mw-chip-bg);
+  color: var(--mw-ink-soft);
+}

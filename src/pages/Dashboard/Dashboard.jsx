@@ -27,6 +27,7 @@ import {
   getCashReceived,
 } from "../../utils/incomeCalculations";
 import TrialBanner from "../../components/TrialBanner/TrialBanner";
+import PwaInstallBanner from "../../components/PwaInstallBanner/PwaInstallBanner";
 import ProGate from "../../components/ProGate/ProGate";
 import CategoryBudgetsPanel, {
   BudgetTeaserPreview,
@@ -417,6 +418,7 @@ export default function Dashboard() {
       </header>
 
       <TrialBanner />
+      <PwaInstallBanner />
 
       <div className={styles.filterContainer}>
         <div className={styles.filter}>

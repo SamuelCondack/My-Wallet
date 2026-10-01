@@ -6,6 +6,7 @@ import { auth } from "../../../config/firebase";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
 import PaywallModal from "../../components/PaywallModal/PaywallModal";
 import ProWelcomeCelebration from "../../components/ProWelcomeCelebration/ProWelcomeCelebration";
+import PwaInstallCard from "../../components/PwaInstallCard/PwaInstallCard";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import {
   PRO_COPY,
@@ -390,6 +391,8 @@ export default function Profile() {
           </button>
         </div>
       </section>
+
+      <PwaInstallCard />
 
       <section className={styles.card}>
         <div className={styles.planHeader}>

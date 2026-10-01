@@ -14,11 +14,13 @@ import SignIn from './pages/SignIn'
 import HomeAuth from './pages/homeAuth/index.jsx'
 import Modal from 'react-modal';
 import { completeGoogleRedirectSignIn } from './utils/googleAuth.js'
+import { bindPwaInstallEvents } from './utils/pwaInstall.js'
 import ToastComponent from './components/Toast/ToastComponent.jsx'
 import ThemeSync from './components/ThemeSync/ThemeSync.jsx'
 import 'react-toastify/dist/ReactToastify.css'
 
 Modal.setAppElement('#root');
+bindPwaInstallEvents();
 
 const router = createBrowserRouter([
   {
