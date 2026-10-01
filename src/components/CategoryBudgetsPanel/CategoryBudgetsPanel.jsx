@@ -265,24 +265,33 @@ export default function CategoryBudgetsPanel({
           <label className={styles.fieldLabel} htmlFor="budgetCategory">
             Category
           </label>
-          <select
-            id="budgetCategory"
-            className={styles.select}
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            disabled={Boolean(editingId) || availableCategories.length === 0}
-          >
-            {availableCategories.length === 0 ? (
-              <option value="">No categories left</option>
-            ) : (
-              availableCategories.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.icon ? `${item.icon} ` : ""}
-                  {item.name}
-                </option>
-              ))
-            )}
-          </select>
+          {editingId ? (
+            <div className={styles.categoryReadonly} id="budgetCategory">
+              <span aria-hidden="true">
+                {categoryById[categoryId]?.icon || "📦"}
+              </span>
+              <span>{categoryById[categoryId]?.name || "Category"}</span>
+            </div>
+          ) : (
+            <select
+              id="budgetCategory"
+              className={styles.select}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              disabled={availableCategories.length === 0}
+            >
+              {availableCategories.length === 0 ? (
+                <option value="">No categories left</option>
+              ) : (
+                availableCategories.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.icon ? `${item.icon} ` : ""}
+                    {item.name}
+                  </option>
+                ))
+              )}
+            </select>
+          )}
 
           <label className={styles.fieldLabel} htmlFor="budgetAmount">
             Monthly limit
