@@ -13,11 +13,11 @@
 .shimmer {
   background: linear-gradient(
     90deg,
-    #f0f0f0 0%,
-    #f8f8f8 20%,
-    #ececec 40%,
-    #f8f8f8 60%,
-    #f0f0f0 80%
+    var(--mw-chip-bg) 0%,
+    var(--mw-card) 20%,
+    var(--mw-input-bg) 40%,
+    var(--mw-card) 60%,
+    var(--mw-chip-bg) 80%
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;

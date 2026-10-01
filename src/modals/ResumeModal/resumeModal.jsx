@@ -24,9 +24,10 @@ const ResumeModal = ({
         <h2>Resume Expense</h2>
         <p className={styles.message}>
           Are you sure you want to resume the expense
-          <b style={{ whiteSpace: "nowrap" }}>
-            {` `}&rdquo;{selectedExpense?.name} &rdquo;
+          <b className={styles.identifier}>
+            {` `}&rdquo;{selectedExpense?.name}&rdquo;
           </b>
+          ?
         </p>
         <div className={styles.buttons}>
           <button className={styles.confirmButton} onClick={onConfirm}>

@@ -8,8 +8,8 @@
   width: min(280px, 92vw);
   padding: 4px;
   border-radius: 999px;
-  background: #eef3f8;
-  border: 1px solid #d5e3f2;
+  background: var(--mw-chip-bg);
+  border: 1px solid var(--mw-line);
   box-sizing: border-box;
   overflow: hidden;
   isolation: isolate;
@@ -45,7 +45,7 @@
   z-index: 1;
   border: none;
   background: transparent;
-  color: #5a6b7d;
+  color: var(--mw-muted);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.2px;

@@ -1248,7 +1248,7 @@ export default function Expenses() {
     <>
       <div className={styles.expensesSectionWrapper}>
         <div className={styles.expensesSection}>
-          <h2 style={{ color: "#000" }}>Expenses</h2>
+          <h2>Expenses</h2>
           <div className={styles.filterContainer}>
             <div className={styles.filter}>
               <label htmlFor="yearFilter">Filter by Year: </label>

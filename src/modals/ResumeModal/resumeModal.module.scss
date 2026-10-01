@@ -60,23 +60,33 @@
 }
 
 .message {
-    margin: 10px;
+    margin: 10px 0;
+    max-width: 100%;
+    color: $inkSoft;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
 
-    b {
-        white-space: nowrap;
-    }
+.identifier {
+    display: inline;
+    max-width: 100%;
+    color: $ink;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
 }
 
 .dateInput {
     width: 140px;
     padding: 10px;
     font-size: 16px;
-    border: 1px solid $defaultBlue; // Use uma variável global para consistência
+    border: 1px solid $defaultBlue;
     border-radius: 8px;
     outline: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    color: #333;
-    background-color: #f9f9f9c9;
+    color: $ink;
+    background-color: var(--mw-input-bg);
 
     &:focus {
         border-color: darken($defaultBlue, 10%);
@@ -84,7 +94,7 @@
     }
 
     &:hover {
-        background-color: #f1f1f1;
+        background-color: var(--mw-chip-bg);
     }
 
     &::placeholder {
