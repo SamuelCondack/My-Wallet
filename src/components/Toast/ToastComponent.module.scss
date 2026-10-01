@@ -1,6 +1,164 @@
-.toastContainer {
-    font-size: 14px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    min-height: auto;
+@import "../../Global/variables.scss";
+
+.container {
+  width: min(420px, calc(100vw - 24px)) !important;
+  padding: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  align-items: stretch !important;
+}
+
+.toast {
+  width: 100% !important;
+  min-height: 52px !important;
+  margin: 0 0 10px !important;
+  padding: 12px 16px !important;
+  border-radius: 22px !important;
+  color: var(--mw-ink) !important;
+  font-family: "Manrope", system-ui, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  background:
+    linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.82) 0%,
+      rgba(255, 255, 255, 0.58) 100%
+    ) !important;
+  box-shadow:
+    0 10px 40px rgba(15, 23, 42, 0.12),
+    0 2px 8px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(28px) saturate(1.55) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.55) !important;
+
+  :global(.Toastify__toast-icon) {
+    width: 20px;
+    margin-inline-end: 12px;
+  }
+
+  :global(.Toastify__toast-icon svg) {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.progress {
+  height: 2px !important;
+  border-radius: 999px !important;
+  opacity: 0.85;
+}
+
+:global(html[data-theme="dark"]) {
+  .toast {
+    border-color: rgba(148, 163, 184, 0.28) !important;
+    background:
+      linear-gradient(
+        165deg,
+        rgba(30, 41, 59, 0.88) 0%,
+        rgba(15, 23, 42, 0.78) 100%
+      ) !important;
+    box-shadow:
+      0 16px 48px rgba(0, 0, 0, 0.45),
+      0 2px 10px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+:global {
+  .Toastify__toast-theme--light {
+    background: transparent;
+    color: inherit;
+  }
+
+  .Toastify__toast--success {
+    --toastify-icon-color-success: #16a34a;
+    --toastify-color-progress-success: #{$defaultBlue};
+  }
+
+  .Toastify__toast--error {
+    --toastify-icon-color-error: #dc2626;
+    --toastify-color-progress-error: #ef4444;
+  }
+
+  .Toastify__toast--info {
+    --toastify-icon-color-info: #{$defaultBlue};
+    --toastify-color-progress-info: #{$defaultBlue};
+  }
+
+  .Toastify__toast--warning {
+    --toastify-icon-color-warning: #d97706;
+    --toastify-color-progress-warning: #f59e0b;
+  }
+
+  .Toastify__progress-bar--wrp {
+    height: 2px !important;
+    bottom: 0;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    border-radius: 999px;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  .Toastify__progress-bar--bg {
+    opacity: 0.12 !important;
+  }
+
+  .Toastify__slide-enter--top-center {
+    animation-name: mwToastIn !important;
+    animation-duration: 0.55s !important;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .Toastify__slide-exit--top-center {
+    animation-name: mwToastOut !important;
+    animation-duration: 0.32s !important;
+    animation-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
+  }
+
+  @keyframes mwToastIn {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, -120%, 0) scale(0.96);
+    }
+    100% {
+      opacity: 1;
+      transform: translate3d(0, var(--y, 0), 0) scale(1);
+    }
+  }
+
+  @keyframes mwToastOut {
+    0% {
+      opacity: 1;
+      transform: translate3d(0, var(--y, 0), 0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(0, -120%, 0) scale(0.96);
+    }
+  }
+
+  @media only screen and (max-width: 480px) {
+    .Toastify__toast-container--top-center {
+      width: calc(100vw - 24px) !important;
+      left: 50% !important;
+      right: auto !important;
+      margin: 0 !important;
+      transform: translateX(-50%) !important;
+      top: max(12px, env(safe-area-inset-top, 0px)) !important;
+      padding: 0 !important;
+    }
+
+    .Toastify__toast {
+      --toastify-toast-width: 100%;
+      width: 100% !important;
+      margin-bottom: 10px !important;
+      border-radius: 22px !important;
+    }
+  }
 }

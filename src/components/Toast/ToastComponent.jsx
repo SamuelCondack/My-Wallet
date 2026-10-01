@@ -4,14 +4,24 @@ import styles from "./ToastComponent.module.scss";
 export default function ToastComponent() {
   return (
     <ToastContainer
-      className={styles.toastContainer}
-      position="bottom-center"
+      className={styles.container}
+      toastClassName={styles.toast}
+      progressClassName={styles.progress}
+      position="top-center"
       transition={Slide}
-      autoClose={3000}
+      autoClose={3200}
       hideProgressBar={false}
       closeOnClick
-      pauseOnHover={false}
-      style={{ bottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}
+      closeButton={false}
+      pauseOnHover
+      newestOnTop
+      limit={3}
+      draggable="touch"
+      draggablePercent={60}
+      theme="light"
+      style={{
+        top: "max(12px, env(safe-area-inset-top, 0px))",
+      }}
     />
   );
 }
