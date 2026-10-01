@@ -4,8 +4,14 @@
   z-index: 9999;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding:
+    max(16px, env(safe-area-inset-top, 0px))
+    max(16px, env(safe-area-inset-right, 0px))
+    max(16px, env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left, 0px));
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   background: rgba(6, 10, 18, 0.5);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -56,6 +62,10 @@
   position: relative;
   z-index: 2;
   width: min(420px, 100%);
+  max-height: min(88dvh, 100%);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   transform-origin: 50% 45%;
   transition:
     transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
@@ -70,6 +80,7 @@
   z-index: 1;
   width: min(70vw, 520px);
   height: min(70vw, 520px);
+  max-width: 100%;
   margin: 0;
   border-radius: 50%;
   pointer-events: none;
@@ -88,10 +99,14 @@
 
 .liquid {
   position: absolute;
-  inset: -20%;
+  inset: 0;
   pointer-events: none;
+  overflow: hidden;
   filter: blur(40px);
   opacity: 0.95;
+  isolation: isolate;
+  contain: paint;
+  clip-path: inset(0);
   transition:
     transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),

@@ -31,7 +31,7 @@
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 @media (max-width: 768px) {
@@ -160,7 +160,7 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  overflow-x: clip;
+  overflow-x: hidden;
 
   h2 {
     margin: 0 0 8px;

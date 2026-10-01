@@ -2,8 +2,10 @@
 
 .page {
   position: relative;
+  width: 100%;
+  max-width: 100%;
   min-height: 100dvh;
-  overflow-x: clip;
+  overflow-x: hidden;
   background:
     radial-gradient(1200px 600px at 10% -10%, rgba(62, 146, 235, 0.2), transparent 60%),
     radial-gradient(900px 500px at 90% 10%, rgba(125, 211, 252, 0.18), transparent 55%),
@@ -17,7 +19,9 @@
   pointer-events: none;
   overflow: hidden;
   z-index: 0;
+  isolation: isolate;
   contain: paint;
+  clip-path: inset(0);
   transform: translateZ(0);
 }
 
@@ -76,8 +80,14 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 32px 20px 48px;
+  padding:
+    calc(32px + env(safe-area-inset-top, 0px))
+    max(20px, env(safe-area-inset-right, 0px))
+    calc(48px + env(safe-area-inset-bottom, 0px))
+    max(20px, env(safe-area-inset-left, 0px));
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
 .brand {
@@ -101,6 +111,8 @@
     position: relative;
     display: inline-block;
     margin-top: 0.08em;
+    max-width: 100%;
+    box-sizing: border-box;
     background: linear-gradient(135deg, $defaultBlue, #2563eb 55%, #3b82f6);
     color: #fff;
     border-radius: 14px;
@@ -416,11 +428,41 @@
 
   .hero {
     min-height: auto;
-    padding-top: 28px;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  }
+
+  .orbA,
+  .orbB,
+  .orbC {
+    width: min(70vw, 280px);
+    height: min(70vw, 280px);
+    animation: none;
+    filter: blur(28px);
+    opacity: 0.5;
+  }
+
+  .orbA {
+    left: -18%;
+    top: 4%;
+  }
+
+  .orbB {
+    right: -20%;
+    top: 12%;
+  }
+
+  .orbC {
+    left: 28%;
+    bottom: 4%;
   }
 
   .previewShell {
     animation: none;
+  }
+
+  .headline {
+    font-size: clamp(30px, 9vw, 44px);
+    max-width: 12ch;
   }
 }
 
