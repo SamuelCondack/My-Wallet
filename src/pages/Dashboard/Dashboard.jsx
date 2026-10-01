@@ -202,29 +202,6 @@ export default function Dashboard() {
     return rows;
   }, [activeMonthKeys, expensesByMonth]);
 
-  const budgetAlert = useMemo(() => {
-    if (!monthPeriod || budgets.length === 0) return null;
-
-    const spentMap = {};
-    categoryTotals.forEach((item) => {
-      spentMap[item.categoryId] = Number(item.value) || 0;
-    });
-
-    let over = 0;
-    let warn = 0;
-    budgets.forEach((budget) => {
-      const limit = Number(budget.amount) || 0;
-      if (!(limit > 0)) return;
-      const spent = spentMap[budget.categoryId] || 0;
-      if (spent >= limit) over += 1;
-      else if (spent >= limit * 0.8) warn += 1;
-    });
-
-    if (over > 0) return { type: "over", count: over };
-    if (warn > 0) return { type: "warn", count: warn };
-    return null;
-  }, [monthPeriod, budgets, categoryTotals]);
-
   const exportPeriodLabel = useMemo(() => {
     if (selectedYear !== "All" && selectedMonth !== "All") {
       return `${selectedYear}-${selectedMonth}`;
@@ -535,29 +512,6 @@ export default function Dashboard() {
           <span>Total spendings</span>
           <strong>{formatCurrency(spendings)}</strong>
         </div>
-      )}
-
-      {budgetAlert && (
-        <button
-          type="button"
-          className={`${styles.budgetAlert} ${
-            budgetAlert.type === "over"
-              ? styles.budgetAlertOver
-              : styles.budgetAlertWarn
-          }`}
-          onClick={() => {
-            document
-              .getElementById("dashboard-budgets")
-              ?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
-        >
-          <strong>
-            {budgetAlert.type === "over"
-              ? `${budgetAlert.count} over budget`
-              : `${budgetAlert.count} near limit`}
-          </strong>
-          <span>View budgets</span>
-        </button>
       )}
 
       <section id="dashboard-budgets" className={styles.section}>
