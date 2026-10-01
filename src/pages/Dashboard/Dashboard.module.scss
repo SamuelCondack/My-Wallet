@@ -717,6 +717,61 @@
   }
 }
 
+.exportBtnSecondary {
+  @include glass-button;
+  border: 1px solid var(--mw-soft-border);
+  background: var(--mw-soft-bg);
+  color: var(--mw-ink);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--mw-soft-shadow);
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.exportActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.exportTeaser {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exportTeaserRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--mw-soft-border);
+  background: var(--mw-soft-bg);
+  padding: 10px 12px;
+
+  span {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--mw-ink);
+  }
+
+  em {
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mw-muted);
+  }
+}
+
 .proPreviewList {
   list-style: none;
   margin: 0;

@@ -238,6 +238,26 @@ export default function Dashboard() {
     downloadTextFile(`mywallet-expenses-${exportPeriodLabel}.csv`, csv);
   };
 
+  const exportTitleLabel =
+    selectedYear !== "All" && selectedMonth !== "All"
+      ? formatPeriodLabel(monthPeriod)
+      : exportPeriodLabel;
+
+  const handleExportPdf = async () => {
+    if (!periodExportRows.length) return;
+    const { downloadMonthExpensesPdf } = await import(
+      "../../utils/exportExpensesPdf"
+    );
+    downloadMonthExpensesPdf({
+      expenses: periodExportRows,
+      categoriesMap,
+      categoryTotals,
+      periodLabel: exportTitleLabel,
+      fileStem: `mywallet-expenses-${exportPeriodLabel}`,
+      totalSpendings: spendings,
+    });
+  };
+
   const moneyReceived = monthPeriod
     ? getCashReceived(incomes, monthPeriod)
     : 0;
@@ -812,29 +832,46 @@ export default function Dashboard() {
           <h2>Pro tools</h2>
         </div>
         <ProGate
-          title="CSV export"
-          description="Download expenses for the filters above as a clean CSV. Unlock with Pro."
+          title="CSV & PDF export"
+          description="Download a clean CSV or PDF report for the filters above. Unlock with Pro."
+          preview={
+            <div className={styles.exportTeaser} aria-hidden="true">
+              <div className={styles.exportTeaserRow}>
+                <span>CSV</span>
+                <em>spreadsheet-ready</em>
+              </div>
+              <div className={styles.exportTeaserRow}>
+                <span>PDF</span>
+                <em>shareable month report</em>
+              </div>
+            </div>
+          }
         >
           <div className={styles.proPreview}>
             <p className={styles.proPreviewLead}>
-              Export expenses for{" "}
-              <strong>
-                {selectedYear !== "All" && selectedMonth !== "All"
-                  ? formatPeriodLabel(monthPeriod)
-                  : exportPeriodLabel}
-              </strong>{" "}
-              as CSV (name, date, value, category, method).
+              Export expenses for <strong>{exportTitleLabel}</strong> — same
+              rows you see with the filters above.
             </p>
-            <button
-              type="button"
-              className={styles.exportBtn}
-              onClick={handleExportCsv}
-              disabled={periodExportRows.length === 0}
-            >
-              {periodExportRows.length === 0
-                ? "No expenses to export"
-                : `Export CSV (${periodExportRows.length})`}
-            </button>
+            <div className={styles.exportActions}>
+              <button
+                type="button"
+                className={styles.exportBtn}
+                onClick={handleExportCsv}
+                disabled={periodExportRows.length === 0}
+              >
+                {periodExportRows.length === 0
+                  ? "No expenses to export"
+                  : `Export CSV (${periodExportRows.length})`}
+              </button>
+              <button
+                type="button"
+                className={styles.exportBtnSecondary}
+                onClick={handleExportPdf}
+                disabled={periodExportRows.length === 0}
+              >
+                Export PDF
+              </button>
+            </div>
           </div>
         </ProGate>
       </section>

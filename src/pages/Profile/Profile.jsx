@@ -448,7 +448,7 @@ export default function Profile() {
             <div className={styles.subscribeHero}>
               <p className={styles.subscribeEyebrow}>Try Pro free</p>
               <p className={styles.subscribeLead}>
-                Budgets, CSV export, and more Pro tools — no charge today.
+                Budgets, CSV & PDF export, and more Pro tools — no charge today.
               </p>
               <button
                 type="button"
@@ -470,7 +470,7 @@ export default function Profile() {
             <div className={styles.subscribeHero}>
               <p className={styles.subscribeEyebrow}>Unlock MyWallet Pro</p>
               <p className={styles.subscribeLead}>
-                Budgets, receipt capture, AI review, and exports.
+                Budgets, CSV & PDF export — receipt capture and AI review coming soon.
               </p>
               <button
                 type="button"
