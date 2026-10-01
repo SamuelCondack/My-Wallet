@@ -96,13 +96,8 @@
 
   .Toastify__progress-bar--wrp {
     height: 2px !important;
-    bottom: 0;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    border-radius: 999px;
-    overflow: hidden;
-    background: transparent;
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
   }
 
   .Toastify__progress-bar--bg {
@@ -150,7 +145,7 @@
       right: auto !important;
       margin: 0 !important;
       transform: translateX(-50%) !important;
-      top: max(12px, env(safe-area-inset-top, 0px)) !important;
+      top: calc(env(safe-area-inset-top, 0px) + 52px) !important;
       padding: 0 !important;
     }
 

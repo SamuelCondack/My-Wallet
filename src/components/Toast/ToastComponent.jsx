@@ -9,18 +9,19 @@ export default function ToastComponent() {
       progressClassName={styles.progress}
       position="top-center"
       transition={Slide}
-      autoClose={3200}
+      autoClose={3000}
       hideProgressBar={false}
       closeOnClick
       closeButton={false}
-      pauseOnHover
+      pauseOnHover={false}
+      pauseOnFocusLoss={false}
       newestOnTop
       limit={3}
       draggable="touch"
       draggablePercent={60}
       theme="light"
       style={{
-        top: "max(12px, env(safe-area-inset-top, 0px))",
+        top: "calc(env(safe-area-inset-top, 0px) + 52px)",
       }}
     />
   );
