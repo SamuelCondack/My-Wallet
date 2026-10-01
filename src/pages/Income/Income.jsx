@@ -10,6 +10,7 @@ import LoadingComponent from "../../components/LoadingComponent/LoadingComponent
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import IncomeModal from "../../modals/IncomeModal/IncomeModal";
 import { useCategories } from "../../hooks/useCategories";
+import { useSessionPeriodFilter } from "../../hooks/useSessionPeriodFilter";
 import {
   getCategoryMap,
   getIncomeCategories,
@@ -22,6 +23,10 @@ import {
   updateIncome,
 } from "../../services/incomeService";
 import { getCached, setCached } from "../../utils/dataCache";
+import {
+  getPageFilter,
+  setPageFilter,
+} from "../../utils/sessionFilters";
 import {
   filterIncomes,
   formatDisplayDate,
@@ -42,18 +47,59 @@ export default function Income() {
   const [userId, setUserId] = useState(null);
   const [incomes, setIncomes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(
-    searchParams.get("year") || currentYear
-  );
-  const [selectedMonth, setSelectedMonth] = useState(
-    searchParams.get("month") || currentMonth
-  );
-  const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || "All"
-  );
-  const [selectedStatus, setSelectedStatus] = useState(
-    searchParams.get("status") || "All"
-  );
+  const {
+    selectedYear,
+    selectedMonth,
+    setSelectedYear,
+    setSelectedMonth,
+  } = useSessionPeriodFilter({
+    year: searchParams.get("year") || undefined,
+    month: searchParams.get("month") || undefined,
+  });
+  const [selectedCategory, setSelectedCategoryState] = useState(() => {
+    const fromUrl = searchParams.get("category");
+    if (fromUrl) return fromUrl;
+    return getPageFilter("income", { category: "All", status: "All" }).category || "All";
+  });
+  const [selectedStatus, setSelectedStatusState] = useState(() => {
+    const fromUrl = searchParams.get("status");
+    if (fromUrl) return fromUrl;
+    return getPageFilter("income", { category: "All", status: "All" }).status || "All";
+  });
+
+  const setSelectedCategory = (category) => {
+    setSelectedCategoryState(category);
+    setPageFilter(
+      "income",
+      { category },
+      { category: "All", status: "All" }
+    );
+  };
+
+  const setSelectedStatus = (status) => {
+    setSelectedStatusState(status);
+    setPageFilter(
+      "income",
+      { status },
+      { category: "All", status: "All" }
+    );
+  };
+
+  useEffect(() => {
+    const category = searchParams.get("category");
+    const status = searchParams.get("status");
+    if (category || status) {
+      setPageFilter(
+        "income",
+        {
+          ...(category ? { category } : {}),
+          ...(status ? { status } : {}),
+        },
+        { category: "All", status: "All" }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("edit");

@@ -6,6 +6,7 @@ import CategoryPieChart from "../../components/CategoryPieChart/CategoryPieChart
 import { auth, db } from "../../../config/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useCategories } from "../../hooks/useCategories";
+import { useSessionPeriodFilter } from "../../hooks/useSessionPeriodFilter";
 import {
   getCategoryMap,
   getExpenseCategories,
@@ -88,8 +89,12 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const {
+    selectedYear,
+    selectedMonth,
+    setSelectedYear,
+    setSelectedMonth,
+  } = useSessionPeriodFilter();
   const [forecastHorizon, setForecastHorizon] = useState("yearEnd");
   const [simulatedMonthly, setSimulatedMonthly] = useState(null);
   const [monthOverrides, setMonthOverrides] = useState({});

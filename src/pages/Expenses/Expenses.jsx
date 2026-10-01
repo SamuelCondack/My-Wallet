@@ -26,9 +26,14 @@ import { useCategories } from "../../hooks/useCategories";
 import { useExpenseFavorites } from "../../hooks/useExpenseFavorites";
 import { useSubscription } from "../../hooks/useSubscription";
 import { useCategoryBudgets } from "../../hooks/useCategoryBudgets";
+import { useSessionPeriodFilter } from "../../hooks/useSessionPeriodFilter";
 import { buildRecentTemplates } from "../../services/expenseFavoritesService";
 import { DEFAULT_CATEGORY_ID } from "../../constants/defaultCategories";
 import { getCached, setCached } from "../../utils/dataCache";
+import {
+  getPageFilter,
+  setPageFilter,
+} from "../../utils/sessionFilters";
 import { matchesExpenseValueQuery } from "../../utils/finance";
 import { loadIncomesWithMigration } from "../../services/incomeService";
 import {
@@ -51,12 +56,16 @@ export default function Expenses() {
   const [userId, setUserId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(
-    searchParams.get("year") || currentYear
-  );
-  const [selectedMonth, setSelectedMonth] = useState(
-    searchParams.get("month") || currentMonth
-  );
+  const {
+    selectedYear,
+    selectedMonth,
+    setSelectedYear,
+    setSelectedMonth,
+    setPeriodBoth,
+  } = useSessionPeriodFilter({
+    year: searchParams.get("year") || undefined,
+    month: searchParams.get("month") || undefined,
+  });
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [incomes, setIncomes] = useState([]);
   const [isIncomeLoading, setIsIncomeLoading] = useState(true);
@@ -70,9 +79,25 @@ export default function Expenses() {
   const [expenseFormInitial, setExpenseFormInitial] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || "All"
-  );
+  const [selectedCategory, setSelectedCategoryState] = useState(() => {
+    const fromUrl = searchParams.get("category");
+    if (fromUrl) return fromUrl;
+    return getPageFilter("expenses", { category: "All" }).category || "All";
+  });
+  const setSelectedCategory = (category) => {
+    setSelectedCategoryState(category);
+    setPageFilter("expenses", { category }, { category: "All" });
+  };
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("category");
+    if (fromUrl) {
+      setPageFilter("expenses", { category: fromUrl }, { category: "All" });
+    }
+    // Persist deep-link category into session once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { categories } = useCategories(userId);
   const expenseCategories = useMemo(
     () => getExpenseCategories(categories),
@@ -761,8 +786,7 @@ export default function Expenses() {
           type="button"
           className={styles.iconActionBtn}
           onClick={() => {
-            setSelectedYear(pauseYear);
-            setSelectedMonth(pauseMonth);
+            setPeriodBoth(pauseYear, pauseMonth);
           }}
           aria-label="Go to pause month"
         >
@@ -785,8 +809,7 @@ export default function Expenses() {
         type="button"
         className={styles.iconActionBtn}
         onClick={shouldEnableCalendar ? () => {
-          setSelectedYear(currentYear);
-          setSelectedMonth(currentMonth);
+          setPeriodBoth(currentYear, currentMonth);
         } : undefined}
         disabled={!shouldEnableCalendar}
         aria-label={!shouldEnableCalendar ? "This expense is in the future" : "Go to current month"}
