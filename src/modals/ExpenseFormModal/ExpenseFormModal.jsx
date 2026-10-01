@@ -576,16 +576,32 @@ export default function ExpenseFormModal({
 
             {isMonthly && !isCreate && (
               <>
-                <label className={styles.fieldLabel} htmlFor="expensePause">
-                  Pause date
-                </label>
+                <div className={styles.pauseDateHeader}>
+                  <label className={styles.fieldLabel} htmlFor="expensePause">
+                    Pause date
+                  </label>
+                  {form.pauseDate ? (
+                    <button
+                      type="button"
+                      className={styles.clearPauseBtn}
+                      onClick={() =>
+                        setForm((prev) => ({ ...prev, pauseDate: "" }))
+                      }
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
                 <input
                   id="expensePause"
                   name="pauseDate"
                   type="date"
-                  value={form.pauseDate}
+                  value={form.pauseDate || ""}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, pauseDate: e.target.value }))
+                    setForm((prev) => ({
+                      ...prev,
+                      pauseDate: e.target.value || "",
+                    }))
                   }
                   className={styles.textInput}
                   min={

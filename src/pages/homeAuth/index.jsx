@@ -4,15 +4,20 @@ import { auth } from "../../../config/firebase";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import x from "../../assets/x.svg";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaUser } from "react-icons/fa";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+
+const OPEN_DX = 72;
+const MAX_DY = 40;
 
 function HomeAuth() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const edgeZoneRef = useRef(null);
+  const edgeSwipeRef = useRef(null);
 
   useBodyScrollLock(isMobile && menuOpen);
 
@@ -42,6 +47,64 @@ function HomeAuth() {
       unsubscribe();
     };
   }, [navigate]);
+
+  /* Native non-passive listeners so we can preventDefault and beat iOS back. */
+  useEffect(() => {
+    const zone = edgeZoneRef.current;
+    if (!zone || !isMobile || menuOpen) return undefined;
+
+    const onStart = (event) => {
+      if (event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      edgeSwipeRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        active: true,
+        opened: false,
+      };
+    };
+
+    const onMove = (event) => {
+      const start = edgeSwipeRef.current;
+      if (!start?.active || start.opened) return;
+      const touch = event.touches[0];
+      if (!touch) return;
+
+      const dx = touch.clientX - start.x;
+      const dy = Math.abs(touch.clientY - start.y);
+
+      if (dy > MAX_DY && dy > Math.abs(dx)) {
+        start.active = false;
+        return;
+      }
+
+      if (dx > 10 && dx > dy) {
+        event.preventDefault();
+      }
+
+      if (dx >= OPEN_DX && dy <= MAX_DY) {
+        start.active = false;
+        start.opened = true;
+        openMenu();
+      }
+    };
+
+    const onEnd = () => {
+      edgeSwipeRef.current = null;
+    };
+
+    zone.addEventListener("touchstart", onStart, { passive: true });
+    zone.addEventListener("touchmove", onMove, { passive: false });
+    zone.addEventListener("touchend", onEnd, { passive: true });
+    zone.addEventListener("touchcancel", onEnd, { passive: true });
+
+    return () => {
+      zone.removeEventListener("touchstart", onStart);
+      zone.removeEventListener("touchmove", onMove);
+      zone.removeEventListener("touchend", onEnd);
+      zone.removeEventListener("touchcancel", onEnd);
+    };
+  }, [isMobile, menuOpen]);
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -104,15 +167,22 @@ function HomeAuth() {
   return (
     <main className={styles.mainContainer}>
       {isMobile && !menuOpen && (
-        <button
-          type="button"
-          id="openMenu"
-          onClick={openMenu}
-          className={styles.menuButton}
-          aria-label="Abrir menu"
-        >
-          <img src={menu} alt="" className={styles.menuImg} aria-hidden="true" />
-        </button>
+        <>
+          <div
+            ref={edgeZoneRef}
+            className={styles.edgeSwipeZone}
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            id="openMenu"
+            onClick={openMenu}
+            className={styles.menuButton}
+            aria-label="Abrir menu"
+          >
+            <img src={menu} alt="" className={styles.menuImg} aria-hidden="true" />
+          </button>
+        </>
       )}
 
       {isMobile && (

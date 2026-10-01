@@ -4,7 +4,9 @@ import PropTypes from "prop-types";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import styles from "./BottomSheet.module.scss";
 
-const CLOSE_OFFSET = 110;
+/* Close only when dragged well down — mid release springs back smoothly. */
+const CLOSE_DISTANCE = 160;
+const CLOSE_VELOCITY = 1100;
 
 export default function BottomSheet({
   isOpen,
@@ -19,12 +21,16 @@ export default function BottomSheet({
   const [rendered, setRendered] = useState(false);
   const [entered, setEntered] = useState(false);
   /* Settled = no CSS transform on the sheet. Inputs inside a transformed
-     ancestor jank hard in Chromium — Framer's translateY(0) was enough. */
+     ancestor jank hard in Chromium. */
   const [settled, setSettled] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [returning, setReturning] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
 
   const sheetRef = useRef(null);
+  const dragYRef = useRef(0);
+  const closingFromDragRef = useRef(false);
   const dragRef = useRef({
     pointerId: null,
     startY: 0,
@@ -41,10 +47,14 @@ export default function BottomSheet({
 
   useEffect(() => {
     if (isOpen) {
+      closingFromDragRef.current = false;
+      setDismissing(false);
       setRendered(true);
       setSettled(false);
       setDragging(false);
+      setReturning(false);
       setDragY(0);
+      dragYRef.current = 0;
       const id = window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => setEntered(true));
       });
@@ -53,27 +63,64 @@ export default function BottomSheet({
 
     setSettled(false);
     setDragging(false);
+    setReturning(false);
+
+    if (closingFromDragRef.current) {
+      /* Drag dismiss already animating off-screen via dragY. */
+      return undefined;
+    }
+
+    setDismissing(false);
     setDragY(0);
+    dragYRef.current = 0;
     const id = window.requestAnimationFrame(() => setEntered(false));
     return () => window.cancelAnimationFrame(id);
   }, [isOpen]);
+
+  const finishUnmount = () => {
+    closingFromDragRef.current = false;
+    setDismissing(false);
+    setEntered(false);
+    setRendered(false);
+    setDragY(0);
+    dragYRef.current = 0;
+  };
 
   const handleTransitionEnd = (event) => {
     if (event.target !== sheetRef.current) return;
     if (event.propertyName !== "transform") return;
 
+    if (dismissing) {
+      finishUnmount();
+      return;
+    }
+
+    if (returning) {
+      setReturning(false);
+      setDragY(0);
+      dragYRef.current = 0;
+      if (isOpen && entered) {
+        setSettled(true);
+      }
+      return;
+    }
+
     if (isOpen && entered && !dragging) {
       setSettled(true);
       setDragY(0);
+      dragYRef.current = 0;
       return;
     }
 
     if (!isOpen && !entered) {
       setRendered(false);
+      setDragY(0);
+      dragYRef.current = 0;
     }
   };
 
   const onHandlePointerDown = (event) => {
+    if (dismissing) return;
     event.preventDefault();
     const y = event.clientY;
     dragRef.current = {
@@ -84,8 +131,10 @@ export default function BottomSheet({
       velocity: 0,
     };
     setSettled(false);
+    setReturning(false);
     setDragging(true);
     setDragY(0);
+    dragYRef.current = 0;
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -100,7 +149,9 @@ export default function BottomSheet({
     drag.velocity = ((y - drag.lastY) / dt) * 1000;
     drag.lastY = y;
     drag.lastT = now;
-    setDragY(Math.max(0, dy));
+    const next = Math.max(0, dy);
+    dragYRef.current = next;
+    setDragY(next);
   };
 
   const endDrag = (event) => {
@@ -114,39 +165,56 @@ export default function BottomSheet({
       /* already released */
     }
 
+    const currentY = dragYRef.current;
     const shouldClose =
-      dragY > CLOSE_OFFSET || drag.velocity > 700;
+      currentY > CLOSE_DISTANCE || drag.velocity > CLOSE_VELOCITY;
 
     setDragging(false);
 
     if (shouldClose) {
+      const sheetHeight = sheetRef.current?.offsetHeight || window.innerHeight;
+      closingFromDragRef.current = true;
+      setDismissing(true);
+      window.requestAnimationFrame(() => {
+        const off = Math.max(currentY, sheetHeight + 48);
+        dragYRef.current = off;
+        setDragY(off);
+      });
       onClose();
       return;
     }
 
-    if (dragY <= 1) {
+    if (currentY <= 1) {
       setDragY(0);
+      dragYRef.current = 0;
       setSettled(true);
       return;
     }
 
-    setDragY(0);
+    setReturning(true);
+    window.requestAnimationFrame(() => {
+      setDragY(0);
+      dragYRef.current = 0;
+    });
   };
 
   if (!mounted || !rendered) return null;
 
   const sheetClass = [
     styles.sheet,
-    entered ? styles.sheetEntered : "",
-    settled && !dragging ? styles.sheetSettled : "",
+    entered && !dismissing ? styles.sheetEntered : "",
+    settled && !dragging && !returning && !dismissing
+      ? styles.sheetSettled
+      : "",
     dragging ? styles.sheetDragging : "",
+    returning || dismissing ? styles.sheetReturning : "",
     className,
   ]
     .filter(Boolean)
     .join(" ");
 
   const sheetStyle =
-    dragging || dragY > 0
+    dragging || returning || dismissing || dragY > 0
       ? { transform: `translateY(${dragY}px)` }
       : undefined;
 
@@ -158,7 +226,9 @@ export default function BottomSheet({
     >
       <button
         type="button"
-        className={`${styles.backdrop} ${entered ? styles.backdropVisible : ""}`}
+        className={`${styles.backdrop} ${
+          entered && !dismissing ? styles.backdropVisible : ""
+        }`}
         aria-label="Close"
         onClick={onClose}
       />

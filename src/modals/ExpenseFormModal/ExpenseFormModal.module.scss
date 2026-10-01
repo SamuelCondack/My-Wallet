@@ -96,12 +96,13 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  flex: 1;
+  flex: 0 1 auto;
 }
 
 .scrollBody {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
+  max-height: min(62dvh, 520px);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -130,6 +131,29 @@
   color: var(--mw-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.pauseDateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+
+  .fieldLabel {
+    margin-bottom: 0;
+  }
+}
+
+.clearPauseBtn {
+  border: none;
+  background: transparent;
+  color: $defaultBlue;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .chipRow {
@@ -314,10 +338,9 @@
   }
 }
 
-/* Keep category sheet at a stable height so search (1 result) doesn't
-   collapse behind the keyboard on mobile. */
+/* Keep category sheet tall enough that search (1 result) stays above the
+   keyboard, without forcing empty space on the expense form sheet. */
 .categorySheet {
-  height: min(72dvh, 520px);
   min-height: min(72dvh, 520px);
   max-height: min(72dvh, 520px);
 }
@@ -451,7 +474,8 @@
   color: $ink;
 
   &::placeholder {
-    color: rgba(15, 23, 42, 0.35);
+    color: var(--mw-muted);
+    opacity: 0.85;
   }
 }
 
@@ -672,7 +696,7 @@
 }
 
 .paymentChipActive {
-  color: #fff;
+  color: #fff !important;
 }
 
 .footer {
@@ -797,7 +821,6 @@
   }
 
   .categorySheet {
-    height: min(70dvh, 480px);
     min-height: min(70dvh, 480px);
     max-height: min(70dvh, 480px);
   }

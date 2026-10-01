@@ -234,12 +234,12 @@
 }
 
 .badgePro {
-  background: #e8f3ff;
+  background: rgba(62, 146, 235, 0.16);
   color: $defaultBlue;
 }
 
 .badgeFree {
-  background: #f3f4f6;
+  background: var(--mw-chip-bg);
   color: var(--mw-muted);
 }
 
@@ -282,7 +282,7 @@
 .subscribeFoot {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--mw-muted);
   line-height: 1.4;
   text-align: center;
 }
@@ -348,14 +348,17 @@
     justify-content: space-between;
     gap: 12px;
     align-items: flex-start;
-    background: #f8fafc;
+    background: var(--mw-chip-bg);
+    border: 1px solid var(--mw-line);
     border-radius: 12px;
     padding: 12px;
+    color: $ink;
 
     strong {
       display: block;
       font-size: 14px;
       margin-bottom: 2px;
+      color: $ink;
     }
 
     span {

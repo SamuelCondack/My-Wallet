@@ -157,6 +157,14 @@ body {
     transform: translateZ(0) scale(1.05);
 }
 
+.expenseMethod {
+    width: 100%;
+    color: #fff !important;
+    text-align: center;
+    border-radius: 20px;
+    font-weight: 700;
+}
+
 .pix {
     border-color: rgba(235, 171, 61, 0.9);
     box-shadow:
@@ -224,14 +232,6 @@ body {
 
 .expenseValue {
     text-align: center;
-}
-
-.expenseMethod {
-    width: 100%;
-    color: #fff;
-    text-align: center;
-    border-radius: 20px;
-    font-weight: 700;
 }
 
 .expenseEditButton {

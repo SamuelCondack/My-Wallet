@@ -1,16 +1,18 @@
 @import "../../Global/variables.scss";
 
 .locked {
-  background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
-  border: 1px dashed #9ec4ef;
+  background: var(--mw-card);
+  border: 1px dashed rgba(62, 146, 235, 0.45);
   border-radius: 14px;
   padding: 18px 16px;
   text-align: center;
-  color: var(--mw-ink);
+  color: $ink;
+  box-shadow: var(--mw-shadow-soft);
 
   h3 {
     margin: 8px 0 6px;
     font-size: 16px;
+    color: $ink;
   }
 
   p {

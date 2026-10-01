@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import { PRO_FEATURES, PRO_PRICE_LABEL, TRIAL_DAYS } from "../../constants/subscription";
 import { startCheckout, openStripeSession } from "../../services/subscriptionService";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import styles from "./PaywallModal.module.scss";
 
 export default function PaywallModal({
@@ -13,6 +14,7 @@ export default function PaywallModal({
   canStartTrial = true,
 }) {
   const [isStarting, setIsStarting] = useState(false);
+  useBodyScrollLock(Boolean(isOpen));
 
   if (!isOpen) return null;
 
@@ -102,7 +104,7 @@ export default function PaywallModal({
 }
 
 PaywallModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
+  isOpen: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
   title: PropTypes.string,
   message: PropTypes.string,
