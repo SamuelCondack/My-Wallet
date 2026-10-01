@@ -331,6 +331,7 @@ export default function Profile() {
   };
 
   return (
+    <div className={styles.pageWrapper}>
     <div className={styles.page}>
       <header className={styles.header}>
         <h1>Profile</h1>
@@ -562,6 +563,7 @@ export default function Profile() {
         isEditModal
         isSubmitting={isLoggingOut}
       />
+    </div>
     </div>
   );
 }
