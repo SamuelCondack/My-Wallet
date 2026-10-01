@@ -20,6 +20,11 @@ import {
   startCheckout,
   syncSubscription,
 } from "../../services/subscriptionService";
+import {
+  applyDocumentTheme,
+  getThemeFromProfile,
+  updateUserTheme,
+} from "../../services/themeService";
 import styles from "./Profile.module.scss";
 
 function formatDate(ms) {
@@ -52,6 +57,7 @@ export default function Profile() {
   const [showProWelcome, setShowProWelcome] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [themeBusy, setThemeBusy] = useState(false);
   const welcomeShownRef = useRef(false);
   const checkoutHandledRef = useRef(false);
   const billingHandledRef = useRef(false);
@@ -295,6 +301,23 @@ export default function Profile() {
   const showManageBilling = isPro || isPastDue;
   const showSubscribe = !isPro && !canStartTrial;
   const showTrial = canStartTrial;
+  const isDarkMode = getThemeFromProfile(profile) === "dark";
+
+  const handleToggleTheme = async () => {
+    if (!user?.uid || themeBusy) return;
+    setThemeBusy(true);
+    const next = isDarkMode ? "light" : "dark";
+    applyDocumentTheme(next);
+    try {
+      await updateUserTheme(user.uid, next);
+    } catch (err) {
+      console.error(err);
+      applyDocumentTheme(isDarkMode ? "dark" : "light");
+      toast.error(err.message || "Could not save theme preference.");
+    } finally {
+      setThemeBusy(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
@@ -337,6 +360,30 @@ export default function Profile() {
             onClick={() => setShowLogoutConfirm(true)}
           >
             Log out
+          </button>
+        </div>
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.themeRow}>
+          <div>
+            <p className={styles.label}>Appearance</p>
+            <h2 className={styles.themeTitle}>Dark mode</h2>
+            <p className={styles.statusDetail}>
+              Saves to your account on this device and others.
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`${styles.themeSwitch} ${
+              isDarkMode ? styles.themeSwitchOn : ""
+            }`}
+            onClick={handleToggleTheme}
+            disabled={themeBusy || !user?.uid}
+            aria-pressed={isDarkMode}
+            aria-label="Toggle dark mode"
+          >
+            <span className={styles.themeKnob} />
           </button>
         </div>
       </section>

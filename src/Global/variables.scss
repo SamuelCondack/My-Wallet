@@ -6,53 +6,50 @@ $lightCyan: #E6F6FC;
 $lightBrown: #c9aa78;
 $purple: #3D5AEB;
 
-// Premium system (keeps MyWallet blue identity)
-$ink: #0b1220;
-$inkSoft: #334155;
-$surface: #f7fafc;
-$surfaceElevated: rgba(255, 255, 255, 0.72);
-$line: rgba(15, 23, 42, 0.08);
+// Theme tokens (overridden by [data-theme="dark"] CSS vars)
+$ink: var(--mw-ink);
+$inkSoft: var(--mw-ink-soft);
+$surface: var(--mw-surface);
+$surfaceElevated: var(--mw-surface-elevated);
+$line: var(--mw-line);
 $blueDeep: #1d4ed8;
 $blueSoft: #60a5fa;
 $easeOut: cubic-bezier(0.16, 1, 0.3, 1);
 $easeSoft: cubic-bezier(0.22, 1, 0.36, 1);
 
 @mixin glass-panel($radius: 24px) {
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.96) 0%,
-    rgba(255, 255, 255, 0.9) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: var(--mw-glass-bg);
+  border: 1px solid var(--mw-glass-border);
   border-radius: $radius;
-  box-shadow:
-    0 14px 36px rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  /* No live backdrop-filter — blur during sheet/modal anims causes jank. */
+  box-shadow: var(--mw-glass-shadow);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  color: $ink;
 }
 
 @mixin glass-dark($radius: 24px) {
   background: linear-gradient(
     160deg,
-    rgba(20, 24, 33, 0.98) 0%,
-    rgba(8, 10, 16, 0.96) 100%
+    rgba(20, 24, 33, 0.78) 0%,
+    rgba(8, 10, 16, 0.72) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: $radius;
   box-shadow:
     0 18px 50px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  /* Solid enough without backdrop-filter; keeps sidebar scroll/anim smooth. */
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
 }
 
-/* Soft elevated surface without live blur (safe for long lists / scroll) */
 @mixin soft-panel($radius: 22px) {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: var(--mw-soft-bg);
+  border: 1px solid var(--mw-soft-border);
   border-radius: $radius;
-  box-shadow:
-    0 12px 28px rgba(15, 23, 42, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  box-shadow: var(--mw-soft-shadow);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  color: $ink;
 }
 
 @mixin glass-button {

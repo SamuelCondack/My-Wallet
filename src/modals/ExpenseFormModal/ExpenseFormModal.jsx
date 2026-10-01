@@ -82,8 +82,29 @@ export default function ExpenseFormModal({
   const [isSavingFavorite, setIsSavingFavorite] = useState(false);
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
+  const [stepPulse, setStepPulse] = useState(null);
   const valueRef = useRef(null);
   const categorySearchRef = useRef(null);
+  const stepPulseTimerRef = useRef(0);
+
+  const pulseStepper = (side) => {
+    setStepPulse(side);
+    if (stepPulseTimerRef.current) {
+      window.clearTimeout(stepPulseTimerRef.current);
+    }
+    stepPulseTimerRef.current = window.setTimeout(() => {
+      setStepPulse(null);
+      stepPulseTimerRef.current = 0;
+    }, 1100);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (stepPulseTimerRef.current) {
+        window.clearTimeout(stepPulseTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -205,7 +226,6 @@ export default function ExpenseFormModal({
       isMonthly: false,
       installments: "",
     }));
-    valueRef.current?.focus({ preventScroll: true });
   };
 
   const handleSave = async (event) => {
@@ -592,10 +612,14 @@ export default function ExpenseFormModal({
                 <div className={styles.stepperRow}>
                   <button
                     type="button"
-                    className={styles.stepperBtn}
+                    className={`${styles.stepperBtn} ${
+                      stepPulse === "dec" ? styles.stepperBtnPulse : ""
+                    }`}
                     aria-label="Decrease installments"
                     disabled={isSaving}
-                    onClick={() =>
+                    onClick={(event) => {
+                      event.currentTarget.blur();
+                      pulseStepper("dec");
                       setForm((prev) => {
                         const raw = String(prev.installments ?? "").trim();
                         const current = Number(raw);
@@ -605,8 +629,8 @@ export default function ExpenseFormModal({
                           ...prev,
                           installments: String(Math.max(0, base - 1)),
                         };
-                      })
-                    }
+                      });
+                    }}
                   >
                     −
                   </button>
@@ -629,10 +653,14 @@ export default function ExpenseFormModal({
                   />
                   <button
                     type="button"
-                    className={styles.stepperBtn}
+                    className={`${styles.stepperBtn} ${
+                      stepPulse === "inc" ? styles.stepperBtnPulse : ""
+                    }`}
                     aria-label="Increase installments"
                     disabled={isSaving}
-                    onClick={() =>
+                    onClick={(event) => {
+                      event.currentTarget.blur();
+                      pulseStepper("inc");
                       setForm((prev) => {
                         const raw = String(prev.installments ?? "").trim();
                         const current = Number(raw);
@@ -641,8 +669,8 @@ export default function ExpenseFormModal({
                             ? 1
                             : current + 1;
                         return { ...prev, installments: String(next) };
-                      })
-                    }
+                      });
+                    }}
                   >
                     +
                   </button>
@@ -686,6 +714,7 @@ export default function ExpenseFormModal({
         labelledBy="category-picker-title"
         lockScroll={false}
         zIndex={50}
+        className={styles.categorySheet}
       >
         <header className={styles.categoryPickerHeader}>
           <h3 id="category-picker-title">Category</h3>

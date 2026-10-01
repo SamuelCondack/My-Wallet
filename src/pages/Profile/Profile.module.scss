@@ -26,6 +26,57 @@
   color: $ink;
 }
 
+.themeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.themeTitle {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.themeSwitch {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 30px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.12);
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.themeSwitchOn {
+  background: $defaultBlue;
+}
+
+.themeKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.themeSwitchOn .themeKnob {
+  transform: translateX(22px);
+}
+
 .identity {
   display: flex;
   align-items: center;
