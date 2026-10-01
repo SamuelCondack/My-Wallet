@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
-import { getProShippedSummary } from "../../constants/subscription";
 import styles from "./ProWelcomeCelebration.module.scss";
 
 const BLOBS = [styles.blobA, styles.blobB, styles.blobC];
@@ -147,8 +146,8 @@ export default function ProWelcomeCelebration({
           </h2>
           <p className={styles.subtitle}>
             {isTrial
-              ? `Your Pro trial is live — ${getProShippedSummary()}.`
-              : `MyWallet Pro is active — ${getProShippedSummary()}.`}
+              ? "Your Pro trial is live. The tools that make money feel lighter start now."
+              : "MyWallet Pro is active. Your next level of clarity just unlocked."}
           </p>
 
           <button
