@@ -13,6 +13,8 @@ import { useT } from "../../i18n/useT";
 
 const OPEN_DX = 72;
 const MAX_DY = 40;
+/** Left edge band where iOS swipe-back competes with the menu gesture. */
+const EDGE_BACK_PX = 28;
 
 function HomeAuth() {
   const navigate = useNavigate();
@@ -62,14 +64,29 @@ function HomeAuth() {
     };
   }, [navigate]);
 
-  /* Native non-passive listeners so we can preventDefault and beat iOS back. */
+  /*
+   * Block iOS Safari/PWA swipe-back so the left-edge gesture can open the menu.
+   * preventDefault must run on touchstart (not only touchmove) — iOS 13.4+.
+   * There is no official PWA API to disable the gesture completely.
+   */
   useEffect(() => {
     const zone = edgeZoneRef.current;
     if (!zone || !isMobile || menuOpen) return undefined;
 
+    const isInteractive = (target) => {
+      if (!(target instanceof Element)) return false;
+      return Boolean(
+        target.closest(
+          "#openMenu, a, button, input, select, textarea, label, [role='button']"
+        )
+      );
+    };
+
     const onStart = (event) => {
       if (event.touches.length !== 1) return;
       const touch = event.touches[0];
+      // Cancel the native back-navigation gesture as soon as the finger lands.
+      event.preventDefault();
       edgeSwipeRef.current = {
         x: touch.clientX,
         y: touch.clientY,
@@ -107,16 +124,30 @@ function HomeAuth() {
       edgeSwipeRef.current = null;
     };
 
-    zone.addEventListener("touchstart", onStart, { passive: true });
+    /* Document capture: catch edge touches that miss the zone element. */
+    const onDocStart = (event) => {
+      if (event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      if (!touch || touch.clientX > EDGE_BACK_PX) return;
+      if (isInteractive(event.target)) return;
+      event.preventDefault();
+    };
+
+    zone.addEventListener("touchstart", onStart, { passive: false });
     zone.addEventListener("touchmove", onMove, { passive: false });
     zone.addEventListener("touchend", onEnd, { passive: true });
     zone.addEventListener("touchcancel", onEnd, { passive: true });
+    document.addEventListener("touchstart", onDocStart, {
+      passive: false,
+      capture: true,
+    });
 
     return () => {
       zone.removeEventListener("touchstart", onStart);
       zone.removeEventListener("touchmove", onMove);
       zone.removeEventListener("touchend", onEnd);
       zone.removeEventListener("touchcancel", onEnd);
+      document.removeEventListener("touchstart", onDocStart, { capture: true });
     };
   }, [isMobile, menuOpen]);
 

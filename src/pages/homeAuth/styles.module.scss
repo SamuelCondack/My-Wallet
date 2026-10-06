@@ -24,12 +24,14 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: calc(20px + env(safe-area-inset-left, 0px));
+  width: calc(28px + env(safe-area-inset-left, 0px));
   z-index: 3;
   touch-action: none;
   pointer-events: auto;
   -webkit-user-select: none;
   user-select: none;
+  /* Helps keep the edge gesture in-app on supporting engines */
+  overscroll-behavior-x: none;
 }
 
 .menuButton {

@@ -98,6 +98,7 @@ html {
   background-attachment: fixed;
   background-repeat: no-repeat;
   background-size: cover;
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -111,6 +112,7 @@ body {
   background-image: none;
   overflow-x: hidden;
   overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
   transition: color 0.25s ease;
 }
 
