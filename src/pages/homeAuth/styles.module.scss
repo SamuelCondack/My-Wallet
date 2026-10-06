@@ -298,48 +298,17 @@
 
 @media (max-width: 768px) {
   .mainContainer {
-    /* Pin to the visual viewport — 100dvh often leaves top/bottom strips
-       when mobile browser chrome shows/hides. */
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: auto;
-    max-height: none;
-    min-height: 0;
     justify-content: center;
     align-items: stretch;
     gap: 0;
-    overflow: hidden;
   }
 
   .content {
-    flex: 1 1 auto;
-    width: 100%;
-    min-width: 0;
     padding-top: calc(48px + env(safe-area-inset-top, 0px));
     padding-left: calc(8px + env(safe-area-inset-left, 0px));
     padding-right: env(safe-area-inset-right, 0px);
-    /* Bottom safe-area is handled inside pages (FABs / padding) so we
-       do not leave a dead horizontal strip under the scroll surface. */
-    padding-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     box-sizing: border-box;
-    height: auto;
-    max-height: none;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .asideMenuMobile {
-    /* Avoid off-canvas drawer contributing to horizontal overflow. */
-    width: min(280px, 86vw);
-    min-width: 0;
-    max-width: 86vw;
-  }
-
-  .asideMenuMobile:not(.asideMenuOpen) {
-    pointer-events: none;
   }
 
   .iconDiv {

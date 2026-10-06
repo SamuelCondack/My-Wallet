@@ -28,13 +28,6 @@ function HomeAuth() {
   const openMenu = () => setMenuOpen(true);
 
   useEffect(() => {
-    document.documentElement.classList.add("mw-app-shell");
-    return () => {
-      document.documentElement.classList.remove("mw-app-shell");
-    };
-  }, []);
-
-  useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
