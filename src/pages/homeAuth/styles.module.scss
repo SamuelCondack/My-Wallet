@@ -49,6 +49,12 @@
   padding: 0;
   box-shadow: $shadowSoft;
   color: $ink;
+  transition: top 0.42s $easeSoft;
+}
+
+:global(html[data-mw-dock-open="1"]) .menuButton {
+  /* Sit with the floating dock instead of floating above it */
+  top: calc(48px + env(safe-area-inset-top, 0px));
 }
 
 .menuImg {

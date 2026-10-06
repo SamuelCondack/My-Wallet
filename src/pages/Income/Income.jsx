@@ -1748,7 +1748,7 @@ export default function Income() {
         ariaLabel={t("metrics.dockAria")}
         metrics={
           <>
-            <div className={dockStyles.metric}>
+            <div className={`${dockStyles.metric} ${dockStyles.metricEarned}`}>
               <span className={dockStyles.metricLabel}>{t("metrics.earned")}</span>
               <span className={dockStyles.metricValue}>
                 ${Number(summary.earned).toLocaleString(locale, {
@@ -1757,7 +1757,13 @@ export default function Income() {
                 })}
               </span>
             </div>
-            <div className={dockStyles.metric}>
+            <div
+              className={`${dockStyles.metric} ${
+                summary.pending > 0
+                  ? dockStyles.metricPending
+                  : dockStyles.metricPendingZero
+              }`}
+            >
               <span className={dockStyles.metricLabel}>
                 {t("metrics.pendingIncome")}
               </span>
@@ -1768,7 +1774,7 @@ export default function Income() {
                 })}
               </span>
             </div>
-            <div className={dockStyles.metric}>
+            <div className={`${dockStyles.metric} ${dockStyles.metricReceived}`}>
               <span className={dockStyles.metricLabel}>
                 {t("metrics.received")}
               </span>

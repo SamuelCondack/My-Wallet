@@ -1482,15 +1482,20 @@ export default function Expenses() {
     <>
       {renderDockMetric(
         t("metrics.earned"),
-        isIncomeLoading ? "…" : `$${formatValue(dockEarned)}`
+        isIncomeLoading ? "…" : `$${formatValue(dockEarned)}`,
+        dockStyles.metricEarned
       )}
       {renderDockMetric(
         t("metrics.pendingIncome"),
-        isIncomeLoading ? "…" : `$${formatValue(dockPending)}`
+        isIncomeLoading ? "…" : `$${formatValue(dockPending)}`,
+        !isIncomeLoading && dockPending > 0
+          ? dockStyles.metricPending
+          : dockStyles.metricPendingZero
       )}
       {renderDockMetric(
         t("metrics.received"),
-        isIncomeLoading ? "…" : `$${formatValue(dockReceived)}`
+        isIncomeLoading ? "…" : `$${formatValue(dockReceived)}`,
+        dockStyles.metricReceived
       )}
       {renderDockMetric(
         t("metrics.yourSpendings"),

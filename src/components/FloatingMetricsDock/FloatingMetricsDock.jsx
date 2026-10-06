@@ -7,6 +7,7 @@ import styles from "./FloatingMetricsDock.module.scss";
 const MOBILE_MQ = "(max-width: 768px)";
 const TOP_INSET_PX = 64;
 const MENU_OPEN_ATTR = "data-mw-menu-open";
+const DOCK_OPEN_ATTR = "data-mw-dock-open";
 
 const fadeTransition = {
   duration: 0.42,
@@ -104,9 +105,21 @@ export default function FloatingMetricsDock({
     };
   }, [anchorRef, enabled, isMobile, menuOpen, observeKey]);
 
-  if (typeof document === "undefined") return null;
-
   const show = enabled && isMobile && visible && !menuOpen;
+
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    if (show) {
+      document.documentElement.setAttribute(DOCK_OPEN_ATTR, "1");
+    } else {
+      document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
+    }
+    return () => {
+      document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
+    };
+  }, [show]);
+
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <AnimatePresence>

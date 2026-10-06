@@ -12,33 +12,33 @@
   padding:
     calc(env(safe-area-inset-top, 0px) + 10px)
     12px
-    28px
+    16px
     calc(56px + env(safe-area-inset-left, 0px));
-  /* Soft veil that dissolves into the page — no hard card edge */
+  /* Soft veil — short fade only at the very bottom */
   background: linear-gradient(
     180deg,
-    rgba(247, 250, 252, 0.72) 0%,
-    rgba(247, 250, 252, 0.48) 55%,
+    rgba(247, 250, 252, 0.78) 0%,
+    rgba(247, 250, 252, 0.62) 78%,
     rgba(247, 250, 252, 0) 100%
   );
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--mw-surface) 72%, transparent) 0%,
-    color-mix(in srgb, var(--mw-surface) 42%, transparent) 52%,
+    color-mix(in srgb, var(--mw-surface) 78%, transparent) 0%,
+    color-mix(in srgb, var(--mw-surface) 55%, transparent) 78%,
     transparent 100%
   );
   border: none;
   border-radius: 0;
   box-shadow: none;
-  backdrop-filter: blur(20px) saturate(1.3);
-  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
   -webkit-mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 62%,
+    #000 86%,
     transparent 100%
   );
-  mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 86%, transparent 100%);
   will-change: opacity, transform;
 }
 
@@ -52,14 +52,14 @@
 :global(html[data-theme="dark"]) .dock {
   background: linear-gradient(
     180deg,
-    rgba(11, 18, 32, 0.78) 0%,
-    rgba(11, 18, 32, 0.45) 52%,
+    rgba(11, 18, 32, 0.82) 0%,
+    rgba(11, 18, 32, 0.58) 78%,
     rgba(11, 18, 32, 0) 100%
   );
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--mw-surface) 78%, transparent) 0%,
-    color-mix(in srgb, var(--mw-surface) 42%, transparent) 52%,
+    color-mix(in srgb, var(--mw-surface) 82%, transparent) 0%,
+    color-mix(in srgb, var(--mw-surface) 55%, transparent) 78%,
     transparent 100%
   );
 }
@@ -127,16 +127,33 @@
   font-variant-numeric: tabular-nums;
 }
 
-.metricNet .metricValue {
+/* Match summary colors from Expenses / Income */
+.metricEarned .metricValue {
+  color: var(--mw-ink);
+}
+
+.metricPending .metricValue {
+  color: #c9a227;
+}
+
+.metricPendingZero .metricValue {
+  color: var(--mw-muted);
+}
+
+.metricReceived .metricValue {
   color: $defaultBlue;
 }
 
-.metricNegative .metricValue {
-  color: #ef4444;
+.metricSpend .metricValue {
+  color: var(--mw-ink);
 }
 
-.metricSpend .metricValue {
-  color: var(--mw-ink-soft);
+.metricNet .metricValue {
+  color: #007b00;
+}
+
+.metricNegative .metricValue {
+  color: red;
 }
 
 .pill {
