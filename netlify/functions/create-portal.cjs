@@ -4,6 +4,7 @@ const {
   jsonResponse,
   handleOptions,
   parseJsonBody,
+  resolveAppRedirectUrl,
 } = require("./_shared/stripe.cjs");
 
 exports.handler = async (event) => {
@@ -33,8 +34,7 @@ exports.handler = async (event) => {
       });
     }
 
-    const origin = process.env.APP_URL || "http://localhost:8888";
-    const returnUrl = body.returnUrl || `${origin}/home/profile`;
+    const returnUrl = resolveAppRedirectUrl(body.returnUrl, "/home/profile");
 
     const portal = await stripe.billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,

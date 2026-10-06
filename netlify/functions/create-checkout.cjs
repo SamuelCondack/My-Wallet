@@ -7,6 +7,7 @@ const {
   jsonResponse,
   handleOptions,
   parseJsonBody,
+  resolveAppRedirectUrl,
 } = require("./_shared/stripe.cjs");
 
 async function getOrCreateStripeCustomer({ stripe, uid, email, name, existingCustomerId }) {
@@ -72,11 +73,14 @@ exports.handler = async (event) => {
       );
     }
 
-    const origin = process.env.APP_URL || "http://localhost:8888";
-    const successUrl =
-      body.successUrl || `${origin}/home/profile?checkout=success`;
-    const cancelUrl =
-      body.cancelUrl || `${origin}/home/profile?checkout=cancel`;
+    const successUrl = resolveAppRedirectUrl(
+      body.successUrl,
+      "/home/profile?checkout=success"
+    );
+    const cancelUrl = resolveAppRedirectUrl(
+      body.cancelUrl,
+      "/home/profile?checkout=cancel"
+    );
 
     // One trial per account: skip trial if they already started/had a subscription.
     const alreadyUsedTrial = Boolean(

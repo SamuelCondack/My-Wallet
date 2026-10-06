@@ -67,6 +67,59 @@ function parseJsonBody(event) {
   }
 }
 
+function getAppOrigin() {
+  return String(process.env.APP_URL || "http://localhost:8888").replace(
+    /\/$/,
+    ""
+  );
+}
+
+/**
+ * Only allow redirects back to APP_URL (same origin). Rejects open redirects.
+ */
+function resolveAppRedirectUrl(candidate, fallbackPath) {
+  const origin = getAppOrigin();
+  const fallback = `${origin}${fallbackPath.startsWith("/") ? "" : "/"}${fallbackPath}`;
+
+  if (!candidate) return fallback;
+
+  let parsed;
+  try {
+    parsed = new URL(String(candidate));
+  } catch {
+    const error = new Error("Invalid redirect URL.");
+    error.statusCode = 400;
+    error.code = "INVALID_REDIRECT";
+    throw error;
+  }
+
+  let allowed;
+  try {
+    allowed = new URL(origin);
+  } catch {
+    const error = new Error("APP_URL is misconfigured.");
+    error.statusCode = 503;
+    error.code = "APP_URL_INVALID";
+    throw error;
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    const error = new Error("Redirect URL must use http or https.");
+    error.statusCode = 400;
+    error.code = "INVALID_REDIRECT";
+    throw error;
+  }
+
+  if (parsed.origin !== allowed.origin) {
+    const error = new Error("Redirect URL must stay on the app origin.");
+    error.statusCode = 400;
+    error.code = "INVALID_REDIRECT";
+    throw error;
+  }
+
+  return parsed.toString();
+}
+
 module.exports = {
   getStripe,
   getPriceId,
@@ -74,4 +127,6 @@ module.exports = {
   jsonResponse,
   handleOptions,
   parseJsonBody,
+  getAppOrigin,
+  resolveAppRedirectUrl,
 };

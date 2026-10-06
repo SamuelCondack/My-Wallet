@@ -33,3 +33,7 @@ package-lock.json
 .env
 # Local Netlify folder
 .netlify
+
+# Local crash dumps
+bash.exe.stackdump
+*.stackdump

@@ -8,6 +8,12 @@ const {
   writeSubscription,
 } = require("./_shared/subscriptionSync.cjs");
 
+function customerIdOf(subscription) {
+  return typeof subscription.customer === "string"
+    ? subscription.customer
+    : subscription.customer?.id || null;
+}
+
 exports.handler = async (event) => {
   const optionsResponse = handleOptions(event);
   if (optionsResponse) return optionsResponse;
@@ -28,32 +34,28 @@ exports.handler = async (event) => {
 
     let subscription = null;
 
+    // Only sync accounts already linked in Firestore — never claim by email.
     if (existing.stripeSubscriptionId) {
       subscription = await stripe.subscriptions.retrieve(
         existing.stripeSubscriptionId
       );
+    } else if (existing.stripeCustomerId) {
+      const list = await stripe.subscriptions.list({
+        customer: existing.stripeCustomerId,
+        status: "all",
+        limit: 10,
+      });
+      subscription =
+        list.data.find(
+          (item) => item.status === "trialing" || item.status === "active"
+        ) ||
+        list.data[0] ||
+        null;
     } else {
-      let customerId = existing.stripeCustomerId || null;
-
-      if (!customerId && decoded.email) {
-        const customers = await stripe.customers.list({
-          email: decoded.email,
-          limit: 5,
-        });
-        customerId = customers.data[0]?.id || null;
-      }
-
-      if (customerId) {
-        const list = await stripe.subscriptions.list({
-          customer: customerId,
-          status: "all",
-          limit: 10,
-        });
-        subscription =
-          list.data.find(
-            (item) => item.status === "trialing" || item.status === "active"
-          ) || list.data[0] || null;
-      }
+      return jsonResponse(404, {
+        error: "No Stripe subscription linked to this account.",
+        code: "NO_SUBSCRIPTION",
+      });
     }
 
     if (!subscription) {
@@ -63,8 +65,27 @@ exports.handler = async (event) => {
       });
     }
 
-    // Ensure metadata links back to this Firebase user
-    if (subscription.metadata?.firebaseUid !== decoded.uid) {
+    const linkedUid = subscription.metadata?.firebaseUid || null;
+    if (linkedUid && linkedUid !== decoded.uid) {
+      return jsonResponse(403, {
+        error: "This Stripe subscription is linked to another account.",
+        code: "SUBSCRIPTION_OWNED_ELSEWHERE",
+      });
+    }
+
+    if (
+      existing.stripeCustomerId &&
+      customerIdOf(subscription) &&
+      customerIdOf(subscription) !== existing.stripeCustomerId
+    ) {
+      return jsonResponse(403, {
+        error: "Stripe customer mismatch for this account.",
+        code: "CUSTOMER_MISMATCH",
+      });
+    }
+
+    // Attach metadata only when missing — never reassign from another owner.
+    if (!linkedUid) {
       await stripe.subscriptions.update(subscription.id, {
         metadata: {
           ...(subscription.metadata || {}),
