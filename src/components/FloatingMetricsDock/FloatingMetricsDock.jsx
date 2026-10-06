@@ -5,7 +5,8 @@ import PropTypes from "prop-types";
 import styles from "./FloatingMetricsDock.module.scss";
 
 const MOBILE_MQ = "(max-width: 768px)";
-const TOP_INSET_PX = 72;
+const TOP_INSET_PX = 64;
+const MENU_OPEN_ATTR = "data-mw-menu-open";
 
 const fadeTransition = {
   duration: 0.42,
@@ -30,6 +31,11 @@ export default function FloatingMetricsDock({
       : false
   );
   const [visible, setVisible] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(() =>
+    typeof document !== "undefined"
+      ? document.documentElement.getAttribute(MENU_OPEN_ATTR) === "1"
+      : false
+  );
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_MQ);
@@ -40,7 +46,22 @@ export default function FloatingMetricsDock({
   }, []);
 
   useEffect(() => {
-    if (!enabled || !isMobile) {
+    const syncMenu = () => {
+      setMenuOpen(
+        document.documentElement.getAttribute(MENU_OPEN_ATTR) === "1"
+      );
+    };
+    syncMenu();
+    const observer = new MutationObserver(syncMenu);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: [MENU_OPEN_ATTR],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !isMobile || menuOpen) {
       setVisible(false);
       return undefined;
     }
@@ -81,26 +102,30 @@ export default function FloatingMetricsDock({
       if (pollId) window.clearInterval(pollId);
       observer?.disconnect();
     };
-  }, [anchorRef, enabled, isMobile, observeKey]);
+  }, [anchorRef, enabled, isMobile, menuOpen, observeKey]);
 
   if (typeof document === "undefined") return null;
 
+  const show = enabled && isMobile && visible && !menuOpen;
+
   return createPortal(
     <AnimatePresence>
-      {enabled && isMobile && visible ? (
+      {show ? (
         <motion.div
           key="floating-metrics-dock"
           className={styles.dock}
           data-no-pull-refresh="true"
-          initial={{ opacity: 0, y: -14 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
+          exit={{ opacity: 0, y: -8 }}
           transition={fadeTransition}
           role="region"
           aria-label={ariaLabel || "Summary"}
         >
-          {metrics ? <div className={styles.metrics}>{metrics}</div> : null}
-          {filters ? <div className={styles.filters}>{filters}</div> : null}
+          <div className={styles.dockInner}>
+            {filters ? <div className={styles.filters}>{filters}</div> : null}
+            {metrics ? <div className={styles.metrics}>{metrics}</div> : null}
+          </div>
         </motion.div>
       ) : null}
     </AnimatePresence>,

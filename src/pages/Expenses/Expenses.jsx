@@ -1455,8 +1455,8 @@ export default function Expenses() {
             selectedYear === currentYear && month === currentMonth;
           return (
             <option key={month} value={month} data-current={isCurrentMonth}>
-              {month}
-              {isCurrentMonth ? " ·" : ""}
+              {month} - {formatMonthName(month, locale)}
+              {isCurrentMonth ? " 📅" : ""}
             </option>
           );
         })}
@@ -1485,7 +1485,7 @@ export default function Expenses() {
         isIncomeLoading ? "…" : `$${formatValue(dockEarned)}`
       )}
       {renderDockMetric(
-        t("metrics.pendingShort"),
+        t("metrics.pendingIncome"),
         isIncomeLoading ? "…" : `$${formatValue(dockPending)}`
       )}
       {renderDockMetric(
@@ -1493,12 +1493,12 @@ export default function Expenses() {
         isIncomeLoading ? "…" : `$${formatValue(dockReceived)}`
       )}
       {renderDockMetric(
-        t("metrics.spendingsShort"),
+        t("metrics.yourSpendings"),
         `-$${formatValue(dockSpendings)}`,
         dockStyles.metricSpend
       )}
       {renderDockMetric(
-        t("metrics.netShort"),
+        t("metrics.netEarnings"),
         isIncomeLoading ? "…" : `$${formatValue(dockNet)}`,
         `${dockStyles.metricNet} ${
           !isIncomeLoading && dockNet < 0 ? dockStyles.metricNegative : ""

@@ -1759,7 +1759,7 @@ export default function Income() {
             </div>
             <div className={dockStyles.metric}>
               <span className={dockStyles.metricLabel}>
-                {t("metrics.pendingShort")}
+                {t("metrics.pendingIncome")}
               </span>
               <span className={dockStyles.metricValue}>
                 ${Number(summary.pending).toLocaleString(locale, {
@@ -1781,7 +1781,7 @@ export default function Income() {
             </div>
             <div className={`${dockStyles.metric} ${dockStyles.metricSpend}`}>
               <span className={dockStyles.metricLabel}>
-                {t("metrics.spendingsShort")}
+                {t("metrics.yourSpendings")}
               </span>
               <span className={dockStyles.metricValue}>
                 -$
@@ -1797,7 +1797,7 @@ export default function Income() {
               }`}
             >
               <span className={dockStyles.metricLabel}>
-                {t("metrics.netShort")}
+                {t("metrics.netEarnings")}
               </span>
               <span className={dockStyles.metricValue}>
                 $
@@ -1850,8 +1850,8 @@ export default function Income() {
                     value={month}
                     data-current={isCurrentMonth}
                   >
-                    {month}
-                    {isCurrentMonth ? " ·" : ""}
+                    {month} - {formatMonthName(month, locale)}
+                    {isCurrentMonth ? " 📅" : ""}
                   </option>
                 );
               })}

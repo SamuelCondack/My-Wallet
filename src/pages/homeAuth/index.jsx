@@ -28,6 +28,17 @@ function HomeAuth() {
   const openMenu = () => setMenuOpen(true);
 
   useEffect(() => {
+    if (isMobile && menuOpen) {
+      document.documentElement.setAttribute("data-mw-menu-open", "1");
+    } else {
+      document.documentElement.removeAttribute("data-mw-menu-open");
+    }
+    return () => {
+      document.documentElement.removeAttribute("data-mw-menu-open");
+    };
+  }, [isMobile, menuOpen]);
+
+  useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
