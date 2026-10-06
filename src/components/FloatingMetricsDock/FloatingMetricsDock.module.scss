@@ -104,26 +104,20 @@
 }
 
 .metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  column-gap: 8px;
+  row-gap: 6px;
+  width: 100%;
+  align-items: start;
 }
 
 .metric {
-  flex: 1 1 28%;
-  min-width: 28%;
-  max-width: 34%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
   color: var(--mw-ink);
-}
-
-.metricSpend,
-.metricNet {
-  flex: 1 1 40%;
-  min-width: 40%;
-  max-width: 50%;
 }
 
 .metricLabel,
@@ -133,6 +127,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .metricLabel {
@@ -148,9 +143,23 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Same colors as the page summary (label + value) */
+/* Row 1: Earned | Pending (center) | Received (right)
+   Row 2: Spendings | (empty) | Net (right) */
 .metricEarned {
+  grid-column: 1;
+  grid-row: 1;
+  align-items: flex-start;
+  text-align: left;
   color: var(--mw-ink);
+}
+
+.metricPending,
+.metricPendingZero {
+  grid-column: 2;
+  grid-row: 1;
+  align-items: center;
+  text-align: center;
+  justify-self: center;
 }
 
 .metricPending {
@@ -162,14 +171,28 @@
 }
 
 .metricReceived {
+  grid-column: 3;
+  grid-row: 1;
+  align-items: flex-end;
+  text-align: right;
+  justify-self: end;
   color: $defaultBlue;
 }
 
 .metricSpend {
+  grid-column: 1;
+  grid-row: 2;
+  align-items: flex-start;
+  text-align: left;
   color: var(--mw-ink);
 }
 
 .metricNet {
+  grid-column: 3;
+  grid-row: 2;
+  align-items: flex-end;
+  text-align: right;
+  justify-self: end;
   color: #007b00;
 }
 
