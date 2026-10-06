@@ -51,12 +51,18 @@
   padding: 0;
   box-shadow: $shadowSoft;
   color: $ink;
-  transition: top 0.42s $easeSoft;
+  transition:
+    opacity 0.36s $easeSoft,
+    transform 0.36s $easeSoft,
+    visibility 0.36s $easeSoft;
 }
 
 :global(html[data-mw-dock-open="1"]) .menuButton {
-  /* Sit with the floating dock instead of floating above it */
-  top: calc(48px + env(safe-area-inset-top, 0px));
+  /* Dock takes the full top bar — hamburger yields until dock dismisses */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(0.92) translateY(-4px);
 }
 
 .menuImg {

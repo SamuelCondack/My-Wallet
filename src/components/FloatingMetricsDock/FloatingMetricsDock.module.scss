@@ -5,15 +5,15 @@
   top: 0;
   left: 0;
   right: 0;
-  /* Below menu button (z-index 4) so hamburger stays on top and clickable */
-  z-index: 3;
+  z-index: 5;
   box-sizing: border-box;
   pointer-events: none;
+  /* Full width — menu button hides while dock is open */
   padding:
     calc(env(safe-area-inset-top, 0px) + 10px)
-    12px
-    14px
-    calc(56px + env(safe-area-inset-left, 0px));
+    calc(12px + env(safe-area-inset-right, 0px))
+    28px
+    calc(12px + env(safe-area-inset-left, 0px));
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -21,39 +21,39 @@
   will-change: opacity, transform;
 }
 
-/* Background-only veil — mask/fade never touches text */
+/* Background-only veil — solid through metrics, fade only after Spendings/Net */
 .dockVeil {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    rgba(247, 250, 252, 0.88) 0%,
-    rgba(247, 250, 252, 0.55) 72%,
-    rgba(247, 250, 252, 0.18) 90%,
+    rgba(247, 250, 252, 0.94) 0%,
+    rgba(247, 250, 252, 0.9) 70%,
+    rgba(247, 250, 252, 0.45) 88%,
     rgba(247, 250, 252, 0) 100%
   );
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--mw-surface) 88%, transparent) 0%,
-    color-mix(in srgb, var(--mw-surface) 50%, transparent) 72%,
-    color-mix(in srgb, var(--mw-surface) 14%, transparent) 90%,
+    color-mix(in srgb, var(--mw-surface) 94%, transparent) 0%,
+    color-mix(in srgb, var(--mw-surface) 88%, transparent) 70%,
+    color-mix(in srgb, var(--mw-surface) 35%, transparent) 88%,
     transparent 100%
   );
-  backdrop-filter: blur(20px) saturate(1.25);
-  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  backdrop-filter: blur(28px) saturate(1.35);
+  -webkit-backdrop-filter: blur(28px) saturate(1.35);
   -webkit-mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 78%,
-    rgba(0, 0, 0, 0.35) 92%,
+    #000 82%,
+    rgba(0, 0, 0, 0.55) 92%,
     transparent 100%
   );
   mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 78%,
-    rgba(0, 0, 0, 0.35) 92%,
+    #000 82%,
+    rgba(0, 0, 0, 0.55) 92%,
     transparent 100%
   );
 }
@@ -61,16 +61,16 @@
 :global(html[data-theme="dark"]) .dockVeil {
   background: linear-gradient(
     180deg,
-    rgba(11, 18, 32, 0.9) 0%,
-    rgba(11, 18, 32, 0.55) 72%,
-    rgba(11, 18, 32, 0.16) 90%,
+    rgba(11, 18, 32, 0.96) 0%,
+    rgba(11, 18, 32, 0.92) 70%,
+    rgba(11, 18, 32, 0.42) 88%,
     rgba(11, 18, 32, 0) 100%
   );
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--mw-surface) 90%, transparent) 0%,
-    color-mix(in srgb, var(--mw-surface) 50%, transparent) 72%,
-    color-mix(in srgb, var(--mw-surface) 12%, transparent) 90%,
+    color-mix(in srgb, var(--mw-surface) 96%, transparent) 0%,
+    color-mix(in srgb, var(--mw-surface) 90%, transparent) 70%,
+    color-mix(in srgb, var(--mw-surface) 38%, transparent) 88%,
     transparent 100%
   );
 }
