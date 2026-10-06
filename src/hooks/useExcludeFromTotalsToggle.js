@@ -1,12 +1,13 @@
 import { useCallback, useRef, useState } from "react";
 
-const SPLASH_MS = 520;
+const SPLASH_MS = 560;
 
 /**
- * Drives liquid-glass splash then persists excludedFromTotals.
+ * Drives liquid-glass splash on exclude and color-restore splash on activate.
  */
 export function useExcludeFromTotalsToggle() {
   const [splashKey, setSplashKey] = useState(null);
+  const [splashMode, setSplashMode] = useState(null); // "out" | "in"
   const timerRef = useRef(null);
   const pendingRef = useRef(new Set());
 
@@ -29,15 +30,14 @@ export function useExcludeFromTotalsToggle() {
     }
 
     const nextExcluded = !currentlyExcluded;
-    if (nextExcluded) {
-      setSplashKey(key);
-      timerRef.current = setTimeout(() => {
-        setSplashKey((prev) => (prev === key ? null : prev));
-        timerRef.current = null;
-      }, SPLASH_MS);
-    } else {
-      setSplashKey(null);
-    }
+    const mode = nextExcluded ? "out" : "in";
+    setSplashMode(mode);
+    setSplashKey(key);
+    timerRef.current = setTimeout(() => {
+      setSplashKey((prev) => (prev === key ? null : prev));
+      setSplashMode((prev) => (prev === mode ? null : prev));
+      timerRef.current = null;
+    }, SPLASH_MS);
 
     try {
       await persist(nextExcluded);
@@ -46,5 +46,5 @@ export function useExcludeFromTotalsToggle() {
     }
   }, []);
 
-  return { splashKey, runToggle, isInteractiveTarget };
+  return { splashKey, splashMode, runToggle, isInteractiveTarget };
 }

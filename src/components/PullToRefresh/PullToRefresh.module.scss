@@ -1,0 +1,89 @@
+@import "../../Global/variables.scss";
+
+.host {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: 50%;
+  z-index: 1200;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-50%, 0, 0);
+  transition: opacity 0.18s $easeSoft;
+  will-change: transform, opacity;
+}
+
+.visible {
+  opacity: 1;
+}
+
+.ball {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--mw-card);
+  border: 1px solid var(--mw-card-border);
+  box-shadow: var(--mw-shadow-soft), inset 0 1px 0 var(--mw-inset-highlight);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+}
+
+.ring {
+  width: 30px;
+  height: 30px;
+  transform: rotate(-90deg);
+}
+
+.track {
+  fill: none;
+  stroke: var(--mw-line);
+  stroke-width: 2.5;
+}
+
+.fill {
+  fill: none;
+  stroke: $defaultBlue;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.04s linear;
+}
+
+.spinner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: $defaultBlue;
+  border-right-color: $defaultBlue;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.16s $easeSoft, transform 0.16s $easeSoft;
+}
+
+.spinnerOn {
+  opacity: 1;
+  transform: scale(1);
+  animation: ptrSpin 0.7s linear infinite;
+}
+
+.refreshing .fill {
+  opacity: 0.25;
+}
+
+@keyframes ptrSpin {
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@media (min-width: 769px) {
+  .host {
+    display: none;
+  }
+}

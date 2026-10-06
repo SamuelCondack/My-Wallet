@@ -64,7 +64,7 @@ export default function Income() {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
-  const { splashKey, runToggle, isInteractiveTarget } =
+  const { splashKey, splashMode, runToggle, isInteractiveTarget } =
     useExcludeFromTotalsToggle();
   const categoryHintValueRef = useRef(0);
 
@@ -948,6 +948,11 @@ export default function Income() {
     const inSelectMode = selectMode && isPending;
     const isExcluded = Boolean(income.excludedFromTotals);
     const isSplashing = splashKey === incomeKey;
+    const splashClass = isSplashing
+      ? splashMode === "in"
+        ? excludeStyles.activating
+        : excludeStyles.splashing
+      : "";
 
     return (
       <motion.div
@@ -969,9 +974,7 @@ export default function Income() {
             isPending ? styles.pendingCard : styles.confirmedCard
           } ${pressedIncomeKey === incomeKey ? styles.incomePressed : ""} ${
             inSelectMode && isSelected ? styles.incomeCardSelected : ""
-          } ${isExcluded ? excludeStyles.excluded : ""} ${
-            isSplashing ? excludeStyles.splashing : ""
-          }`}
+          } ${isExcluded ? excludeStyles.excluded : ""} ${splashClass}`}
           onTouchStart={(event) => {
             if (inSelectMode) return;
             handleIncomeTouchStart(event, incomeKey);

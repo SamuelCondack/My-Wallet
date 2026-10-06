@@ -92,20 +92,38 @@
   animation: excludeCornerSplash 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.splashing .splashCorner:nth-child(2) {
+.splashing .splashCorner:nth-child(2),
+.activating .splashCorner:nth-child(2) {
   animation-delay: 0.04s;
 }
 
-.splashing .splashCorner:nth-child(3) {
+.splashing .splashCorner:nth-child(3),
+.activating .splashCorner:nth-child(3) {
   animation-delay: 0.07s;
 }
 
-.splashing .splashCorner:nth-child(4) {
+.splashing .splashCorner:nth-child(4),
+.activating .splashCorner:nth-child(4) {
   animation-delay: 0.1s;
 }
 
 .splashing {
   transform: scale(0.978);
+}
+
+.activating {
+  transform: scale(1.02);
+  animation: activateCardBloom 0.56s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.activating .splashCorner {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(62, 146, 235, 0.42) 36%,
+    rgba(62, 146, 235, 0) 72%
+  );
+  animation: activateCornerSplash 0.56s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes excludeCornerSplash {
@@ -120,5 +138,35 @@
   100% {
     opacity: 0;
     transform: scale(1.55);
+  }
+}
+
+@keyframes activateCornerSplash {
+  0% {
+    opacity: 0;
+    transform: scale(0.12);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+@keyframes activateCardBloom {
+  0% {
+    filter: grayscale(0.85) saturate(0.3);
+    opacity: 0.78;
+  }
+  55% {
+    filter: grayscale(0) saturate(1.08) brightness(1.03);
+    opacity: 1;
+  }
+  100% {
+    filter: none;
+    opacity: 1;
   }
 }

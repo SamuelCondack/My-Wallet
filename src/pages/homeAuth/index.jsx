@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaUser } from "react-icons/fa";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import PullToRefresh from "../../components/PullToRefresh/PullToRefresh";
 
 const OPEN_DX = 72;
 const MAX_DY = 40;
@@ -166,6 +167,7 @@ function HomeAuth() {
 
   return (
     <main className={styles.mainContainer}>
+      <PullToRefresh enabled={isMobile && !menuOpen} />
       {isMobile && !menuOpen && (
         <>
           <div

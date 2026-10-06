@@ -54,7 +54,7 @@ import excludeStyles from "../../styles/excludeFromTotals.module.scss";
 export default function Expenses() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { splashKey, runToggle, isInteractiveTarget } =
+  const { splashKey, splashMode, runToggle, isInteractiveTarget } =
     useExcludeFromTotalsToggle();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
@@ -1557,6 +1557,11 @@ export default function Expenses() {
                             expense.id + "-" + expense.installmentNumber;
                           const isExcluded = Boolean(expense.excludedFromTotals);
                           const isSplashing = splashKey === expenseKey;
+                          const splashClass = isSplashing
+                            ? splashMode === "in"
+                              ? excludeStyles.activating
+                              : excludeStyles.splashing
+                            : "";
 
                           return (
                           <motion.div
@@ -1583,9 +1588,7 @@ export default function Expenses() {
                                 pressedExpenseKey === expenseKey
                                   ? styles.expensePressed
                                   : ""
-                              } ${isExcluded ? excludeStyles.excluded : ""} ${
-                                isSplashing ? excludeStyles.splashing : ""
-                              }`}
+                              } ${isExcluded ? excludeStyles.excluded : ""} ${splashClass}`}
                               onTouchStart={(event) =>
                                 handleExpenseTouchStart(event, expenseKey)
                               }
