@@ -37,15 +37,25 @@ import {
 import { matchesExpenseValueQuery } from "../../utils/finance";
 import { loadIncomesWithMigration } from "../../services/incomeService";
 import {
+  setExpenseExcludedFromTotals,
+  setExpensesExcludedFromTotals,
+} from "../../services/excludedFromTotalsService";
+import {
   getEarnedIncome,
   getNetEarnings,
   getPendingIncome,
   getReceivedIncomeForFinancialPeriod,
 } from "../../utils/incomeCalculations";
+import { countsInTotals } from "../../utils/totalsVisibility";
+import { useExcludeFromTotalsToggle } from "../../hooks/useExcludeFromTotalsToggle";
+import ExcludeSplashLayer from "../../components/ExcludeSplashLayer/ExcludeSplashLayer";
+import excludeStyles from "../../styles/excludeFromTotals.module.scss";
 
 export default function Expenses() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { splashKey, runToggle, isInteractiveTarget } =
+    useExcludeFromTotalsToggle();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
@@ -146,7 +156,12 @@ export default function Expenses() {
       const cachedExpenses = getCached("expenses", user.uid);
 
       if (cachedExpenses) {
-        setExpensesList(cachedExpenses);
+        setExpensesList(
+          cachedExpenses.map((item) => ({
+            ...item,
+            excludedFromTotals: Boolean(item.excludedFromTotals),
+          }))
+        );
         setIsLoading(false);
       }
 
@@ -158,10 +173,14 @@ export default function Expenses() {
 
         const filteredData = data.docs
           .filter((doc) => !doc.id.startsWith("earnings-"))
-          .map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
-          }));
+          .map((doc) => {
+            const dataItem = doc.data();
+            return {
+              ...dataItem,
+              id: doc.id,
+              excludedFromTotals: Boolean(dataItem.excludedFromTotals),
+            };
+          });
 
         setExpensesList(filteredData);
         setCached("expenses", user.uid, filteredData);
@@ -944,10 +963,14 @@ export default function Expenses() {
       const data = await getDocs(expensesCollectionRef);
       const filteredData = data.docs
         .filter((docItem) => !docItem.id.startsWith("earnings-"))
-        .map((docItem) => ({
-          ...docItem.data(),
-          id: docItem.id,
-        }));
+        .map((docItem) => {
+          const dataItem = docItem.data();
+          return {
+            ...dataItem,
+            id: docItem.id,
+            excludedFromTotals: Boolean(dataItem.excludedFromTotals),
+          };
+        });
 
       setExpensesList(filteredData);
       setCached("expenses", userId, filteredData);
@@ -1242,10 +1265,70 @@ export default function Expenses() {
   };
 
   const getMonthSpendingsTotal = (monthExpenses) =>
-    monthExpenses.reduce((acc, cur) => acc + Number(cur.value), 0).toFixed(2);
+    monthExpenses
+      .reduce((acc, cur) => {
+        if (!countsInTotals(cur)) return acc;
+        return acc + Number(cur.value);
+      }, 0)
+      .toFixed(2);
 
   const renderSpendingsSummary = (monthKey, monthExpenses) =>
     renderIncomeSummary(monthKey, getMonthSpendingsTotal(monthExpenses));
+
+  const applyExpenseExcluded = async (expense, nextExcluded) => {
+    if (!userId || !expense?.id) return;
+    const previous = Boolean(expense.excludedFromTotals);
+    setExpensesList((prev) => {
+      const next = prev.map((item) =>
+        item.id === expense.id
+          ? { ...item, excludedFromTotals: nextExcluded }
+          : item
+      );
+      setCached("expenses", userId, next);
+      return next;
+    });
+    try {
+      await setExpenseExcludedFromTotals(userId, expense.id, nextExcluded);
+    } catch (error) {
+      console.error(error);
+      setExpensesList((prev) => {
+        const next = prev.map((item) =>
+          item.id === expense.id
+            ? { ...item, excludedFromTotals: previous }
+            : item
+        );
+        setCached("expenses", userId, next);
+        return next;
+      });
+      toast.error("Couldn't update expense.");
+    }
+  };
+
+  const activateAllExpenses = async (monthExpenses) => {
+    if (!userId) return;
+    const ids = [
+      ...new Set(
+        monthExpenses
+          .filter((item) => item.excludedFromTotals)
+          .map((item) => item.id)
+      ),
+    ];
+    if (!ids.length) return;
+    setExpensesList((prev) => {
+      const idSet = new Set(ids);
+      const next = prev.map((item) =>
+        idSet.has(item.id) ? { ...item, excludedFromTotals: false } : item
+      );
+      setCached("expenses", userId, next);
+      return next;
+    });
+    try {
+      await setExpensesExcludedFromTotals(userId, ids, false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Couldn't activate expenses.");
+    }
+  };
 
   const filteredCategorySpendings =
     effectiveSelectedCategory === "All"
@@ -1254,8 +1337,9 @@ export default function Expenses() {
           .flatMap(([, expenses]) => expenses)
           .filter(
             (expense) =>
+              countsInTotals(expense) &&
               (expense.categoryId || DEFAULT_CATEGORY_ID) ===
-              effectiveSelectedCategory
+                effectiveSelectedCategory
           )
           .reduce((sum, expense) => sum + Number(expense.value), 0);
 
@@ -1415,15 +1499,33 @@ export default function Expenses() {
                 ) : null;
 
               // Garantir que o mês seja exibido mesmo sem despesas
+              const monthHasExcluded = expenses.some(
+                (expense) => expense.excludedFromTotals
+              );
+              const monthTitle = (
+                <div className={styles.monthHeader}>
+                  <h3 className={styles.month}>
+                    {new Date(year, month - 1, 1).toLocaleString("default", {
+                      month: "long",
+                    })}{" "}
+                    {year}
+                  </h3>
+                  {monthHasExcluded && (
+                    <button
+                      type="button"
+                      className={styles.activateAllBtn}
+                      onClick={() => activateAllExpenses(expenses)}
+                    >
+                      Activate all
+                    </button>
+                  )}
+                </div>
+              );
+
               if (expenses.length === 0) {
                 return (
                   <div key={monthKey}>
-                    <h3 className={styles.month}>
-                      {new Date(year, month - 1, 1).toLocaleString("default", {
-                        month: "long",
-                      })}{" "}
-                      {year}
-                    </h3>
+                    {monthTitle}
                     <div className={styles.monthSummary}>
                       {renderSpendingsSummary(monthKey, expenses)}
                     </div>
@@ -1434,12 +1536,7 @@ export default function Expenses() {
 
               return (
                 <div key={monthKey}>
-                  <h3 className={styles.month}>
-                    {new Date(year, month - 1, 1).toLocaleString("default", {
-                      month: "long",
-                    })}{" "}
-                    {year}
-                  </h3>
+                  {monthTitle}
 
                   <div className={styles.monthSummary}>
                     {renderSpendingsSummary(monthKey, expenses)}
@@ -1458,6 +1555,8 @@ export default function Expenses() {
                         .map((expense) => {
                           const expenseKey =
                             expense.id + "-" + expense.installmentNumber;
+                          const isExcluded = Boolean(expense.excludedFromTotals);
+                          const isSplashing = splashKey === expenseKey;
 
                           return (
                           <motion.div
@@ -1478,17 +1577,51 @@ export default function Expenses() {
                             }}
                           >
                             <div
-                              className={`${styles.expense} ${getBorderStyle(
+                              className={`${styles.expense} ${excludeStyles.surface} ${getBorderStyle(
                                 expense.method
                               )} ${
                                 pressedExpenseKey === expenseKey
                                   ? styles.expensePressed
                                   : ""
+                              } ${isExcluded ? excludeStyles.excluded : ""} ${
+                                isSplashing ? excludeStyles.splashing : ""
                               }`}
                               onTouchStart={(event) =>
                                 handleExpenseTouchStart(event, expenseKey)
                               }
+                              onClick={(event) => {
+                                if (isInteractiveTarget(event.target)) return;
+                                runToggle({
+                                  key: expenseKey,
+                                  currentlyExcluded: isExcluded,
+                                  persist: (nextExcluded) =>
+                                    applyExpenseExcluded(expense, nextExcluded),
+                                });
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              aria-pressed={isExcluded}
+                              aria-label={`${
+                                isExcluded ? "Include" : "Exclude"
+                              } ${expense.name} from totals`}
+                              onKeyDown={(event) => {
+                                if (event.key !== "Enter" && event.key !== " ") {
+                                  return;
+                                }
+                                event.preventDefault();
+                                runToggle({
+                                  key: expenseKey,
+                                  currentlyExcluded: isExcluded,
+                                  persist: (nextExcluded) =>
+                                    applyExpenseExcluded(expense, nextExcluded),
+                                });
+                              }}
                             >
+                            <ExcludeSplashLayer
+                              active={isSplashing}
+                              className={excludeStyles.splashLayer}
+                              cornerClassName={excludeStyles.splashCorner}
+                            />
                             <button
                               className={styles.expenseEditButton}
                               onClick={() => handleEditClick(expense)}

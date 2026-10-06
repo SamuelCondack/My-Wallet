@@ -1,0 +1,124 @@
+/**
+ * Shared “exclude from totals” card surface — liquid press + corner splash + grayscale.
+ */
+.surface {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    filter 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.surface:active:not(.excluded) {
+  transform: scale(0.985);
+}
+
+.excluded {
+  filter: grayscale(1) saturate(0.15) brightness(0.96);
+  opacity: 0.7;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 8px 28px rgba(15, 23, 42, 0.06) !important;
+}
+
+.excluded::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.04) 42%,
+    rgba(148, 163, 184, 0.12) 100%
+  );
+  mix-blend-mode: soft-light;
+  opacity: 0.85;
+  transition: opacity 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.splashLayer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.splashCorner {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(148, 163, 184, 0.22) 38%,
+    rgba(148, 163, 184, 0) 70%
+  );
+  opacity: 0;
+  transform: scale(0.2);
+  filter: blur(0.5px);
+}
+
+.splashCorner:nth-child(1) {
+  top: -28px;
+  left: -28px;
+}
+
+.splashCorner:nth-child(2) {
+  top: -28px;
+  right: -28px;
+}
+
+.splashCorner:nth-child(3) {
+  bottom: -28px;
+  left: -28px;
+}
+
+.splashCorner:nth-child(4) {
+  bottom: -28px;
+  right: -28px;
+}
+
+.splashing .splashCorner {
+  animation: excludeCornerSplash 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.splashing .splashCorner:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+.splashing .splashCorner:nth-child(3) {
+  animation-delay: 0.07s;
+}
+
+.splashing .splashCorner:nth-child(4) {
+  animation-delay: 0.1s;
+}
+
+.splashing {
+  transform: scale(0.978);
+}
+
+@keyframes excludeCornerSplash {
+  0% {
+    opacity: 0;
+    transform: scale(0.15);
+  }
+  35% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}

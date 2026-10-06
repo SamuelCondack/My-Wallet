@@ -6,6 +6,8 @@
  * Do not mix these.
  */
 
+import { countsInTotals } from "./totalsVisibility.js";
+
 export const INCOME_STATUS = {
   PENDING: "pending",
   CONFIRMED: "confirmed",
@@ -63,6 +65,9 @@ export function getCashReceived(incomes, cashPeriod) {
  */
 export function getCashOut(expenses, cashPeriod) {
   return (expenses || []).reduce((sum, item) => {
+    if (!countsInTotals(item)) {
+      return sum;
+    }
     const cashDate = item.paidDate || item.inclusionDate;
     if (!cashDate || monthKeyFromDate(cashDate) !== cashPeriod) {
       return sum;
@@ -245,7 +250,7 @@ export function dateInputToPeriod(dateValue) {
 
 function sumBy(items, predicate) {
   return (items || []).reduce((sum, item) => {
-    if (!predicate(item)) {
+    if (!countsInTotals(item) || !predicate(item)) {
       return sum;
     }
     return sum + (Number(item.amount) || 0);

@@ -17,7 +17,9 @@ export default function ToastComponent() {
       pauseOnFocusLoss={false}
       newestOnTop
       limit={3}
-      draggable={false}
+      draggable
+      draggableDirection="y"
+      draggablePercent={40}
       theme="light"
       style={{
         top: "calc(env(safe-area-inset-top, 0px) + 52px)",

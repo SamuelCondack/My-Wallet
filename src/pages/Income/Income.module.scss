@@ -385,8 +385,77 @@
   flex-wrap: wrap;
 }
 
+.sectionTitleRow,
+.confirmedTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.confirmedTitleRow {
+  margin: 0 10% 12px;
+}
+
 .confirmedTitle {
-  margin: 0 0 12px 10% !important;
+  margin: 0 !important;
+}
+
+.activateAllBtn {
+  border: none;
+  background: none;
+  padding: 0;
+  color: $defaultBlue;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.categoryFilter {
+  position: relative;
+}
+
+.categoryFilterWithHint {
+  padding-bottom: 26px;
+}
+
+.categorySelectWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.categorySelect {
+  min-width: 148px;
+  box-sizing: border-box;
+}
+
+.categoryFilterHintWrap {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.categoryFilterHint {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: $defaultBlue;
+  background: var(--mw-chip-bg);
+  border-radius: 999px;
+  padding: 3px 8px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .selectHint {

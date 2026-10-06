@@ -1,3 +1,5 @@
+import { countsInTotals } from "./totalsVisibility.js";
+
 export function buildExpensesByMonth(expensesList, referenceDate = new Date()) {
   const expensesByMonth = {};
 
@@ -96,16 +98,17 @@ export function buildExpensesByMonth(expensesList, referenceDate = new Date()) {
 }
 
 export function getMonthTotal(expensesByMonth, monthKey) {
-  return (expensesByMonth[monthKey] || []).reduce(
-    (sum, expense) => sum + Number(expense.value || 0),
-    0
-  );
+  return (expensesByMonth[monthKey] || []).reduce((sum, expense) => {
+    if (!countsInTotals(expense)) return sum;
+    return sum + Number(expense.value || 0);
+  }, 0);
 }
 
 export function getCategoryTotals(expensesByMonth, monthKey, defaultCategoryId = "other") {
   const totals = {};
 
   (expensesByMonth[monthKey] || []).forEach((expense) => {
+    if (!countsInTotals(expense)) return;
     const categoryId = expense.categoryId || defaultCategoryId;
     totals[categoryId] = (totals[categoryId] || 0) + Number(expense.value || 0);
   });

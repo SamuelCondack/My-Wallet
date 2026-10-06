@@ -129,6 +129,28 @@ assertEqual(
   1
 );
 
+// Excluded from totals — still in lists, omitted from sums
+const excludedPending = { ...septemberPending, excludedFromTotals: true };
+assertEqual(
+  "excluded pending omitted from earned",
+  getEarnedIncome([septemberConfirmed, excludedPending], "2026-09"),
+  3000
+);
+assertEqual(
+  "excluded pending omitted from pending total",
+  getPendingIncome([septemberConfirmed, excludedPending], "2026-09"),
+  0
+);
+assertEqual(
+  "excluded still returned by filterIncomes",
+  filterIncomes([excludedPending], {
+    year: "2026",
+    month: "09",
+    status: "pending",
+  }).length,
+  1
+);
+
 if (!process.exitCode) {
   console.log("All income calculation checks passed.");
 }

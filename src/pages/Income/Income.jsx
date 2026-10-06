@@ -30,6 +30,8 @@ import {
   loadIncomesWithMigration,
   pauseMonthlyIncome,
   resumeMonthlyIncome,
+  setIncomeExcludedFromTotals,
+  setIncomesExcludedFromTotals,
   updateIncome,
 } from "../../services/incomeService";
 import { getCached, setCached } from "../../utils/dataCache";
@@ -49,8 +51,12 @@ import {
   buildExpensesByMonth,
   getMonthTotal,
 } from "../../utils/expenseCalculations";
+import { countsInTotals } from "../../utils/totalsVisibility";
 import { DEFAULT_INCOME_CATEGORY_ID } from "../../constants/defaultCategories";
 import { getProFeature } from "../../constants/subscription";
+import { useExcludeFromTotalsToggle } from "../../hooks/useExcludeFromTotalsToggle";
+import ExcludeSplashLayer from "../../components/ExcludeSplashLayer/ExcludeSplashLayer";
+import excludeStyles from "../../styles/excludeFromTotals.module.scss";
 import styles from "./Income.module.scss";
 
 export default function Income() {
@@ -58,6 +64,9 @@ export default function Income() {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+  const { splashKey, runToggle, isInteractiveTarget } =
+    useExcludeFromTotalsToggle();
+  const categoryHintValueRef = useRef(0);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [userId, setUserId] = useState(null);
@@ -349,15 +358,20 @@ export default function Income() {
     if (periodKey) {
       return getIncomeSummaryForPeriod(incomes, periodKey);
     }
-    const earned = summarySource.reduce(
-      (sum, item) => sum + Number(item.amount),
-      0
-    );
+    const earned = summarySource.reduce((sum, item) => {
+      if (!countsInTotals(item)) return sum;
+      return sum + Number(item.amount);
+    }, 0);
     const received = summarySource
-      .filter((item) => item.status === INCOME_STATUS.CONFIRMED)
+      .filter(
+        (item) =>
+          countsInTotals(item) && item.status === INCOME_STATUS.CONFIRMED
+      )
       .reduce((sum, item) => sum + Number(item.amount), 0);
     const pending = summarySource
-      .filter((item) => item.status === INCOME_STATUS.PENDING)
+      .filter(
+        (item) => countsInTotals(item) && item.status === INCOME_STATUS.PENDING
+      )
       .reduce((sum, item) => sum + Number(item.amount), 0);
     return { earned, received, pending };
   }, [incomes, periodKey, summarySource]);
@@ -377,20 +391,20 @@ export default function Income() {
         .reduce(
           (sum, [, monthExpenses]) =>
             sum +
-            monthExpenses.reduce(
-              (monthSum, expense) => monthSum + (Number(expense.value) || 0),
-              0
-            ),
+            monthExpenses.reduce((monthSum, expense) => {
+              if (!countsInTotals(expense)) return monthSum;
+              return monthSum + (Number(expense.value) || 0);
+            }, 0),
           0
         );
     }
     return Object.values(expensesByMonth).reduce(
       (sum, monthExpenses) =>
         sum +
-        monthExpenses.reduce(
-          (monthSum, expense) => monthSum + (Number(expense.value) || 0),
-          0
-        ),
+        monthExpenses.reduce((monthSum, expense) => {
+          if (!countsInTotals(expense)) return monthSum;
+          return monthSum + (Number(expense.value) || 0);
+        }, 0),
       0
     );
   }, [expensesByMonth, periodKey, selectedYear]);
@@ -404,6 +418,18 @@ export default function Income() {
     (item) => item.status === INCOME_STATUS.CONFIRMED
   );
 
+  const filteredCategoryIncomeTotal = useMemo(() => {
+    if (selectedCategory === "All") return null;
+    return filterIncomes(incomes, {
+      year: selectedYear,
+      month: selectedMonth,
+      categoryId: selectedCategory,
+      status: "All",
+    })
+      .filter(countsInTotals)
+      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  }, [incomes, selectedYear, selectedMonth, selectedCategory]);
+
   /** Pending in the current year/month only — ignores category filter (used for All / By category). */
   const periodPendingList = useMemo(
     () =>
@@ -416,9 +442,15 @@ export default function Income() {
     [incomes, selectedYear, selectedMonth]
   );
 
+  /** Bulk PDF paths omit excluded cards; manual select can still include them. */
+  const periodPendingExportList = useMemo(
+    () => periodPendingList.filter(countsInTotals),
+    [periodPendingList]
+  );
+
   const pendingByCategory = useMemo(() => {
     const groups = new Map();
-    periodPendingList.forEach((item) => {
+    periodPendingExportList.forEach((item) => {
       const key = item.categoryId || DEFAULT_INCOME_CATEGORY_ID;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(item);
@@ -440,7 +472,7 @@ export default function Income() {
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [periodPendingList, categoriesMap]);
+  }, [periodPendingExportList, categoriesMap]);
 
   const exportPeriodLabel = useMemo(() => {
     if (periodKey) return formatPeriodLabel(periodKey);
@@ -508,12 +540,64 @@ export default function Income() {
       setPaywallOpen(true);
       return;
     }
+    // Allow opening when only excluded pendings remain (manual select can still export them).
     if (periodPendingList.length === 0) {
       toast.info("No pending income to export.");
       return;
     }
     setExportSheetView("menu");
     setExportSheetOpen(true);
+  };
+
+  const applyIncomeExcluded = async (income, nextExcluded) => {
+    if (!userId || !income?.id) return;
+    const previous = Boolean(income.excludedFromTotals);
+    setIncomes((prev) => {
+      const next = prev.map((item) =>
+        item.id === income.id
+          ? { ...item, excludedFromTotals: nextExcluded }
+          : item
+      );
+      setCached("income", userId, next);
+      return next;
+    });
+    try {
+      await setIncomeExcludedFromTotals(userId, income.id, nextExcluded);
+    } catch (error) {
+      console.error(error);
+      setIncomes((prev) => {
+        const next = prev.map((item) =>
+          item.id === income.id
+            ? { ...item, excludedFromTotals: previous }
+            : item
+        );
+        setCached("income", userId, next);
+        return next;
+      });
+      toast.error("Couldn't update income.");
+    }
+  };
+
+  const activateAllIncomes = async (items) => {
+    if (!userId) return;
+    const ids = items
+      .filter((item) => item.excludedFromTotals)
+      .map((item) => item.id);
+    if (!ids.length) return;
+    setIncomes((prev) => {
+      const idSet = new Set(ids);
+      const next = prev.map((item) =>
+        idSet.has(item.id) ? { ...item, excludedFromTotals: false } : item
+      );
+      setCached("income", userId, next);
+      return next;
+    });
+    try {
+      await setIncomesExcludedFromTotals(userId, ids, false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Couldn't activate incomes.");
+    }
   };
 
   const startSelectMode = () => {
@@ -847,12 +931,23 @@ export default function Income() {
     return <LoadingComponent variant="expenses" />;
   }
 
+  if (filteredCategoryIncomeTotal !== null) {
+    categoryHintValueRef.current = filteredCategoryIncomeTotal;
+  }
+
+  const categoryHintTransition = {
+    duration: 0.34,
+    ease: [0.32, 0.72, 0, 1],
+  };
+
   const renderCard = (income) => {
     const category = categoriesMap[income.categoryId];
     const isPending = income.status === INCOME_STATUS.PENDING;
     const incomeKey = income.id;
     const isSelected = selectedIncomeIds.includes(incomeKey);
     const inSelectMode = selectMode && isPending;
+    const isExcluded = Boolean(income.excludedFromTotals);
+    const isSplashing = splashKey === incomeKey;
 
     return (
       <motion.div
@@ -870,33 +965,58 @@ export default function Income() {
         }}
       >
         <div
-          className={`${styles.incomeCard} ${
+          className={`${styles.incomeCard} ${excludeStyles.surface} ${
             isPending ? styles.pendingCard : styles.confirmedCard
           } ${pressedIncomeKey === incomeKey ? styles.incomePressed : ""} ${
             inSelectMode && isSelected ? styles.incomeCardSelected : ""
+          } ${isExcluded ? excludeStyles.excluded : ""} ${
+            isSplashing ? excludeStyles.splashing : ""
           }`}
           onTouchStart={(event) => {
             if (inSelectMode) return;
             handleIncomeTouchStart(event, incomeKey);
           }}
-          onClick={
+          onClick={(event) => {
+            if (inSelectMode) {
+              toggleIncomeSelected(incomeKey);
+              return;
+            }
+            if (isInteractiveTarget(event.target)) return;
+            runToggle({
+              key: incomeKey,
+              currentlyExcluded: isExcluded,
+              persist: (nextExcluded) =>
+                applyIncomeExcluded(income, nextExcluded),
+            });
+          }}
+          role="button"
+          tabIndex={0}
+          aria-pressed={isExcluded}
+          aria-label={
             inSelectMode
-              ? () => toggleIncomeSelected(incomeKey)
-              : undefined
+              ? `${isSelected ? "Deselect" : "Select"} ${income.description}`
+              : `${isExcluded ? "Include" : "Exclude"} ${income.description} from totals`
           }
-          role={inSelectMode ? "button" : undefined}
-          tabIndex={inSelectMode ? 0 : undefined}
-          onKeyDown={
-            inSelectMode
-              ? (event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    toggleIncomeSelected(incomeKey);
-                  }
-                }
-              : undefined
-          }
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            if (inSelectMode) {
+              toggleIncomeSelected(incomeKey);
+              return;
+            }
+            runToggle({
+              key: incomeKey,
+              currentlyExcluded: isExcluded,
+              persist: (nextExcluded) =>
+                applyIncomeExcluded(income, nextExcluded),
+            });
+          }}
         >
+          <ExcludeSplashLayer
+            active={isSplashing}
+            className={excludeStyles.splashLayer}
+            cornerClassName={excludeStyles.splashCorner}
+          />
           {inSelectMode ? (
             <span
               className={`${styles.selectCheck} ${
@@ -1074,21 +1194,48 @@ export default function Income() {
             </select>
           </div>
 
-          <div className={styles.filter}>
+          <div
+            className={`${styles.filter} ${styles.categoryFilter} ${
+              filteredCategoryIncomeTotal !== null
+                ? styles.categoryFilterWithHint
+                : ""
+            }`}
+          >
             <label htmlFor="incomeCategoryFilter">Filter by Category: </label>
-            <select
-              id="incomeCategoryFilter"
-              value={selectedCategory}
-              className={styles.selectFilters}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-              <option value="All">All</option>
-              {incomeCategories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.icon} {category.name}
-                </option>
-              ))}
-            </select>
+            <div className={styles.categorySelectWrap}>
+              <select
+                id="incomeCategoryFilter"
+                value={selectedCategory}
+                className={`${styles.selectFilters} ${styles.categorySelect}`}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <option value="All">All</option>
+                {incomeCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+              </select>
+              <AnimatePresence>
+                {filteredCategoryIncomeTotal !== null ? (
+                  <motion.div
+                    key="income-category-filter-hint"
+                    className={styles.categoryFilterHintWrap}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={categoryHintTransition}
+                  >
+                    <span
+                      className={styles.categoryFilterHint}
+                      title="Temporary total for the selected category filter"
+                    >
+                      ${categoryHintValueRef.current.toFixed(2)}
+                    </span>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
           </div>
 
           <div className={styles.filter}>
@@ -1220,7 +1367,19 @@ export default function Income() {
               selectedStatus === INCOME_STATUS.PENDING) && (
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
-                  <h3>Pending</h3>
+                  <div className={styles.sectionTitleRow}>
+                    <h3>Pending</h3>
+                    {pendingList.some((item) => item.excludedFromTotals) &&
+                      !selectMode && (
+                        <button
+                          type="button"
+                          className={styles.activateAllBtn}
+                          onClick={() => activateAllIncomes(pendingList)}
+                        >
+                          Activate all
+                        </button>
+                      )}
+                  </div>
                   {periodPendingList.length > 0 && !selectMode && (
                     <button
                       type="button"
@@ -1263,7 +1422,18 @@ export default function Income() {
               selectedStatus === INCOME_STATUS.CONFIRMED) &&
               !selectMode && (
               <section className={styles.section}>
-                <h3 className={styles.confirmedTitle}>Confirmed</h3>
+                <div className={styles.confirmedTitleRow}>
+                  <h3 className={styles.confirmedTitle}>Confirmed</h3>
+                  {confirmedList.some((item) => item.excludedFromTotals) && (
+                    <button
+                      type="button"
+                      className={styles.activateAllBtn}
+                      onClick={() => activateAllIncomes(confirmedList)}
+                    >
+                      Activate all
+                    </button>
+                  )}
+                </div>
                 {confirmedList.length === 0 ? (
                   <p className={styles.emptySection}>
                     No confirmed income for this period.
@@ -1383,17 +1553,17 @@ export default function Income() {
             <button
               type="button"
               className={styles.exportMenuBtn}
-              disabled={isExportingPdf}
+              disabled={isExportingPdf || periodPendingExportList.length === 0}
               onClick={() =>
                 runPendingPdfExport({
-                  list: periodPendingList,
+                  list: periodPendingExportList,
                 })
               }
             >
               <strong>All pending</strong>
               <span>
-                {periodPendingList.length} item
-                {periodPendingList.length === 1 ? "" : "s"}
+                {periodPendingExportList.length} item
+                {periodPendingExportList.length === 1 ? "" : "s"}
               </span>
             </button>
             <button

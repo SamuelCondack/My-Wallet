@@ -362,9 +362,32 @@ body {
     }
 }
 
-.month {
+.monthHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
     margin: 16px 0 8px 10%;
+}
+
+.month {
+    margin: 0;
     text-align: left;
+}
+
+.activateAllBtn {
+    border: none;
+    background: none;
+    padding: 0;
+    color: $defaultBlue;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 
 .monthSummary {

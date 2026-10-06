@@ -74,6 +74,7 @@ function normalizeIncome(id, data) {
     startPeriod: data.startPeriod || null,
     isPaused: Boolean(data.isPaused),
     pauseDate: data.pauseDate || null,
+    excludedFromTotals: Boolean(data.excludedFromTotals),
     createdAt: data.createdAt || null,
     updatedAt: data.updatedAt || null,
     migratedFromEarnings: Boolean(data.migratedFromEarnings),
@@ -179,6 +180,7 @@ async function createMonthlyIncome(userId, payload) {
       startPeriod,
       isPaused: false,
       pauseDate: null,
+      excludedFromTotals: false,
     };
     const ref = doc(incomeCollection(userId));
     await setDoc(ref, data);
@@ -207,7 +209,6 @@ export async function createIncome(userId, payload, { id } = {}) {
       ? Math.floor(installmentsRaw)
       : 1;
   const totalAmount = Number(payload.amount);
-  const status = payload.status;
   const now = new Date().toISOString();
 
   if (installments === 1 || id) {
@@ -220,6 +221,7 @@ export async function createIncome(userId, payload, { id } = {}) {
       startPeriod: null,
       isPaused: false,
       pauseDate: null,
+      excludedFromTotals: false,
     };
 
     const ref = id ? incomeDoc(userId, id) : doc(incomeCollection(userId));
@@ -251,6 +253,7 @@ export async function createIncome(userId, payload, { id } = {}) {
       startPeriod: null,
       isPaused: false,
       pauseDate: null,
+      excludedFromTotals: false,
       createdAt: now,
       updatedAt: now,
       migratedFromEarnings: false,
@@ -329,6 +332,7 @@ export async function ensureMonthlyIncomeHorizon(userId, incomes) {
         startPeriod,
         isPaused: Boolean(template.isPaused),
         pauseDate: template.pauseDate || null,
+        excludedFromTotals: false,
         createdAt: now,
         updatedAt: now,
         migratedFromEarnings: false,
@@ -543,6 +547,35 @@ export async function resumeMonthlyIncome(userId, income) {
 /**
  * Confirm pending income. Never changes incomePeriod.
  */
+export async function setIncomeExcludedFromTotals(userId, incomeId, excluded) {
+  const excludedFromTotals = Boolean(excluded);
+  const updatedAt = new Date().toISOString();
+  await updateDoc(incomeDoc(userId, incomeId), {
+    excludedFromTotals,
+    updatedAt,
+  });
+  invalidateCached("income", userId);
+  return { excludedFromTotals, updatedAt };
+}
+
+export async function setIncomesExcludedFromTotals(userId, incomeIds, excluded) {
+  const excludedFromTotals = Boolean(excluded);
+  const updatedAt = new Date().toISOString();
+  const ids = [...new Set((incomeIds || []).filter(Boolean))];
+  if (!ids.length) return { excludedFromTotals, updatedAt, count: 0 };
+
+  const batch = writeBatch(db);
+  ids.forEach((incomeId) => {
+    batch.update(incomeDoc(userId, incomeId), {
+      excludedFromTotals,
+      updatedAt,
+    });
+  });
+  await batch.commit();
+  invalidateCached("income", userId);
+  return { excludedFromTotals, updatedAt, count: ids.length };
+}
+
 export async function confirmIncome(userId, incomeId, receivedDate) {
   if (!receivedDate) {
     throw new Error("Received date is required.");
@@ -559,6 +592,19 @@ export async function confirmIncome(userId, incomeId, receivedDate) {
   return data;
 }
 
+async function dismissEarningsMigration(userId, incomePeriod) {
+  const monthKey = String(incomePeriod || "").slice(0, 7);
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+    return;
+  }
+  // Keep historical earnings.value; only mark so migrate won't recreate the income.
+  await setDoc(
+    doc(earningsCollection(userId), monthKey),
+    { incomeMigrationDismissed: true },
+    { merge: true }
+  );
+}
+
 export async function deleteIncome(userId, incomeId) {
   const incomes = await fetchIncomes(userId);
   const target = incomes.find((item) => item.id === incomeId);
@@ -573,6 +619,11 @@ export async function deleteIncome(userId, incomeId) {
   } else {
     await deleteDoc(incomeDoc(userId, incomeId));
   }
+
+  if (target?.migratedFromEarnings) {
+    await dismissEarningsMigration(userId, target.incomePeriod);
+  }
+
   invalidateCached("income", userId);
   return target || null;
 }
@@ -581,6 +632,8 @@ export async function deleteIncome(userId, incomeId) {
  * Migrate legacy monthly earnings docs into Income transactions.
  * Idempotent: uses fixed ids `migrated-earnings-{YYYY-MM}`.
  * Does not delete or alter historical earnings amounts.
+ * If the user deletes a migrated income, earnings.incomeMigrationDismissed
+ * prevents it from being recreated on the next load.
  */
 export async function migrateEarningsToIncome(userId, existingIncomes = null) {
   const incomes = existingIncomes ?? (await fetchIncomes(userId));
@@ -600,7 +653,12 @@ export async function migrateEarningsToIncome(userId, existingIncomes = null) {
       continue;
     }
 
-    const value = Number(earningsDoc.data()?.value);
+    const earningsData = earningsDoc.data() || {};
+    if (earningsData.incomeMigrationDismissed) {
+      continue;
+    }
+
+    const value = Number(earningsData.value);
     if (!(value > 0)) {
       continue;
     }
