@@ -4,11 +4,6 @@ import { useLocation } from "react-router-dom";
 /** In-memory scroll Y per pathname (session-lived). */
 const scrollMemory = new Map();
 
-export function clearRouteScroll(pathname) {
-  if (!pathname) return;
-  scrollMemory.delete(pathname);
-}
-
 function readScrollY() {
   return window.scrollY || document.documentElement.scrollTop || 0;
 }
