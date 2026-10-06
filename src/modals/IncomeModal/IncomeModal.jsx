@@ -22,6 +22,8 @@ const EMPTY_FORM = {
   receivedDate: "",
   status: INCOME_STATUS.PENDING,
   installments: "",
+  isMonthly: false,
+  pauseDate: "",
   notes: "",
 };
 
@@ -83,6 +85,8 @@ export default function IncomeModal({
           Number(initialValues.installments) > 1
             ? String(Number(initialValues.installments))
             : "",
+        isMonthly: Boolean(initialValues.isMonthly),
+        pauseDate: initialValues.pauseDate || "",
         notes: initialValues.notes || "",
       });
     } else {
@@ -94,6 +98,8 @@ export default function IncomeModal({
         expectedDate: today,
         status: INCOME_STATUS.PENDING,
         installments: "",
+        isMonthly: false,
+        pauseDate: "",
       });
     }
 
@@ -138,11 +144,12 @@ export default function IncomeModal({
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    const isMonthly = Boolean(form.isMonthly);
     const installmentsRaw = String(form.installments || "").trim();
     const installments = Number(installmentsRaw);
     const resolvedInstallments =
       !isConfirmMode &&
-      mode === "create" &&
+      !isMonthly &&
       Number.isFinite(installments) &&
       installments > 1
         ? Math.floor(installments)
@@ -155,6 +162,8 @@ export default function IncomeModal({
       expectedDate: form.expectedDate,
       notes: form.notes,
       installments: resolvedInstallments,
+      isMonthly,
+      pauseDate: isMonthly ? form.pauseDate || null : null,
       receivedDate:
         form.status === INCOME_STATUS.CONFIRMED || isConfirmMode
           ? form.receivedDate
@@ -313,7 +322,73 @@ export default function IncomeModal({
                 })}
               </div>
 
-              {mode === "create" && (
+              <div className={styles.toggleRow}>
+                  <span>Monthly income</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={form.isMonthly}
+                    className={`${styles.switch} ${
+                      form.isMonthly ? styles.switchOn : ""
+                    }`}
+                    disabled={isSubmitting}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        isMonthly: !prev.isMonthly,
+                        installments: !prev.isMonthly ? "" : prev.installments,
+                        pauseDate: !prev.isMonthly ? prev.pauseDate : "",
+                      }))
+                    }
+                  >
+                    <span className={styles.switchThumb} />
+                  </button>
+                </div>
+
+              {form.isMonthly && mode === "edit" && (
+                <>
+                  <div className={styles.pauseDateHeader}>
+                    <label
+                      className={sheetStyles.fieldLabel}
+                      htmlFor="income-pause"
+                    >
+                      Pause date
+                    </label>
+                    {form.pauseDate ? (
+                      <button
+                        type="button"
+                        className={styles.clearPauseBtn}
+                        onClick={() =>
+                          setForm((prev) => ({ ...prev, pauseDate: "" }))
+                        }
+                        disabled={isSubmitting}
+                      >
+                        Clear
+                      </button>
+                    ) : null}
+                  </div>
+                  <input
+                    id="income-pause"
+                    name="pauseDate"
+                    type="date"
+                    value={form.pauseDate || ""}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                    className={sheetStyles.textInput}
+                    min={
+                      form.incomePeriodDate
+                        ? new Date(
+                            new Date(form.incomePeriodDate).getTime() + 86400000
+                          )
+                            .toISOString()
+                            .split("T")[0]
+                        : undefined
+                    }
+                  />
+                </>
+              )}
+
+              {!form.isMonthly && (
                 <div className={styles.stepperField}>
                   <label
                     className={sheetStyles.fieldLabel}
@@ -395,14 +470,6 @@ export default function IncomeModal({
                   </div>
                 </div>
               )}
-
-              {mode === "edit" &&
-                Number(initialValues?.installments) > 1 && (
-                  <p className={styles.installmentBadge}>
-                    Installment {initialValues.installmentNumber}/
-                    {initialValues.installments}
-                  </p>
-                )}
             </>
           )}
 
@@ -411,6 +478,9 @@ export default function IncomeModal({
               <p>
                 <strong>{form.description}</strong>
               </p>
+              {initialValues?.isMonthly && (
+                <p className={styles.installmentBadge}>Monthly income</p>
+              )}
               {Number(initialValues?.installments) > 1 && (
                 <p className={styles.installmentBadge}>
                   Installment {initialValues.installmentNumber}/

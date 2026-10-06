@@ -134,6 +134,44 @@ export function shiftPeriod(period, monthsToAdd) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
+/** Inclusive list of YYYY-MM periods from start to end. */
+export function periodsFromTo(startPeriod, endPeriod) {
+  if (!startPeriod || !/^\d{4}-\d{2}$/.test(startPeriod)) return [];
+  if (!endPeriod || !/^\d{4}-\d{2}$/.test(endPeriod) || endPeriod < startPeriod) {
+    return [startPeriod];
+  }
+  const out = [];
+  let current = startPeriod;
+  for (let i = 0; i < 120 && current <= endPeriod; i += 1) {
+    out.push(current);
+    current = shiftPeriod(current, 1);
+  }
+  return out;
+}
+
+/** Months between two YYYY-MM periods (can be negative). */
+export function monthDiff(fromPeriod, toPeriod) {
+  if (
+    !fromPeriod ||
+    !toPeriod ||
+    !/^\d{4}-\d{2}$/.test(fromPeriod) ||
+    !/^\d{4}-\d{2}$/.test(toPeriod)
+  ) {
+    return 0;
+  }
+  const [y1, m1] = fromPeriod.split("-").map(Number);
+  const [y2, m2] = toPeriod.split("-").map(Number);
+  return (y2 - y1) * 12 + (m2 - m1);
+}
+
+/** Current calendar period + N months (default +2, same horizon as expenses). */
+export function horizonEndPeriod(referenceDate = new Date(), monthsAhead = 2) {
+  const period = `${referenceDate.getFullYear()}-${String(
+    referenceDate.getMonth() + 1
+  ).padStart(2, "0")}`;
+  return shiftPeriod(period, monthsAhead);
+}
+
 /** Shift a YYYY-MM-DD date by N calendar months (clamps day). */
 export function shiftDateOnly(dateValue, monthsToAdd) {
   if (!dateValue || !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {

@@ -721,9 +721,6 @@
 }
 
 .confirmButton {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
   background: $defaultBlue;
   color: #fff;
   border: none;
@@ -743,10 +740,43 @@
   }
 }
 
+.playPauseIcon {
+  color: #3e92ebba;
+  font-size: 20px;
+  cursor: pointer;
+  pointer-events: none;
+  transition: transform 0.4s ease;
+}
+
+.iconActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  @media (hover: hover) {
+    &:hover .playPauseIcon {
+      transform: scale(1.1);
+    }
+  }
+}
+
 .cardFooter {
   width: 100%;
   min-height: 36px;
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.cardFooterLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .emptyState {

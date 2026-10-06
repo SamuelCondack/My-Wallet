@@ -4,7 +4,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { FaCheck, FaCopy, FaPencilAlt } from "react-icons/fa";
+import { FaCheck, FaCopy, FaPause, FaPencilAlt, FaPlay } from "react-icons/fa";
 import bin from "../../assets/bin.png";
 import { auth, db } from "../../../config/firebase";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
@@ -22,9 +22,14 @@ import {
 } from "../../services/categoriesService";
 import {
   confirmIncome,
+  convertIncomeToMonthly,
+  convertMonthlyIncomeToOneOff,
   createIncome,
   deleteIncome,
+  fetchIncomes,
   loadIncomesWithMigration,
+  pauseMonthlyIncome,
+  resumeMonthlyIncome,
   updateIncome,
 } from "../../services/incomeService";
 import { getCached, setCached } from "../../utils/dataCache";
@@ -126,6 +131,9 @@ export default function Income() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [incomeToDelete, setIncomeToDelete] = useState(null);
+  const [monthlyActionIncome, setMonthlyActionIncome] = useState(null);
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const [showResumeModal, setShowResumeModal] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [pressedIncomeKey, setPressedIncomeKey] = useState(null);
   const activeTouchIdRef = useRef(null);
@@ -694,9 +702,28 @@ export default function Income() {
         );
         toast.success("Income confirmed!");
       } else if (modalMode === "edit" && activeIncome?.id) {
-        const updated = await updateIncome(userId, activeIncome.id, payload);
-        syncIncomes(
-          incomes.map((item) =>
+        const wasMonthly = Boolean(activeIncome.isMonthly);
+        const nowMonthly = Boolean(payload.isMonthly);
+        let nextIncomes;
+
+        if (!wasMonthly && nowMonthly) {
+          nextIncomes = await convertIncomeToMonthly(
+            userId,
+            activeIncome,
+            payload
+          );
+        } else if (wasMonthly && !nowMonthly) {
+          nextIncomes = await convertMonthlyIncomeToOneOff(
+            userId,
+            activeIncome,
+            payload
+          );
+        } else {
+          const updated = await updateIncome(userId, activeIncome.id, {
+            ...payload,
+            pauseDate: undefined,
+          });
+          nextIncomes = incomes.map((item) =>
             item.id === activeIncome.id
               ? {
                   ...item,
@@ -705,19 +732,41 @@ export default function Income() {
                   installmentNumber: item.installmentNumber,
                   installmentGroupId: item.installmentGroupId,
                   totalAmount: item.totalAmount,
+                  isMonthly: nowMonthly,
+                  monthlyGroupId: item.monthlyGroupId,
+                  startPeriod: item.startPeriod,
+                  isPaused: item.isPaused,
+                  pauseDate: item.pauseDate,
                 }
               : item
-          )
-        );
+          );
+
+          if (nowMonthly) {
+            if (payload.pauseDate) {
+              await pauseMonthlyIncome(
+                userId,
+                activeIncome,
+                payload.pauseDate
+              );
+              nextIncomes = await fetchIncomes(userId);
+            } else if (activeIncome.pauseDate && !payload.pauseDate) {
+              nextIncomes = await resumeMonthlyIncome(userId, activeIncome);
+            }
+          }
+        }
+
+        syncIncomes(nextIncomes);
         toast.success("Income updated!");
       } else {
         const created = await createIncome(userId, payload);
         const createdList = Array.isArray(created) ? created : [created];
         syncIncomes([...createdList, ...incomes]);
         toast.success(
-          createdList.length > 1
-            ? `Added ${createdList.length} installments!`
-            : "Income added!"
+          payload.isMonthly
+            ? "Monthly income added!"
+            : createdList.length > 1
+              ? `Added ${createdList.length} installments!`
+              : "Income added!"
         );
       }
       setModalOpen(false);
@@ -737,14 +786,58 @@ export default function Income() {
 
     setIsSubmitting(true);
     try {
-      await deleteIncome(userId, incomeToDelete.id);
-      syncIncomes(incomes.filter((item) => item.id !== incomeToDelete.id));
-      toast.success("Income deleted.");
+      const deleted = await deleteIncome(userId, incomeToDelete.id);
+      if (deleted?.isMonthly && deleted.monthlyGroupId) {
+        syncIncomes(
+          incomes.filter(
+            (item) => item.monthlyGroupId !== deleted.monthlyGroupId
+          )
+        );
+        toast.success("Monthly income deleted.");
+      } else {
+        syncIncomes(incomes.filter((item) => item.id !== incomeToDelete.id));
+        toast.success("Income deleted.");
+      }
       setShowDeleteModal(false);
       setIncomeToDelete(null);
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete income.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmPauseMonthly = async () => {
+    if (!userId || !monthlyActionIncome) return;
+    setIsSubmitting(true);
+    try {
+      await pauseMonthlyIncome(userId, monthlyActionIncome);
+      const next = await fetchIncomes(userId);
+      syncIncomes(next);
+      toast.success("Monthly income paused.");
+      setShowPauseModal(false);
+      setMonthlyActionIncome(null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to pause income.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmResumeMonthly = async () => {
+    if (!userId || !monthlyActionIncome) return;
+    setIsSubmitting(true);
+    try {
+      const next = await resumeMonthlyIncome(userId, monthlyActionIncome);
+      syncIncomes(next);
+      toast.success("Monthly income resumed.");
+      setShowResumeModal(false);
+      setMonthlyActionIncome(null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to resume income.");
     } finally {
       setIsSubmitting(false);
     }
@@ -856,16 +949,49 @@ export default function Income() {
           </p>
 
           {!inSelectMode && (
-            <div className={styles.cardFooter}>
-              {isPending ? (
-                <button
-                  type="button"
-                  className={styles.confirmButton}
-                  onClick={() => openConfirm(income)}
-                >
-                  Confirm
-                </button>
-              ) : null}
+            <div
+              className={styles.cardFooter}
+              style={{
+                justifyContent:
+                  income.isMonthly || isPending ? "space-between" : "flex-end",
+              }}
+            >
+              <div className={styles.cardFooterLeft}>
+                {isPending ? (
+                  <button
+                    type="button"
+                    className={styles.confirmButton}
+                    onClick={() => openConfirm(income)}
+                  >
+                    Confirm
+                  </button>
+                ) : null}
+                {income.isMonthly && (
+                  <button
+                    type="button"
+                    className={styles.iconActionBtn}
+                    onClick={() => {
+                      setMonthlyActionIncome(income);
+                      if (income.isPaused) {
+                        setShowResumeModal(true);
+                      } else {
+                        setShowPauseModal(true);
+                      }
+                    }}
+                    aria-label={
+                      income.isPaused
+                        ? "Resume monthly income"
+                        : "Pause monthly income"
+                    }
+                  >
+                    {income.isPaused ? (
+                      <FaPlay className={styles.playPauseIcon} />
+                    ) : (
+                      <FaPause className={styles.playPauseIcon} />
+                    )}
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
                 className={styles.deleteButton}
@@ -1360,8 +1486,42 @@ export default function Income() {
         }}
         onConfirm={handleDelete}
         title="Delete Income"
-        message="Are you sure you want to delete"
+        message={
+          incomeToDelete?.isMonthly
+            ? "This deletes the whole monthly series. Are you sure you want to delete"
+            : "Are you sure you want to delete"
+        }
         expenseName={incomeToDelete?.description}
+        isSubmitting={isSubmitting}
+      />
+
+      <ConfirmationModal
+        isOpen={showPauseModal}
+        onRequestClose={() => {
+          if (!isSubmitting) {
+            setShowPauseModal(false);
+            setMonthlyActionIncome(null);
+          }
+        }}
+        onConfirm={handleConfirmPauseMonthly}
+        title="Pause monthly income"
+        message="Stop generating this income after this month for"
+        expenseName={monthlyActionIncome?.description}
+        isSubmitting={isSubmitting}
+      />
+
+      <ConfirmationModal
+        isOpen={showResumeModal}
+        onRequestClose={() => {
+          if (!isSubmitting) {
+            setShowResumeModal(false);
+            setMonthlyActionIncome(null);
+          }
+        }}
+        onConfirm={handleConfirmResumeMonthly}
+        title="Resume monthly income"
+        message="Continue this monthly income for"
+        expenseName={monthlyActionIncome?.description}
         isSubmitting={isSubmitting}
       />
 
