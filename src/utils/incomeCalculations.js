@@ -126,6 +126,38 @@ export function formatPeriodLabel(period) {
   return `${label} ${year}`;
 }
 
+/** Shift a YYYY-MM period by N calendar months. */
+export function shiftPeriod(period, monthsToAdd) {
+  if (!period || !/^\d{4}-\d{2}$/.test(period)) return period || "";
+  const [year, month] = period.split("-").map(Number);
+  const date = new Date(year, month - 1 + Number(monthsToAdd || 0), 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Shift a YYYY-MM-DD date by N calendar months (clamps day). */
+export function shiftDateOnly(dateValue, monthsToAdd) {
+  if (!dateValue || !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue || "";
+  }
+  const [year, month, day] = dateValue.split("-").map(Number);
+  const targetMonthIndex = month - 1 + Number(monthsToAdd || 0);
+  const lastDay = new Date(
+    year + Math.floor(targetMonthIndex / 12),
+    ((targetMonthIndex % 12) + 12) % 12 + 1,
+    0
+  ).getDate();
+  const safeDay = Math.min(day, lastDay);
+  const date = new Date(
+    year,
+    month - 1 + Number(monthsToAdd || 0),
+    safeDay
+  );
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 export function formatDisplayDate(dateValue) {
   if (!dateValue) {
     return "";

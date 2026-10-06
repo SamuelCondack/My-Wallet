@@ -234,6 +234,12 @@ body {
     text-align: center;
 }
 
+.expenseTotal {
+    font-size: 12px;
+    color: var(--mw-muted);
+    font-weight: 500;
+}
+
 .expenseEditButton {
     position: absolute;
     top: 10px;

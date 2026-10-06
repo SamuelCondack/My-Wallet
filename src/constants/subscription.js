@@ -46,7 +46,8 @@ export const PRO_FEATURES = [
     id: "export",
     title: "CSV & PDF export",
     shortLabel: "CSV & PDF export",
-    description: "Download a clean monthly CSV or PDF report whenever you need it.",
+    description:
+      "Download expense CSV/PDF reports or a pending income PDF for collections.",
     shipped: true,
   },
   {

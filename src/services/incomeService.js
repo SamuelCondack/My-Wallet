@@ -7,7 +7,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
-import { INCOME_STATUS } from "../utils/incomeCalculations";
+import {
+  INCOME_STATUS,
+  shiftDateOnly,
+  shiftPeriod,
+} from "../utils/incomeCalculations";
 import { getCached, invalidateCached, setCached } from "../utils/dataCache";
 
 const MIGRATION_PREFIX = "migrated-earnings-";
@@ -25,6 +29,17 @@ function earningsCollection(userId) {
 }
 
 function normalizeIncome(id, data) {
+  const installmentsRaw = Number(data.installments);
+  const installments =
+    Number.isFinite(installmentsRaw) && installmentsRaw > 1
+      ? Math.floor(installmentsRaw)
+      : 1;
+  const installmentNumberRaw = Number(data.installmentNumber);
+  const installmentNumber =
+    Number.isFinite(installmentNumberRaw) && installmentNumberRaw > 0
+      ? Math.floor(installmentNumberRaw)
+      : 1;
+
   return {
     id,
     description: data.description || "",
@@ -37,6 +52,11 @@ function normalizeIncome(id, data) {
       ? INCOME_STATUS.CONFIRMED
       : INCOME_STATUS.PENDING,
     notes: data.notes || "",
+    installments,
+    installmentNumber,
+    installmentGroupId: data.installmentGroupId || null,
+    totalAmount:
+      data.totalAmount == null ? null : Number(data.totalAmount) || 0,
     createdAt: data.createdAt || null,
     updatedAt: data.updatedAt || null,
     migratedFromEarnings: Boolean(data.migratedFromEarnings),
@@ -93,27 +113,73 @@ export async function createIncome(userId, payload, { id } = {}) {
     throw new Error(errors[0]);
   }
 
-  const now = new Date().toISOString();
+  const installmentsRaw = Number(payload.installments);
+  const installments =
+    Number.isFinite(installmentsRaw) && installmentsRaw > 1
+      ? Math.floor(installmentsRaw)
+      : 1;
+  const totalAmount = Number(payload.amount);
   const status = payload.status;
-  const data = {
-    description: payload.description.trim(),
-    amount: Number(payload.amount),
-    categoryId: payload.categoryId,
-    incomePeriod: payload.incomePeriod,
-    expectedDate: payload.expectedDate,
-    receivedDate:
-      status === INCOME_STATUS.CONFIRMED ? payload.receivedDate : null,
-    status,
-    notes: (payload.notes || "").trim(),
-    createdAt: now,
-    updatedAt: now,
-    migratedFromEarnings: Boolean(payload.migratedFromEarnings),
-  };
+  const now = new Date().toISOString();
 
-  const ref = id ? incomeDoc(userId, id) : doc(incomeCollection(userId));
-  await setDoc(ref, data);
+  if (installments === 1 || id) {
+    const data = {
+      description: payload.description.trim(),
+      amount: totalAmount,
+      categoryId: payload.categoryId,
+      incomePeriod: payload.incomePeriod,
+      expectedDate: payload.expectedDate,
+      receivedDate:
+        status === INCOME_STATUS.CONFIRMED ? payload.receivedDate : null,
+      status,
+      notes: (payload.notes || "").trim(),
+      installments: 1,
+      installmentNumber: 1,
+      installmentGroupId: null,
+      totalAmount: null,
+      createdAt: now,
+      updatedAt: now,
+      migratedFromEarnings: Boolean(payload.migratedFromEarnings),
+    };
+
+    const ref = id ? incomeDoc(userId, id) : doc(incomeCollection(userId));
+    await setDoc(ref, data);
+    invalidateCached("income", userId);
+    return [normalizeIncome(ref.id, data)];
+  }
+
+  const groupId =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `income-group-${Date.now()}`;
+  const eachAmount = totalAmount / installments;
+  const created = [];
+
+  for (let index = 0; index < installments; index += 1) {
+    const data = {
+      description: payload.description.trim(),
+      amount: eachAmount,
+      categoryId: payload.categoryId,
+      incomePeriod: shiftPeriod(payload.incomePeriod, index),
+      expectedDate: shiftDateOnly(payload.expectedDate, index),
+      receivedDate: null,
+      status: INCOME_STATUS.PENDING,
+      notes: (payload.notes || "").trim(),
+      installments,
+      installmentNumber: index + 1,
+      installmentGroupId: groupId,
+      totalAmount,
+      createdAt: now,
+      updatedAt: now,
+      migratedFromEarnings: false,
+    };
+    const ref = doc(incomeCollection(userId));
+    await setDoc(ref, data);
+    created.push(normalizeIncome(ref.id, data));
+  }
+
   invalidateCached("income", userId);
-  return normalizeIncome(ref.id, data);
+  return created;
 }
 
 export async function updateIncome(userId, incomeId, payload) {
@@ -196,7 +262,7 @@ export async function migrateEarningsToIncome(userId, existingIncomes = null) {
     // Mid-month receivedDate keeps amount in the same calendar month without TZ issues.
     const receivedDate = `${monthKey}-15`;
 
-    const record = await createIncome(
+    const records = await createIncome(
       userId,
       {
         description: "Existing income",
@@ -212,7 +278,7 @@ export async function migrateEarningsToIncome(userId, existingIncomes = null) {
       { id: migrationId }
     );
 
-    created.push(record);
+    created.push(...(Array.isArray(records) ? records : [records]));
   }
 
   return created;

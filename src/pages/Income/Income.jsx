@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
+import { collection, getDocs } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { FaCheck, FaCopy, FaPencilAlt } from "react-icons/fa";
 import bin from "../../assets/bin.png";
-import { auth } from "../../../config/firebase";
+import { auth, db } from "../../../config/firebase";
 import LoadingComponent from "../../components/LoadingComponent/LoadingComponent";
+import BottomSheet from "../../components/BottomSheet/BottomSheet";
+import sheetStyles from "../../components/BottomSheet/BottomSheet.module.scss";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import IncomeModal from "../../modals/IncomeModal/IncomeModal";
+import PaywallModal from "../../components/PaywallModal/PaywallModal";
 import { useCategories } from "../../hooks/useCategories";
 import { useSessionPeriodFilter } from "../../hooks/useSessionPeriodFilter";
+import { useSubscription } from "../../hooks/useSubscription";
 import {
   getCategoryMap,
   getIncomeCategories,
@@ -35,10 +40,16 @@ import {
   INCOME_STATUS,
   periodToDateInput,
 } from "../../utils/incomeCalculations";
+import {
+  buildExpensesByMonth,
+  getMonthTotal,
+} from "../../utils/expenseCalculations";
 import { DEFAULT_INCOME_CATEGORY_ID } from "../../constants/defaultCategories";
+import { getProFeature } from "../../constants/subscription";
 import styles from "./Income.module.scss";
 
 export default function Income() {
+  const navigate = useNavigate();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
@@ -46,7 +57,14 @@ export default function Income() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [userId, setUserId] = useState(null);
   const [incomes, setIncomes] = useState([]);
+  const [expensesList, setExpensesList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [exportSheetOpen, setExportSheetOpen] = useState(false);
+  const [exportSheetView, setExportSheetView] = useState("menu");
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIncomeIds, setSelectedIncomeIds] = useState([]);
+  const { isPro, canStartTrial } = useSubscription();
   const {
     selectedYear,
     selectedMonth,
@@ -113,6 +131,7 @@ export default function Income() {
   const pressReleaseTimerRef = useRef(0);
   const [copiedMetric, setCopiedMetric] = useState(null);
   const copyTimeoutsRef = useRef([]);
+  const spendingsCopyPhaseRef = useRef("copy");
 
   const { categories } = useCategories(userId);
   const incomeCategories = useMemo(
@@ -134,22 +153,45 @@ export default function Income() {
     const load = async () => {
       if (!userId) {
         setIncomes([]);
+        setExpensesList([]);
         setIsLoading(false);
         return;
       }
 
       const cachedIncome = getCached("income", userId);
+      const cachedExpenses = getCached("expenses", userId);
       if (cachedIncome) {
         setIncomes(cachedIncome);
+      }
+      if (cachedExpenses) {
+        setExpensesList(cachedExpenses);
+      }
+      if (cachedIncome && cachedExpenses) {
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
       try {
-        const data = await loadIncomesWithMigration(userId);
-        if (!cancelled) {
-          setIncomes(data);
+        const [incomeData, expensesSnap] = await Promise.all([
+          cachedIncome
+            ? Promise.resolve(cachedIncome)
+            : loadIncomesWithMigration(userId),
+          cachedExpenses
+            ? Promise.resolve(null)
+            : getDocs(collection(db, userId)),
+        ]);
+        if (cancelled) return;
+
+        if (!cachedIncome) {
+          setIncomes(incomeData);
+        }
+        if (!cachedExpenses && expensesSnap) {
+          const filteredData = expensesSnap.docs
+            .filter((docItem) => !docItem.id.startsWith("earnings-"))
+            .map((docItem) => ({ ...docItem.data(), id: docItem.id }));
+          setExpensesList(filteredData);
+          setCached("expenses", userId, filteredData);
         }
       } catch (error) {
         console.error(error);
@@ -311,12 +353,166 @@ export default function Income() {
     return { earned, received, pending };
   }, [incomes, periodKey, summarySource]);
 
+  const expensesByMonth = useMemo(
+    () => buildExpensesByMonth(expensesList),
+    [expensesList]
+  );
+
+  const spendingsTotal = useMemo(() => {
+    if (periodKey) {
+      return getMonthTotal(expensesByMonth, periodKey);
+    }
+    if (selectedYear !== "All") {
+      return Object.entries(expensesByMonth)
+        .filter(([monthKey]) => monthKey.startsWith(`${selectedYear}-`))
+        .reduce(
+          (sum, [, monthExpenses]) =>
+            sum +
+            monthExpenses.reduce(
+              (monthSum, expense) => monthSum + (Number(expense.value) || 0),
+              0
+            ),
+          0
+        );
+    }
+    return Object.values(expensesByMonth).reduce(
+      (sum, monthExpenses) =>
+        sum +
+        monthExpenses.reduce(
+          (monthSum, expense) => monthSum + (Number(expense.value) || 0),
+          0
+        ),
+      0
+    );
+  }, [expensesByMonth, periodKey, selectedYear]);
+
+  const netEarnings = summary.earned - spendingsTotal;
+
   const pendingList = filtered.filter(
     (item) => item.status === INCOME_STATUS.PENDING
   );
   const confirmedList = filtered.filter(
     (item) => item.status === INCOME_STATUS.CONFIRMED
   );
+
+  /** Pending in the current year/month only — ignores category filter (used for All / By category). */
+  const periodPendingList = useMemo(
+    () =>
+      filterIncomes(incomes, {
+        year: selectedYear,
+        month: selectedMonth,
+        categoryId: "All",
+        status: INCOME_STATUS.PENDING,
+      }),
+    [incomes, selectedYear, selectedMonth]
+  );
+
+  const pendingByCategory = useMemo(() => {
+    const groups = new Map();
+    periodPendingList.forEach((item) => {
+      const key = item.categoryId || DEFAULT_INCOME_CATEGORY_ID;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    });
+    return Array.from(groups.entries())
+      .map(([categoryId, items]) => {
+        const category = categoriesMap[categoryId];
+        const total = items.reduce(
+          (sum, item) => sum + (Number(item.amount) || 0),
+          0
+        );
+        return {
+          categoryId,
+          name: category?.name || "Other",
+          icon: category?.icon || "💰",
+          count: items.length,
+          total,
+          items,
+        };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, [periodPendingList, categoriesMap]);
+
+  const exportPeriodLabel = useMemo(() => {
+    if (periodKey) return formatPeriodLabel(periodKey);
+    if (selectedYear !== "All") return String(selectedYear);
+    return "All periods";
+  }, [periodKey, selectedYear]);
+
+  const exportFileStem = useMemo(() => {
+    const stem =
+      selectedYear !== "All" && selectedMonth !== "All"
+        ? `${selectedYear}-${selectedMonth}`
+        : selectedYear !== "All"
+          ? String(selectedYear)
+          : "all";
+    return `mywallet-payment-due-${stem}`;
+  }, [selectedYear, selectedMonth]);
+
+  const selectedPendingList = useMemo(
+    () => pendingList.filter((item) => selectedIncomeIds.includes(item.id)),
+    [pendingList, selectedIncomeIds]
+  );
+
+  const runPendingPdfExport = async ({ list }) => {
+    if (!list.length) {
+      toast.info("No pending income to export.");
+      return;
+    }
+    try {
+      const { downloadPendingIncomesPdf } = await import(
+        "../../utils/exportPendingIncomesPdf"
+      );
+      await downloadPendingIncomesPdf({
+        incomes: list,
+        periodLabel: exportPeriodLabel,
+        fileStem: exportFileStem,
+      });
+      setExportSheetOpen(false);
+      setExportSheetView("menu");
+      setSelectMode(false);
+      setSelectedIncomeIds([]);
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not export PDF.");
+    }
+  };
+
+  const openExportSheet = () => {
+    if (!isPro) {
+      setPaywallOpen(true);
+      return;
+    }
+    if (periodPendingList.length === 0) {
+      toast.info("No pending income to export.");
+      return;
+    }
+    setExportSheetView("menu");
+    setExportSheetOpen(true);
+  };
+
+  const startSelectMode = () => {
+    setExportSheetOpen(false);
+    setExportSheetView("menu");
+    setSelectMode(true);
+    setSelectedIncomeIds([]);
+    if (selectedStatus !== INCOME_STATUS.PENDING && selectedStatus !== "All") {
+      setSelectedStatus(INCOME_STATUS.PENDING);
+    }
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIncomeIds([]);
+  };
+
+  const toggleIncomeSelected = (incomeId) => {
+    setSelectedIncomeIds((prev) =>
+      prev.includes(incomeId)
+        ? prev.filter((id) => id !== incomeId)
+        : [...prev, incomeId]
+    );
+  };
 
   const scrollToTop = () => {
     const start = window.scrollY || document.documentElement.scrollTop;
@@ -360,19 +556,31 @@ export default function Income() {
       return;
     }
 
+    const isSpendingsMetric = metricKey.endsWith("-spendings");
+    const checkDelay = isSpendingsMetric ? 620 : 280;
+    const clearDelay = isSpendingsMetric ? 1700 : 1400;
+
     clearCopyTimeouts();
     setCopiedMetric({ key: metricKey, phase: "copy" });
 
     copyTimeoutsRef.current.push(
       setTimeout(() => {
         setCopiedMetric({ key: metricKey, phase: "check" });
-      }, 280)
+      }, checkDelay)
     );
     copyTimeoutsRef.current.push(
       setTimeout(() => {
         setCopiedMetric(null);
-      }, 1400)
+      }, clearDelay)
     );
+  };
+
+  const goToExpenses = () => {
+    const params = new URLSearchParams();
+    if (selectedYear !== "All") params.set("year", selectedYear);
+    if (selectedMonth !== "All") params.set("month", selectedMonth);
+    const query = params.toString();
+    navigate(query ? `/home/expenses?${query}` : "/home/expenses");
   };
 
   const renderCopyableMetric = ({
@@ -382,6 +590,7 @@ export default function Income() {
     displayValue,
     className,
     shineClass,
+    hideFeedback = false,
   }) => {
     const isActive = copiedMetric?.key === metricKey;
     const phase = isActive ? copiedMetric.phase : null;
@@ -401,7 +610,7 @@ export default function Income() {
         >
           {displayValue}
         </b>
-        {phase && (
+        {!hideFeedback && phase && (
           <span
             className={`${styles.metricCopyFeedback} ${
               phase === "check" ? styles.metricCopyFeedbackDone : ""
@@ -470,13 +679,29 @@ export default function Income() {
       } else if (modalMode === "edit" && activeIncome?.id) {
         const updated = await updateIncome(userId, activeIncome.id, payload);
         syncIncomes(
-          incomes.map((item) => (item.id === activeIncome.id ? updated : item))
+          incomes.map((item) =>
+            item.id === activeIncome.id
+              ? {
+                  ...item,
+                  ...updated,
+                  installments: item.installments,
+                  installmentNumber: item.installmentNumber,
+                  installmentGroupId: item.installmentGroupId,
+                  totalAmount: item.totalAmount,
+                }
+              : item
+          )
         );
         toast.success("Income updated!");
       } else {
         const created = await createIncome(userId, payload);
-        syncIncomes([created, ...incomes]);
-        toast.success("Income added!");
+        const createdList = Array.isArray(created) ? created : [created];
+        syncIncomes([...createdList, ...incomes]);
+        toast.success(
+          createdList.length > 1
+            ? `Added ${createdList.length} installments!`
+            : "Income added!"
+        );
       }
       setModalOpen(false);
       setActiveIncome(null);
@@ -516,6 +741,8 @@ export default function Income() {
     const category = categoriesMap[income.categoryId];
     const isPending = income.status === INCOME_STATUS.PENDING;
     const incomeKey = income.id;
+    const isSelected = selectedIncomeIds.includes(incomeKey);
+    const inSelectMode = selectMode && isPending;
 
     return (
       <motion.div
@@ -535,25 +762,69 @@ export default function Income() {
         <div
           className={`${styles.incomeCard} ${
             isPending ? styles.pendingCard : styles.confirmedCard
-          } ${pressedIncomeKey === incomeKey ? styles.incomePressed : ""}`}
-          onTouchStart={(event) => handleIncomeTouchStart(event, incomeKey)}
+          } ${pressedIncomeKey === incomeKey ? styles.incomePressed : ""} ${
+            inSelectMode && isSelected ? styles.incomeCardSelected : ""
+          }`}
+          onTouchStart={(event) => {
+            if (inSelectMode) return;
+            handleIncomeTouchStart(event, incomeKey);
+          }}
+          onClick={
+            inSelectMode
+              ? () => toggleIncomeSelected(incomeKey)
+              : undefined
+          }
+          role={inSelectMode ? "button" : undefined}
+          tabIndex={inSelectMode ? 0 : undefined}
+          onKeyDown={
+            inSelectMode
+              ? (event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    toggleIncomeSelected(incomeKey);
+                  }
+                }
+              : undefined
+          }
         >
-          <button
-            type="button"
-            className={styles.expenseEditButton}
-            onClick={() => openEdit(income)}
-            title="Edit income"
-            aria-label="Edit income"
-          >
-            <FaPencilAlt className={styles.expensePencilIcon} />
-          </button>
+          {inSelectMode ? (
+            <span
+              className={`${styles.selectCheck} ${
+                isSelected ? styles.selectCheckOn : ""
+              }`}
+              aria-hidden="true"
+            >
+              {isSelected ? <FaCheck /> : null}
+            </span>
+          ) : (
+            <button
+              type="button"
+              className={styles.expenseEditButton}
+              onClick={() => openEdit(income)}
+              title="Edit income"
+              aria-label="Edit income"
+            >
+              <FaPencilAlt className={styles.expensePencilIcon} />
+            </button>
+          )}
 
           <p className={styles.incomeName}>{income.description}</p>
           <p className={styles.categoryBadge}>
             {category ? `${category.icon} ${category.name}` : "Other"}
           </p>
           <p className={styles.incomeValue}>
-            ${Number(income.amount).toFixed(2)}
+            {Number(income.installments) > 1 ? (
+              <>
+                ${Number(income.amount).toFixed(2)}{" "}
+                {income.installmentNumber}/{income.installments}
+                <br />
+                <span className={styles.incomeTotal}>
+                  Total: ${Number(income.totalAmount || income.amount).toFixed(2)}
+                </span>
+              </>
+            ) : (
+              `$${Number(income.amount).toFixed(2)}`
+            )}
           </p>
           <p className={styles.expenseMethod}>
             {isPending ? "Pending" : "Confirmed"}
@@ -567,34 +838,34 @@ export default function Income() {
             Income Period: {formatPeriodLabel(income.incomePeriod)}
           </p>
 
-          <div className={styles.cardFooter}>
-            {isPending ? (
+          {!inSelectMode && (
+            <div className={styles.cardFooter}>
+              {isPending ? (
+                <button
+                  type="button"
+                  className={styles.confirmButton}
+                  onClick={() => openConfirm(income)}
+                >
+                  Confirm
+                </button>
+              ) : null}
               <button
                 type="button"
-                className={styles.confirmButton}
-                onClick={() => openConfirm(income)}
+                className={styles.deleteButton}
+                onClick={() => {
+                  setIncomeToDelete(income);
+                  setShowDeleteModal(true);
+                }}
+                aria-label="Delete income"
               >
-                Confirm
+                <img
+                  className={styles.binImg}
+                  src={bin}
+                  alt="delete button"
+                />
               </button>
-            ) : (
-              <span />
-            )}
-            <button
-              type="button"
-              className={styles.deleteButton}
-              onClick={() => {
-                setIncomeToDelete(income);
-                setShowDeleteModal(true);
-              }}
-              aria-label="Delete income"
-            >
-              <img
-                className={styles.binImg}
-                src={bin}
-                alt="delete button"
-              />
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       </motion.div>
     );
@@ -710,7 +981,7 @@ export default function Income() {
           })}
           {renderCopyableMetric({
             metricKey: `${periodKey || "all"}-pending`,
-            label: "Pending",
+            label: "Pending Income",
             numericValue: summary.pending,
             displayValue: `$${summary.pending.toFixed(2)}`,
             className:
@@ -727,6 +998,72 @@ export default function Income() {
             className: styles.summaryReceived,
             shineClass: styles.shineReceived,
           })}
+          {(() => {
+            const spendingsMetricKey = `${periodKey || "all"}-spendings`;
+            const isSpendingsCopying = copiedMetric?.key === spendingsMetricKey;
+            if (isSpendingsCopying && copiedMetric.phase) {
+              spendingsCopyPhaseRef.current = copiedMetric.phase;
+            }
+            return (
+              <div className={styles.spendingsRow}>
+                {renderCopyableMetric({
+                  metricKey: spendingsMetricKey,
+                  label: "Your Spendings",
+                  numericValue: spendingsTotal,
+                  displayValue: `-$${spendingsTotal.toFixed(2)}`,
+                  className: styles.totalSpendings,
+                  shineClass: styles.shineNeutral,
+                  hideFeedback: true,
+                })}
+                <span
+                  className={`${styles.spendingsCopySlot} ${
+                    isSpendingsCopying ? styles.spendingsCopySlotOpen : ""
+                  }`}
+                  aria-hidden="true"
+                >
+                  <span
+                    className={`${styles.spendingsCopyIcon} ${
+                      spendingsCopyPhaseRef.current === "check"
+                        ? styles.spendingsCopyIconDone
+                        : ""
+                    }`}
+                  >
+                    {spendingsCopyPhaseRef.current === "check" ? (
+                      <FaCheck />
+                    ) : (
+                      <FaCopy />
+                    )}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  className={styles.spendingsExpensesButton}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    goToExpenses();
+                  }}
+                  aria-label="Open Expenses page"
+                  title="Open Expenses"
+                >
+                  <FaPencilAlt
+                    className={styles.pencilIcon}
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+            );
+          })()}
+          {renderCopyableMetric({
+            metricKey: `${periodKey || "all"}-net`,
+            label: "Net Earnings",
+            numericValue: netEarnings,
+            displayValue: `$${netEarnings.toFixed(2)}`,
+            className: `${styles.netEarnings} ${
+              netEarnings < 0 ? styles.netEarningsNegative : ""
+            }`,
+            shineClass:
+              netEarnings < 0 ? styles.shineNegative : styles.shinePositive,
+          })}
         </div>
 
         {filtered.length === 0 ? (
@@ -739,7 +1076,32 @@ export default function Income() {
             {(selectedStatus === "All" ||
               selectedStatus === INCOME_STATUS.PENDING) && (
               <section className={styles.section}>
-                <h3>Pending</h3>
+                <div className={styles.sectionHeader}>
+                  <h3>Pending</h3>
+                  {periodPendingList.length > 0 && !selectMode && (
+                    <button
+                      type="button"
+                      className={styles.exportPdfBtn}
+                      onClick={openExportSheet}
+                    >
+                      {isPro ? "Export PDF" : "Export PDF · Pro"}
+                    </button>
+                  )}
+                  {selectMode && (
+                    <button
+                      type="button"
+                      className={styles.exportPdfBtn}
+                      onClick={exitSelectMode}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+                {selectMode && (
+                  <p className={styles.selectHint}>
+                    Tap cards to select, then export.
+                  </p>
+                )}
                 {pendingList.length === 0 ? (
                   <p className={styles.emptySection}>
                     No pending income for this period.
@@ -755,9 +1117,10 @@ export default function Income() {
             )}
 
             {(selectedStatus === "All" ||
-              selectedStatus === INCOME_STATUS.CONFIRMED) && (
+              selectedStatus === INCOME_STATUS.CONFIRMED) &&
+              !selectMode && (
               <section className={styles.section}>
-                <h3>Confirmed</h3>
+                <h3 className={styles.confirmedTitle}>Confirmed</h3>
                 {confirmedList.length === 0 ? (
                   <p className={styles.emptySection}>
                     No confirmed income for this period.
@@ -793,18 +1156,143 @@ export default function Income() {
         )}
       </AnimatePresence>
 
-      <button
-        type="button"
-        className={styles.floatingAddButton}
-        onClick={openCreate}
-        aria-label="Add income"
-        title="Add income"
+      {!selectMode && (
+        <button
+          type="button"
+          className={styles.floatingAddButton}
+          onClick={openCreate}
+          aria-label="Add income"
+          title="Add income"
+        >
+          <span className={styles.fabIcon} aria-hidden="true">
+            +
+          </span>
+          <span className={styles.fabLabel}>Add income</span>
+        </button>
+      )}
+
+      {selectMode && (
+        <div className={styles.selectBar}>
+          <button
+            type="button"
+            className={styles.selectBarCancel}
+            onClick={exitSelectMode}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.selectBarExport}
+            disabled={selectedPendingList.length === 0}
+            onClick={() =>
+              runPendingPdfExport({
+                list: selectedPendingList,
+              })
+            }
+          >
+            Export {selectedPendingList.length || ""}
+          </button>
+        </div>
+      )}
+
+      <BottomSheet
+        isOpen={exportSheetOpen}
+        onClose={() => {
+          setExportSheetOpen(false);
+          setExportSheetView("menu");
+        }}
+        labelledBy="income-export-title"
       >
-        <span className={styles.fabIcon} aria-hidden="true">
-          +
-        </span>
-        <span className={styles.fabLabel}>Add income</span>
-      </button>
+        <header className={sheetStyles.header}>
+          <h2 id="income-export-title">
+            {exportSheetView === "category"
+              ? "Export by category"
+              : "Export pending PDF"}
+          </h2>
+          <div className={sheetStyles.headerActions}>
+            <button
+              type="button"
+              className={sheetStyles.iconBtn}
+              onClick={() => {
+                setExportSheetOpen(false);
+                setExportSheetView("menu");
+              }}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+        </header>
+
+        {exportSheetView === "menu" ? (
+          <div className={styles.exportMenu}>
+            <p className={styles.exportMenuLead}>
+              Period: <strong>{exportPeriodLabel}</strong>
+            </p>
+            <button
+              type="button"
+              className={styles.exportMenuBtn}
+              onClick={() =>
+                runPendingPdfExport({
+                  list: periodPendingList,
+                })
+              }
+            >
+              <strong>All pending</strong>
+              <span>
+                {periodPendingList.length} item
+                {periodPendingList.length === 1 ? "" : "s"}
+              </span>
+            </button>
+            <button
+              type="button"
+              className={styles.exportMenuBtn}
+              onClick={() => setExportSheetView("category")}
+              disabled={pendingByCategory.length === 0}
+            >
+              <strong>By category</strong>
+              <span>One PDF per category</span>
+            </button>
+            <button
+              type="button"
+              className={styles.exportMenuBtn}
+              onClick={startSelectMode}
+            >
+              <strong>Select incomes</strong>
+              <span>Pick individual items</span>
+            </button>
+          </div>
+        ) : (
+          <div className={styles.exportMenu}>
+            <button
+              type="button"
+              className={styles.exportBackBtn}
+              onClick={() => setExportSheetView("menu")}
+            >
+              ← Back
+            </button>
+            {pendingByCategory.map((group) => (
+              <button
+                key={group.categoryId}
+                type="button"
+                className={styles.exportMenuBtn}
+                onClick={() =>
+                  runPendingPdfExport({
+                    list: group.items,
+                  })
+                }
+              >
+                <strong>
+                  {group.icon} {group.name}
+                </strong>
+                <span>
+                  {group.count} · ${group.total.toFixed(2)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </BottomSheet>
 
       <IncomeModal
         isOpen={modalOpen}
@@ -846,6 +1334,17 @@ export default function Income() {
         message="Are you sure you want to delete"
         expenseName={incomeToDelete?.description}
         isSubmitting={isSubmitting}
+      />
+
+      <PaywallModal
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        title={getProFeature("export")?.title || "CSV & PDF export"}
+        message={
+          getProFeature("export")?.description ||
+          "Export pending income as a PDF to share what you're owed."
+        }
+        canStartTrial={canStartTrial}
       />
     </div>
   );

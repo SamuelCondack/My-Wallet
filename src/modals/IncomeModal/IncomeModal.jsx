@@ -11,6 +11,7 @@ import {
   periodToDateInput,
 } from "../../utils/incomeCalculations";
 import { DEFAULT_INCOME_CATEGORY_ID } from "../../constants/defaultCategories";
+import styles from "./IncomeModal.module.scss";
 
 const EMPTY_FORM = {
   description: "",
@@ -20,6 +21,7 @@ const EMPTY_FORM = {
   expectedDate: "",
   receivedDate: "",
   status: INCOME_STATUS.PENDING,
+  installments: "",
   notes: "",
 };
 
@@ -33,7 +35,29 @@ export default function IncomeModal({
   isSubmitting = false,
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [stepPulse, setStepPulse] = useState({ side: null, tick: 0 });
   const nameInputRef = useRef(null);
+  const stepPulseTimerRef = useRef(0);
+
+  const pulseStepper = (side) => {
+    if (stepPulseTimerRef.current) {
+      window.clearTimeout(stepPulseTimerRef.current);
+      stepPulseTimerRef.current = 0;
+    }
+    setStepPulse((prev) => ({ side, tick: prev.tick + 1 }));
+    stepPulseTimerRef.current = window.setTimeout(() => {
+      setStepPulse((prev) => ({ ...prev, side: null }));
+      stepPulseTimerRef.current = 0;
+    }, 1150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (stepPulseTimerRef.current) {
+        window.clearTimeout(stepPulseTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -55,6 +79,10 @@ export default function IncomeModal({
         expectedDate: initialValues.expectedDate || "",
         receivedDate: initialValues.receivedDate || "",
         status: initialValues.status || INCOME_STATUS.PENDING,
+        installments:
+          Number(initialValues.installments) > 1
+            ? String(Number(initialValues.installments))
+            : "",
         notes: initialValues.notes || "",
       });
     } else {
@@ -65,6 +93,7 @@ export default function IncomeModal({
         incomePeriodDate: today,
         expectedDate: today,
         status: INCOME_STATUS.PENDING,
+        installments: "",
       });
     }
 
@@ -109,6 +138,15 @@ export default function IncomeModal({
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    const installmentsRaw = String(form.installments || "").trim();
+    const installments = Number(installmentsRaw);
+    const resolvedInstallments =
+      !isConfirmMode &&
+      mode === "create" &&
+      Number.isFinite(installments) &&
+      installments > 1
+        ? Math.floor(installments)
+        : 1;
     onSubmit({
       description: form.description,
       amount: parseFloat(String(form.amount).replace(/,/g, ".")),
@@ -116,6 +154,7 @@ export default function IncomeModal({
       incomePeriod: dateInputToPeriod(form.incomePeriodDate),
       expectedDate: form.expectedDate,
       notes: form.notes,
+      installments: resolvedInstallments,
       receivedDate:
         form.status === INCOME_STATUS.CONFIRMED || isConfirmMode
           ? form.receivedDate
@@ -273,6 +312,97 @@ export default function IncomeModal({
                   );
                 })}
               </div>
+
+              {mode === "create" && (
+                <div className={styles.stepperField}>
+                  <label
+                    className={sheetStyles.fieldLabel}
+                    htmlFor="income-installments"
+                  >
+                    Installments
+                  </label>
+                  <div className={styles.stepperRow}>
+                    <button
+                      key={
+                        stepPulse.side === "dec"
+                          ? `dec-${stepPulse.tick}`
+                          : "dec"
+                      }
+                      type="button"
+                      className={`${styles.stepperBtn} ${
+                        stepPulse.side === "dec" ? styles.stepperBtnPulse : ""
+                      }`}
+                      aria-label="Decrease installments"
+                      disabled={isSubmitting}
+                      onClick={(event) => {
+                        event.currentTarget.blur();
+                        pulseStepper("dec");
+                        setForm((prev) => {
+                          const raw = String(prev.installments ?? "").trim();
+                          const current = Number(raw);
+                          const base =
+                            raw === "" || !Number.isFinite(current) ? 1 : current;
+                          return {
+                            ...prev,
+                            installments: String(Math.max(0, base - 1)),
+                          };
+                        });
+                      }}
+                    >
+                      −
+                    </button>
+                    <input
+                      id="income-installments"
+                      name="installments"
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      step="1"
+                      placeholder="0"
+                      value={form.installments}
+                      onChange={handleChange}
+                      disabled={isSubmitting}
+                      className={styles.stepperInput}
+                    />
+                    <button
+                      key={
+                        stepPulse.side === "inc"
+                          ? `inc-${stepPulse.tick}`
+                          : "inc"
+                      }
+                      type="button"
+                      className={`${styles.stepperBtn} ${
+                        stepPulse.side === "inc" ? styles.stepperBtnPulse : ""
+                      }`}
+                      aria-label="Increase installments"
+                      disabled={isSubmitting}
+                      onClick={(event) => {
+                        event.currentTarget.blur();
+                        pulseStepper("inc");
+                        setForm((prev) => {
+                          const raw = String(prev.installments ?? "").trim();
+                          const current = Number(raw);
+                          const next =
+                            raw === "" || !Number.isFinite(current)
+                              ? 1
+                              : current + 1;
+                          return { ...prev, installments: String(next) };
+                        });
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {mode === "edit" &&
+                Number(initialValues?.installments) > 1 && (
+                  <p className={styles.installmentBadge}>
+                    Installment {initialValues.installmentNumber}/
+                    {initialValues.installments}
+                  </p>
+                )}
             </>
           )}
 
@@ -281,6 +411,12 @@ export default function IncomeModal({
               <p>
                 <strong>{form.description}</strong>
               </p>
+              {Number(initialValues?.installments) > 1 && (
+                <p className={styles.installmentBadge}>
+                  Installment {initialValues.installmentNumber}/
+                  {initialValues.installments}
+                </p>
+              )}
               <p>Amount: ${Number(form.amount || 0).toFixed(2)}</p>
               <p>
                 Income Period:{" "}
