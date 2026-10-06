@@ -62,6 +62,7 @@ export default function Income() {
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [exportSheetView, setExportSheetView] = useState("menu");
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIncomeIds, setSelectedIncomeIds] = useState([]);
   const { isPro, canStartTrial } = useSubscription();
@@ -455,10 +456,13 @@ export default function Income() {
   );
 
   const runPendingPdfExport = async ({ list }) => {
+    if (isExportingPdf) return;
     if (!list.length) {
       toast.info("No pending income to export.");
       return;
     }
+    setIsExportingPdf(true);
+    const toastId = toast.loading("Generating PDF…");
     try {
       const { downloadPendingIncomesPdf } = await import(
         "../../utils/exportPendingIncomesPdf"
@@ -468,13 +472,26 @@ export default function Income() {
         periodLabel: exportPeriodLabel,
         fileStem: exportFileStem,
       });
+      toast.update(toastId, {
+        render: "PDF ready",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000,
+      });
       setExportSheetOpen(false);
       setExportSheetView("menu");
       setSelectMode(false);
       setSelectedIncomeIds([]);
     } catch (error) {
       console.error(error);
-      toast.error("Could not export PDF.");
+      toast.update(toastId, {
+        render: "Could not export PDF.",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
+    } finally {
+      setIsExportingPdf(false);
     }
   };
 
@@ -1177,20 +1194,23 @@ export default function Income() {
             type="button"
             className={styles.selectBarCancel}
             onClick={exitSelectMode}
+            disabled={isExportingPdf}
           >
             Cancel
           </button>
           <button
             type="button"
             className={styles.selectBarExport}
-            disabled={selectedPendingList.length === 0}
+            disabled={selectedPendingList.length === 0 || isExportingPdf}
             onClick={() =>
               runPendingPdfExport({
                 list: selectedPendingList,
               })
             }
           >
-            Export {selectedPendingList.length || ""}
+            {isExportingPdf
+              ? "Generating…"
+              : `Export ${selectedPendingList.length || ""}`}
           </button>
         </div>
       )}
@@ -1198,6 +1218,7 @@ export default function Income() {
       <BottomSheet
         isOpen={exportSheetOpen}
         onClose={() => {
+          if (isExportingPdf) return;
           setExportSheetOpen(false);
           setExportSheetView("menu");
         }}
@@ -1205,19 +1226,23 @@ export default function Income() {
       >
         <header className={sheetStyles.header}>
           <h2 id="income-export-title">
-            {exportSheetView === "category"
-              ? "Export by category"
-              : "Export pending PDF"}
+            {isExportingPdf
+              ? "Generating PDF…"
+              : exportSheetView === "category"
+                ? "Export by category"
+                : "Export pending PDF"}
           </h2>
           <div className={sheetStyles.headerActions}>
             <button
               type="button"
               className={sheetStyles.iconBtn}
               onClick={() => {
+                if (isExportingPdf) return;
                 setExportSheetOpen(false);
                 setExportSheetView("menu");
               }}
               aria-label="Close"
+              disabled={isExportingPdf}
             >
               ×
             </button>
@@ -1232,6 +1257,7 @@ export default function Income() {
             <button
               type="button"
               className={styles.exportMenuBtn}
+              disabled={isExportingPdf}
               onClick={() =>
                 runPendingPdfExport({
                   list: periodPendingList,
@@ -1248,7 +1274,7 @@ export default function Income() {
               type="button"
               className={styles.exportMenuBtn}
               onClick={() => setExportSheetView("category")}
-              disabled={pendingByCategory.length === 0}
+              disabled={pendingByCategory.length === 0 || isExportingPdf}
             >
               <strong>By category</strong>
               <span>One PDF per category</span>
@@ -1257,6 +1283,7 @@ export default function Income() {
               type="button"
               className={styles.exportMenuBtn}
               onClick={startSelectMode}
+              disabled={isExportingPdf}
             >
               <strong>Select incomes</strong>
               <span>Pick individual items</span>
@@ -1268,6 +1295,7 @@ export default function Income() {
               type="button"
               className={styles.exportBackBtn}
               onClick={() => setExportSheetView("menu")}
+              disabled={isExportingPdf}
             >
               ← Back
             </button>
@@ -1276,6 +1304,7 @@ export default function Income() {
                 key={group.categoryId}
                 type="button"
                 className={styles.exportMenuBtn}
+                disabled={isExportingPdf}
                 onClick={() =>
                   runPendingPdfExport({
                     list: group.items,
