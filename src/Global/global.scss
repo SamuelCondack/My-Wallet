@@ -105,6 +105,23 @@ body {
   background: $surface;
 }
 
+/* Auth shell: pin document so 100dvh / browser chrome cannot leave
+   empty strips or a second scroll surface on real phones. */
+html.mw-app-shell,
+html.mw-app-shell body {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+html.mw-app-shell #root {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
 * {
   font-family: "Quicksand", sans-serif;
   font-optical-sizing: auto;
