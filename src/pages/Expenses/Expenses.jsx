@@ -448,7 +448,10 @@ export default function Expenses() {
   }
 
   function formatValue(value) {
-    return Number(value).toFixed(2).replace(".", ",");
+    return Number(value || 0).toLocaleString(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
 
   const handlePauseExpense = (expense) => {
