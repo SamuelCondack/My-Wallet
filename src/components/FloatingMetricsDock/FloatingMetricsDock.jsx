@@ -135,6 +135,7 @@ export default function FloatingMetricsDock({
           role="region"
           aria-label={ariaLabel || "Summary"}
         >
+          <div className={styles.dockVeil} aria-hidden="true" />
           <div className={styles.dockInner}>
             {filters ? <div className={styles.filters}>{filters}</div> : null}
             {metrics ? <div className={styles.metrics}>{metrics}</div> : null}

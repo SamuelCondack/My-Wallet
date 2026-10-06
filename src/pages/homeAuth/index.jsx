@@ -1,7 +1,7 @@
 import walletIcon from "../../assets/WalletIcon.png";
 import styles from "./styles.module.scss";
 import { auth } from "../../../config/firebase";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import x from "../../assets/x.svg";
 import { useEffect, useRef, useState } from "react";
@@ -18,11 +18,14 @@ const EDGE_BACK_PX = 28;
 
 function HomeAuth() {
   const navigate = useNavigate();
+  const location = useLocation();
   const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const edgeZoneRef = useRef(null);
   const edgeSwipeRef = useRef(null);
+  const pathLockRef = useRef(`${location.pathname}${location.search}`);
+  const restoringHistoryRef = useRef(false);
 
   useBodyScrollLock(isMobile && menuOpen);
 
@@ -65,9 +68,42 @@ function HomeAuth() {
   }, [navigate]);
 
   /*
-   * Block iOS Safari/PWA swipe-back so the left-edge gesture can open the menu.
-   * preventDefault must run on touchstart (not only touchmove) — iOS 13.4+.
-   * There is no official PWA API to disable the gesture completely.
+   * Neutralize iOS PWA swipe-back via history trap: Apple provides no API to
+   * disable the gesture, so any popstate is immediately reversed and the menu opens.
+   */
+  useEffect(() => {
+    if (!isMobile) return undefined;
+
+    const path = `${location.pathname}${location.search}`;
+    pathLockRef.current = path;
+    window.history.pushState({ mwSwipeLock: true }, "", path);
+
+    const onPopState = () => {
+      if (restoringHistoryRef.current) return;
+      restoringHistoryRef.current = true;
+
+      const locked = pathLockRef.current;
+      const current = `${window.location.pathname}${window.location.search}`;
+      window.history.pushState({ mwSwipeLock: true }, "", locked);
+      if (current !== locked) {
+        navigate(locked, { replace: true });
+      }
+      openMenu();
+
+      window.requestAnimationFrame(() => {
+        restoringHistoryRef.current = false;
+      });
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [isMobile, location.pathname, location.search, navigate]);
+
+  /*
+   * Also cancel the gesture on the left edge (touchstart) so the menu swipe
+   * can win before WebKit starts the back transition.
    */
   useEffect(() => {
     const zone = edgeZoneRef.current;
@@ -85,7 +121,6 @@ function HomeAuth() {
     const onStart = (event) => {
       if (event.touches.length !== 1) return;
       const touch = event.touches[0];
-      // Cancel the native back-navigation gesture as soon as the finger lands.
       event.preventDefault();
       edgeSwipeRef.current = {
         x: touch.clientX,
@@ -124,7 +159,6 @@ function HomeAuth() {
       edgeSwipeRef.current = null;
     };
 
-    /* Document capture: catch edge touches that miss the zone element. */
     const onDocStart = (event) => {
       if (event.touches.length !== 1) return;
       const touch = event.touches[0];
