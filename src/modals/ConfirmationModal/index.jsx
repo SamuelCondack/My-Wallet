@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import styles from "./styles.module.scss";
 import PropTypes from "prop-types";
+import { useT } from "../../i18n/useT";
 
 const ConfirmationModal = ({
   isOpen,
@@ -11,6 +12,7 @@ const ConfirmationModal = ({
   identifier,
   afterMessage,
 }) => {
+  const t = useT();
   if (!isOpen) return null;
 
   return (
@@ -36,10 +38,10 @@ const ConfirmationModal = ({
         </p>
         <div className={styles.buttons}>
           <button className={styles.confirmButton} onClick={onConfirm}>
-            Yes
+            {t("common.yes")}
           </button>
           <button className={styles.cancelButton} onClick={onRequestClose}>
-            No
+            {t("common.no")}
           </button>
         </div>
       </motion.div>

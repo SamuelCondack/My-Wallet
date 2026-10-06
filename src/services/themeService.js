@@ -1,3 +1,4 @@
+import { tNow } from "../i18n/translate";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../../config/firebase";
 
@@ -15,7 +16,7 @@ export function applyDocumentTheme(theme) {
 }
 
 export async function updateUserTheme(userId, theme) {
-  if (!userId) throw new Error("Missing user.");
+  if (!userId) throw new Error(tNow("toast.needSignIn"));
   const next = theme === "dark" ? "dark" : "light";
   await setDoc(
     doc(db, "users", userId),

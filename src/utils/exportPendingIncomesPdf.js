@@ -1,4 +1,7 @@
 import { jsPDF } from "jspdf";
+import { createTranslator } from "../i18n/translate";
+
+const defaultT = createTranslator("en");
 
 function money(value) {
   return Number(value || 0).toLocaleString("en-US", {
@@ -7,10 +10,13 @@ function money(value) {
   });
 }
 
-function shortDate(value) {
+function shortDate(value, locale = "en-US") {
   if (!value) return "—";
   const [year, month, day] = String(value).split("-");
   if (!year || !month) return String(value);
+  if (String(locale).toLowerCase().startsWith("pt")) {
+    return `${day || "01"}/${month}/${year}`;
+  }
   return `${month}/${day || "01"}/${year}`;
 }
 
@@ -57,11 +63,16 @@ function ensureSpace(doc, cursorY, needed, pageWidth, pageHeight, marginX, margi
 /**
  * Mobile-first payment-due PDF (narrow page, large type, stacked rows).
  * Designed to be readable in WhatsApp on a phone without pinch-zoom.
+ *
+ * Optional `t` (translate function from useT()) and `locale` (e.g. "pt-BR")
+ * localize all PDF strings. Defaults to English.
  */
 export async function downloadPendingIncomesPdf({
   incomes = [],
-  periodLabel = "All periods",
+  periodLabel,
   fileStem = "mywallet-payment-due",
+  t = defaultT,
+  locale = "en-US",
 } = {}) {
   const rows = [...incomes].sort((a, b) =>
     String(a.expectedDate || "").localeCompare(String(b.expectedDate || ""))
@@ -98,7 +109,7 @@ export async function downloadPendingIncomesPdf({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.setTextColor(113, 113, 122);
-    doc.text("Payment due", textX, cursorY + 30);
+    doc.text(t("export.pdf.paymentDue"), textX, cursorY + 30);
     cursorY += logoSize + 22;
   } else {
     doc.setFont("helvetica", "bold");
@@ -108,14 +119,18 @@ export async function downloadPendingIncomesPdf({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.setTextColor(113, 113, 122);
-    doc.text("Payment due", marginX, cursorY + 30);
+    doc.text(t("export.pdf.paymentDue"), marginX, cursorY + 30);
     cursorY += 48;
   }
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
   doc.setTextColor(11, 18, 32);
-  doc.text(String(periodLabel), marginX, cursorY);
+  doc.text(
+    String(periodLabel || t("export.pdf.allPeriods")),
+    marginX,
+    cursorY
+  );
   cursorY += 10;
 
   // Hero total card
@@ -127,7 +142,7 @@ export async function downloadPendingIncomesPdf({
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
-  doc.text("TOTAL DUE", marginX + 18, cursorY + 28);
+  doc.text(t("export.pdf.totalDueCaps"), marginX + 18, cursorY + 28);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(28);
@@ -136,7 +151,9 @@ export async function downloadPendingIncomesPdf({
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.text(
-    `${rows.length} item${rows.length === 1 ? "" : "s"}`,
+    t(rows.length === 1 ? "export.pdf.itemOne" : "export.pdf.itemMany", {
+      count: rows.length,
+    }),
     contentRight - 18,
     cursorY + 28,
     { align: "right" }
@@ -147,7 +164,7 @@ export async function downloadPendingIncomesPdf({
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(100, 116, 139);
-  doc.text("DETAILS", marginX, cursorY);
+  doc.text(t("export.pdf.details"), marginX, cursorY);
   cursorY += 12;
   drawHairline(doc, marginX, cursorY, contentRight);
   cursorY += 8;
@@ -165,13 +182,15 @@ export async function downloadPendingIncomesPdf({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(13);
     doc.setTextColor(100, 116, 139);
-    doc.text("No amounts due in this period.", marginX, cursorY + 18);
+    doc.text(t("export.pdf.noAmountsDue"), marginX, cursorY + 18);
     cursorY += 40;
   } else {
     rows.forEach((item) => {
       const name = displayName(item);
       const amount = money(item.amount);
-      const dateLabel = `Expected ${shortDate(item.expectedDate)}`;
+      const dateLabel = t("export.pdf.expected", {
+        date: shortDate(item.expectedDate, locale),
+      });
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
@@ -222,7 +241,7 @@ export async function downloadPendingIncomesPdf({
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(15, 23, 42);
-  doc.text("Total due", marginX, cursorY);
+  doc.text(t("export.pdf.totalDue"), marginX, cursorY);
   doc.setFontSize(16);
   doc.text(money(total), contentRight, cursorY, { align: "right" });
 
@@ -235,7 +254,11 @@ export async function downloadPendingIncomesPdf({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(148, 163, 184);
-    doc.text(`Generated ${new Date().toLocaleString()} · MyWallet`, marginX, h - 22);
+    doc.text(
+      t("export.pdf.generated", { date: new Date().toLocaleString(locale) }),
+      marginX,
+      h - 22
+    );
     if (pageCount > 1) {
       doc.text(`${page}/${pageCount}`, w - marginX, h - 22, { align: "right" });
     }

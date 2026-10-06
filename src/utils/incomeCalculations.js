@@ -119,13 +119,13 @@ export function monthKeyFromDate(dateValue) {
   return "";
 }
 
-export function formatPeriodLabel(period) {
+export function formatPeriodLabel(period, locale = "default") {
   if (!period || !period.includes("-")) {
     return period || "";
   }
   const [year, month] = period.split("-");
   const label = new Date(Number(year), Number(month) - 1, 1).toLocaleString(
-    "default",
+    locale,
     { month: "long" }
   );
   return `${label} ${year}`;
@@ -201,7 +201,7 @@ export function shiftDateOnly(dateValue, monthsToAdd) {
   )}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-export function formatDisplayDate(dateValue) {
+export function formatDisplayDate(dateValue, language = "en") {
   if (!dateValue) {
     return "";
   }
@@ -210,7 +210,9 @@ export function formatDisplayDate(dateValue) {
   const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (isoMatch) {
     const [, year, month, day] = isoMatch;
-    return `${month}/${day}/${year}`;
+    return language === "pt"
+      ? `${day}/${month}/${year}`
+      : `${month}/${day}/${year}`;
   }
   // Already MM/DD/YYYY
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {

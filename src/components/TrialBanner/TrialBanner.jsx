@@ -2,13 +2,16 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSubscription } from "../../hooks/useSubscription";
 import {
-  PRO_COPY,
+  PRO_COPY_KEYS,
+  TRIAL_DAYS,
   SUBSCRIPTION_STATUS,
 } from "../../constants/subscription";
+import { useT } from "../../i18n/useT";
 import PaywallModal from "../PaywallModal/PaywallModal";
 import styles from "./TrialBanner.module.scss";
 
 export default function TrialBanner() {
+  const t = useT();
   const {
     loading,
     isPro,
@@ -27,18 +30,18 @@ export default function TrialBanner() {
     return (
       <div className={`${styles.banner} ${styles.warning}`}>
         <div className={styles.copy}>
-          <strong>Payment issue</strong>
-          <span>Update your billing details to keep Pro access.</span>
+          <strong>{t("trialBanner.paymentIssue")}</strong>
+          <span>{t("trialBanner.paymentIssueText")}</span>
         </div>
         <div className={styles.actions}>
           <Link to="/home/profile" className={styles.primaryLink}>
-            Manage billing
+            {t("trialBanner.manageBilling")}
           </Link>
           <button
             type="button"
             className={styles.dismiss}
             onClick={() => setDismissed(true)}
-            aria-label="Dismiss"
+            aria-label={t("common.dismiss")}
           >
             ×
           </button>
@@ -57,24 +60,29 @@ export default function TrialBanner() {
           <div className={styles.copy}>
             <strong>
               {trialDaysLeft === 0
-                ? "Trial ends today"
-                : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left in trial`}
+                ? t("trialBanner.endsToday")
+                : t(
+                    trialDaysLeft === 1
+                      ? "trialBanner.daysLeftOne"
+                      : "trialBanner.daysLeftMany",
+                    { n: trialDaysLeft }
+                  )}
             </strong>
             <span>
               {urgent
-                ? "Subscribe to keep Pro features after the trial."
-                : "Explore Pro features before your trial ends."}
+                ? t("trialBanner.urgentText")
+                : t("trialBanner.exploreText")}
             </span>
           </div>
           <div className={styles.actions}>
             <Link to="/home/profile" className={styles.primaryLink}>
-              Manage plan
+              {t("trialBanner.managePlan")}
             </Link>
             <button
               type="button"
               className={styles.dismiss}
               onClick={() => setDismissed(true)}
-              aria-label="Dismiss"
+              aria-label={t("common.dismiss")}
             >
               ×
             </button>
@@ -101,9 +109,9 @@ export default function TrialBanner() {
     <>
       <div className={`${styles.banner} ${styles.promo}`}>
         <div className={styles.copy}>
-          <strong>Try MyWallet Pro free</strong>
+          <strong>{t("trialBanner.promoTitle")}</strong>
           <span>
-            {PRO_COPY.trialBanner}
+            {t(PRO_COPY_KEYS.trialBanner, { days: TRIAL_DAYS })}
           </span>
         </div>
         <div className={styles.actions}>
@@ -112,13 +120,13 @@ export default function TrialBanner() {
             className={styles.primaryBtn}
             onClick={() => setPaywallOpen(true)}
           >
-            Start trial
+            {t("trialBanner.startTrial")}
           </button>
           <button
             type="button"
             className={styles.dismiss}
             onClick={() => setDismissed(true)}
-            aria-label="Dismiss"
+            aria-label={t("common.dismiss")}
           >
             ×
           </button>

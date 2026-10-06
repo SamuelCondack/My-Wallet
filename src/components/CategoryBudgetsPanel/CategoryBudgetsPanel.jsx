@@ -5,6 +5,7 @@ import BottomSheet from "../BottomSheet/BottomSheet";
 import sheetStyles from "../BottomSheet/BottomSheet.module.scss";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import { formatCurrency } from "../../utils/finance";
+import { useT } from "../../i18n/useT";
 import styles from "./CategoryBudgetsPanel.module.scss";
 
 function budgetTone(spent, limit) {
@@ -21,13 +22,14 @@ function progressPercent(spent, limit) {
 }
 
 export function BudgetTeaserPreview() {
+  const t = useT();
   return (
     <div className={styles.teaserList} aria-hidden="true">
       <div className={styles.row}>
         <div className={styles.rowMain}>
           <span className={styles.rowIcon}>🍔</span>
           <div className={styles.rowCopy}>
-            <strong>Food</strong>
+            <strong>{t("budgets.teaser.food")}</strong>
             <span>$186 / $200</span>
           </div>
         </div>
@@ -39,7 +41,7 @@ export function BudgetTeaserPreview() {
         <div className={styles.rowMain}>
           <span className={styles.rowIcon}>🚗</span>
           <div className={styles.rowCopy}>
-            <strong>Transport</strong>
+            <strong>{t("budgets.teaser.transport")}</strong>
             <span>$142 / $120</span>
           </div>
         </div>
@@ -60,6 +62,7 @@ export default function CategoryBudgetsPanel({
   onSave,
   onRemove,
 }) {
+  const t = useT();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [categoryId, setCategoryId] = useState("");
@@ -95,7 +98,7 @@ export default function CategoryBudgetsPanel({
           limit,
           tone: budgetTone(spent, limit),
           percent: progressPercent(spent, limit),
-          name: category?.name || "Category",
+          name: category?.name || t("budgets.fallbackCategory"),
           icon: category?.icon || "📦",
         };
       })
@@ -105,7 +108,7 @@ export default function CategoryBudgetsPanel({
         if (rankDiff !== 0) return rankDiff;
         return b.spent - a.spent;
       });
-  }, [budgets, spentByCategory, categoryById]);
+  }, [budgets, spentByCategory, categoryById, t]);
 
   const availableCategories = useMemo(() => {
     const taken = new Set(budgets.map((item) => item.categoryId));
@@ -148,12 +151,12 @@ export default function CategoryBudgetsPanel({
   const handleSave = async (event) => {
     event.preventDefault();
     if (!categoryId) {
-      toast.error("Pick a category.");
+      toast.error(t("budgets.toast.pickCategory"));
       return;
     }
     const value = Number(String(amount).replace(",", "."));
     if (!Number.isFinite(value) || value <= 0) {
-      toast.error("Enter a valid monthly limit.");
+      toast.error(t("budgets.toast.invalidLimit"));
       return;
     }
 
@@ -164,11 +167,13 @@ export default function CategoryBudgetsPanel({
         await onRemove(editingId);
       }
       await onSave(categoryId, value);
-      toast.success(editingId ? "Budget updated." : "Budget saved.");
+      toast.success(
+        editingId ? t("budgets.toast.updated") : t("budgets.toast.saved")
+      );
       setSheetOpen(false);
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Could not save budget.");
+      toast.error(err.message || t("budgets.toast.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -179,12 +184,12 @@ export default function CategoryBudgetsPanel({
     setSaving(true);
     try {
       await onRemove(editingId);
-      toast.success("Budget removed.");
+      toast.success(t("budgets.toast.removed"));
       setConfirmRemoveOpen(false);
       setSheetOpen(false);
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Could not remove budget.");
+      toast.error(err.message || t("budgets.toast.removeFailed"));
     } finally {
       setSaving(false);
     }
@@ -193,7 +198,7 @@ export default function CategoryBudgetsPanel({
   if (!monthPeriod) {
     return (
       <p className={styles.hint}>
-        Pick a specific month above to track category budgets.
+        {t("budgets.pickMonth")}
       </p>
     );
   }
@@ -208,14 +213,25 @@ export default function CategoryBudgetsPanel({
             }`}
           >
             {overCount > 0
-              ? `${overCount} categor${overCount === 1 ? "y is" : "ies are"} over budget this month.`
-              : `${warnCount} categor${warnCount === 1 ? "y is" : "ies are"} nearing the limit.`}
+              ? t(
+                  overCount === 1
+                    ? "budgets.alertOverOne"
+                    : "budgets.alertOverMany",
+                  { count: overCount }
+                )
+              : t(
+                  warnCount === 1
+                    ? "budgets.alertWarnOne"
+                    : "budgets.alertWarnMany",
+                  { count: warnCount }
+                )}
           </p>
         )}
 
         <div className={styles.toolbar}>
           <p className={styles.periodNote}>
-            Limits for <strong>{monthLabel || monthPeriod}</strong>
+            {t("budgets.limitsFor")}{" "}
+            <strong>{monthLabel || monthPeriod}</strong>
           </p>
           <button
             type="button"
@@ -223,13 +239,13 @@ export default function CategoryBudgetsPanel({
             onClick={openCreate}
             disabled={availableCategories.length === 0}
           >
-            Add budget
+            {t("budgets.add")}
           </button>
         </div>
 
         {budgetRows.length === 0 ? (
           <p className={styles.empty}>
-            Set a monthly limit on a category you care about.
+            {t("budgets.empty")}
           </p>
         ) : (
           <ul className={styles.list}>
@@ -248,7 +264,11 @@ export default function CategoryBudgetsPanel({
                       <strong>{row.name}</strong>
                       <span>
                         {formatCurrency(row.spent)} / {formatCurrency(row.limit)}
-                        {row.tone === "over" ? " · Over" : row.tone === "warn" ? " · Almost" : ""}
+                        {row.tone === "over"
+                          ? ` · ${t("budgets.over")}`
+                          : row.tone === "warn"
+                            ? ` · ${t("budgets.almost")}`
+                            : ""}
                       </span>
                     </div>
                     <span className={styles.pct}>{row.percent}%</span>
@@ -273,12 +293,12 @@ export default function CategoryBudgetsPanel({
           <div className={styles.sheetBody}>
             <header className={styles.sheetHeader}>
               <h2 id="budget-sheet-title">
-                {editingId ? "Edit budget" : "Add budget"}
+                {editingId ? t("budgets.edit") : t("budgets.add")}
               </h2>
             </header>
 
             <label className={styles.fieldLabel} htmlFor="budgetCategory">
-              Category
+              {t("budgets.category")}
             </label>
             <select
               id="budgetCategory"
@@ -288,7 +308,7 @@ export default function CategoryBudgetsPanel({
               disabled={availableCategories.length === 0}
             >
               {availableCategories.length === 0 ? (
-                <option value="">No categories left</option>
+                <option value="">{t("budgets.noCategoriesLeft")}</option>
               ) : (
                 availableCategories.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -300,7 +320,7 @@ export default function CategoryBudgetsPanel({
             </select>
 
             <label className={styles.fieldLabel} htmlFor="budgetAmount">
-              Monthly limit
+              {t("budgets.monthlyLimit")}
             </label>
             <div className={styles.amountRow}>
               <span aria-hidden="true">$</span>
@@ -322,7 +342,7 @@ export default function CategoryBudgetsPanel({
                 onClick={requestRemove}
                 disabled={saving}
               >
-                Remove budget
+                {t("budgets.remove")}
               </button>
             )}
           </div>
@@ -334,7 +354,11 @@ export default function CategoryBudgetsPanel({
                 className={sheetStyles.primaryBtn}
                 disabled={saving || !categoryId}
               >
-                {saving ? "Saving…" : editingId ? "Edit" : "Add"}
+                {saving
+                  ? t("common.saving")
+                  : editingId
+                    ? t("common.edit")
+                    : t("common.add")}
               </button>
               <button
                 type="button"
@@ -342,7 +366,7 @@ export default function CategoryBudgetsPanel({
                 onClick={closeSheet}
                 disabled={saving}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </div>
@@ -355,9 +379,11 @@ export default function CategoryBudgetsPanel({
           if (!saving) setConfirmRemoveOpen(false);
         }}
         onConfirm={handleRemove}
-        title="Remove budget"
-        message="Are you sure you want to remove the budget for"
-        expenseName={categoryById[editingId]?.name || "this category"}
+        title={t("budgets.removeTitle")}
+        message={t("budgets.removeMessage")}
+        expenseName={
+          categoryById[editingId]?.name || t("budgets.thisCategory")
+        }
         isSubmitting={saving}
       />
     </>

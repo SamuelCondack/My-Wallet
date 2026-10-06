@@ -5,6 +5,14 @@ export const PAYMENT_METHODS = [
   "Pix",
 ];
 
+/** Maps the English value stored in Firestore to its i18n key. */
+export const PAYMENT_METHOD_LABEL_KEYS = {
+  "Credit Card": "payment.creditCard",
+  "Debit Card": "payment.debitCard",
+  Money: "payment.money",
+  Pix: "payment.pix",
+};
+
 /** Matches expense card colors in Expenses.module.scss */
 export const PAYMENT_METHOD_COLORS = {
   "Credit Card": "#3e92eb",

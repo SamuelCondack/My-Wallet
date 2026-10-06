@@ -9,9 +9,11 @@ import {
   FREE_FAVORITE_LIMIT,
   PAYMENT_METHODS,
   PAYMENT_METHOD_COLORS,
+  PAYMENT_METHOD_LABEL_KEYS,
 } from "../../constants/quickAdd";
-import { PRO_COPY } from "../../constants/subscription";
+import { PRO_COPY_KEYS } from "../../constants/subscription";
 import { useSubscription } from "../../hooks/useSubscription";
+import { useT } from "../../i18n/useT";
 import styles from "./ExpenseFormModal.module.scss";
 
 function templateQuickValue(template) {
@@ -104,6 +106,7 @@ export default function ExpenseFormModal({
   initialValues = null,
   editingExpense = null,
 }) {
+  const t = useT();
   const isCreate = mode === "create";
   const { canStartTrial } = useSubscription();
   const [form, setForm] = useState(EMPTY_FORM);
@@ -194,12 +197,12 @@ export default function ExpenseFormModal({
       categories.find((item) => item.id === form.categoryId) ||
       categories[0] || {
         id: DEFAULT_CATEGORY_ID,
-        name: "Other",
+        name: t("common.other"),
         icon: "📦",
         color: "#B0B0B0",
       }
     );
-  }, [categories, form.categoryId]);
+  }, [categories, form.categoryId, t]);
 
   const budgetHint = useMemo(() => {
     if (!isPro || !budgets.length) return null;
@@ -328,9 +331,9 @@ export default function ExpenseFormModal({
               null
             );
             if (spent + quickValue >= limit) {
-              toast.info("That category is over its monthly budget.");
+              toast.info(t("expenseForm.toast.templateOverBudget"));
             } else if (spent + quickValue >= limit * 0.8) {
-              toast.info("That category is nearing its monthly budget.");
+              toast.info(t("expenseForm.toast.templateNearingBudget"));
             }
           }
         }
@@ -360,15 +363,15 @@ export default function ExpenseFormModal({
     const value = Number(String(form.value).replace(",", "."));
 
     if (!name) {
-      toast.error("Enter a name.");
+      toast.error(t("expenseForm.toast.enterName"));
       return;
     }
     if (!Number.isFinite(value) || value <= 0) {
-      toast.error("Enter a valid amount.");
+      toast.error(t("expenseForm.toast.validAmount"));
       return;
     }
     if (!form.inclusionDate) {
-      toast.error("Pick an inclusion date.");
+      toast.error(t("expenseForm.toast.pickDate"));
       return;
     }
 
@@ -381,7 +384,7 @@ export default function ExpenseFormModal({
           installments < 0 ||
           !Number.isInteger(installments)
         ) {
-          toast.error("Installments must be 0 or a whole number.");
+          toast.error(t("expenseForm.toast.installmentsInvalid"));
           return;
         }
       }
@@ -392,7 +395,7 @@ export default function ExpenseFormModal({
       form.inclusionDate &&
       new Date(form.pauseDate) <= new Date(form.inclusionDate)
     ) {
-      toast.error("Pause date must be after inclusion date.");
+      toast.error(t("expenseForm.toast.pauseAfterInclusion"));
       return;
     }
 
@@ -416,11 +419,13 @@ export default function ExpenseFormModal({
       });
       if (budgetHint?.tone === "over") {
         toast.info(
-          `${selectedCategory.name} is over its monthly budget after this expense.`
+          t("expenseForm.toast.overBudget", { category: selectedCategory.name })
         );
       } else if (budgetHint?.tone === "warn") {
         toast.info(
-          `${selectedCategory.name} is nearing its monthly budget.`
+          t("expenseForm.toast.nearingBudget", {
+            category: selectedCategory.name,
+          })
         );
       }
     } finally {
@@ -433,7 +438,7 @@ export default function ExpenseFormModal({
 
     const name = form.name.trim();
     if (!name) {
-      toast.error("Enter a name before saving a favorite.");
+      toast.error(t("expenseForm.toast.favoriteNameRequired"));
       return;
     }
 
@@ -441,7 +446,7 @@ export default function ExpenseFormModal({
     try {
       if (matchingFavorite) {
         await onRemoveFavorite(matchingFavorite.id);
-        toast.success("Favorite removed.");
+        toast.success(t("expenseForm.toast.favoriteRemoved"));
         return;
       }
 
@@ -457,10 +462,10 @@ export default function ExpenseFormModal({
         categoryId: form.categoryId || DEFAULT_CATEGORY_ID,
         paymentMethod: form.paymentMethod,
       });
-      toast.success("Saved to favorites.");
+      toast.success(t("expenseForm.toast.favoriteSaved"));
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Could not update favorites.");
+      toast.error(err.message || t("expenseForm.toast.favoriteFailed"));
     } finally {
       setIsSavingFavorite(false);
     }
@@ -476,7 +481,7 @@ export default function ExpenseFormModal({
       >
         <header className={styles.header}>
           <h2 id="expense-form-title">
-            {isCreate ? "Add expense" : "Edit expense"}
+            {isCreate ? t("expenseForm.addTitle") : t("expenseForm.editTitle")}
           </h2>
           <div className={styles.headerActions}>
             {isCreate && (
@@ -486,9 +491,15 @@ export default function ExpenseFormModal({
                 onClick={handleToggleFavorite}
                 disabled={isSavingFavorite}
                 aria-label={
-                  matchingFavorite ? "Remove favorite" : "Save as favorite"
+                  matchingFavorite
+                    ? t("expenseForm.removeFavorite")
+                    : t("expenseForm.saveAsFavorite")
                 }
-                title={matchingFavorite ? "Remove favorite" : "Save favorite"}
+                title={
+                  matchingFavorite
+                    ? t("expenseForm.removeFavorite")
+                    : t("expenseForm.saveFavorite")
+                }
               >
                 {matchingFavorite ? <FaStar /> : <FaRegStar />}
               </button>
@@ -497,7 +508,7 @@ export default function ExpenseFormModal({
               type="button"
               className={styles.iconBtn}
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t("common.close")}
             >
               <FaTimes />
             </button>
@@ -510,7 +521,9 @@ export default function ExpenseFormModal({
               <div className={styles.shortcuts}>
                 {favorites.length > 0 && (
                     <div className={styles.shortcutBlock}>
-                    <p className={styles.shortcutLabel}>Favorites · quick add</p>
+                    <p className={styles.shortcutLabel}>
+                      {t("expenseForm.favoritesQuickAdd")}
+                    </p>
                     <HorizontalChipRow className={styles.chipRow}>
                       {favorites.map((item) => {
                         const canQuickAdd = templateQuickValue(item) != null;
@@ -525,8 +538,8 @@ export default function ExpenseFormModal({
                             disabled={isSaving}
                             title={
                               canQuickAdd
-                                ? "Tap to save this expense"
-                                : "Tap to prefill"
+                                ? t("expenseForm.tapToSave")
+                                : t("expenseForm.tapToPrefill")
                             }
                           >
                             <FaStar
@@ -547,7 +560,7 @@ export default function ExpenseFormModal({
                 {recent.length > 0 && (
                   <div className={styles.shortcutBlock}>
                     <p className={styles.shortcutLabel}>
-                      Repeat recent · quick add
+                      {t("expenseForm.recentQuickAdd")}
                     </p>
                     <HorizontalChipRow className={styles.chipRow}>
                       {recent.map((item) => {
@@ -563,8 +576,8 @@ export default function ExpenseFormModal({
                             disabled={isSaving}
                             title={
                               canQuickAdd
-                                ? "Tap to save this expense"
-                                : "Tap to prefill"
+                                ? t("expenseForm.tapToSave")
+                                : t("expenseForm.tapToPrefill")
                             }
                           >
                             <span>{shortLabel(item.name)}</span>
@@ -579,13 +592,13 @@ export default function ExpenseFormModal({
             )}
 
             <label className={styles.fieldLabel} htmlFor="expenseName">
-              Name
+              {t("expenseForm.name")}
             </label>
             <input
               id="expenseName"
               name="name"
               type="text"
-              placeholder="Coffee, Uber, groceries…"
+              placeholder={t("expenseForm.namePlaceholder")}
               value={form.name}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, name: e.target.value }))
@@ -596,8 +609,8 @@ export default function ExpenseFormModal({
 
             <label className={styles.amountLabel} htmlFor="expenseValue">
               {!isCreate && Number(editingExpense?.installments) > 1
-                ? "Total amount"
-                : "Amount"}
+                ? t("expenseForm.totalAmount")
+                : t("expenseForm.amount")}
             </label>
             <div className={styles.amountRow}>
               <span aria-hidden="true">$</span>
@@ -617,7 +630,7 @@ export default function ExpenseFormModal({
               />
             </div>
 
-            <p className={styles.fieldLabel}>Category</p>
+            <p className={styles.fieldLabel}>{t("expenseForm.category")}</p>
             <button
               type="button"
               className={styles.categoryTrigger}
@@ -649,14 +662,16 @@ export default function ExpenseFormModal({
                 <div className={styles.budgetHintCopy}>
                   <strong>
                     {budgetHint.tone === "over"
-                      ? "Over budget"
+                      ? t("expenseForm.budget.over")
                       : budgetHint.tone === "warn"
-                        ? "Near budget limit"
-                        : "Within budget"}
+                        ? t("expenseForm.budget.near")
+                        : t("expenseForm.budget.within")}
                   </strong>
                   <span>
-                    ${budgetHint.projected.toFixed(0)} / $
-                    {budgetHint.limit.toFixed(0)} this month
+                    {t("expenseForm.budget.usage", {
+                      projected: `$${budgetHint.projected.toFixed(0)}`,
+                      limit: `$${budgetHint.limit.toFixed(0)}`,
+                    })}
                   </span>
                 </div>
                 <div className={styles.budgetHintTrack}>
@@ -685,7 +700,7 @@ export default function ExpenseFormModal({
               </div>
             )}
 
-            <p className={styles.fieldLabel}>Payment</p>
+            <p className={styles.fieldLabel}>{t("expenseForm.payment")}</p>
             <div className={styles.paymentGrid}>
               {PAYMENT_METHODS.map((method) => {
                 const active = form.paymentMethod === method;
@@ -710,14 +725,16 @@ export default function ExpenseFormModal({
                       setForm((prev) => ({ ...prev, paymentMethod: method }))
                     }
                   >
-                    {method}
+                    {PAYMENT_METHOD_LABEL_KEYS[method]
+                      ? t(PAYMENT_METHOD_LABEL_KEYS[method])
+                      : method}
                   </button>
                 );
               })}
             </div>
 
             <label className={styles.fieldLabel} htmlFor="expenseDate">
-              Inclusion date
+              {t("expenseForm.inclusionDate")}
             </label>
             <input
               id="expenseDate"
@@ -739,7 +756,7 @@ export default function ExpenseFormModal({
             />
 
             <div className={styles.toggleRow}>
-              <span>Monthly expense</span>
+              <span>{t("expenseForm.monthlyExpense")}</span>
               <button
                 type="button"
                 role="switch"
@@ -764,7 +781,7 @@ export default function ExpenseFormModal({
               <>
                 <div className={styles.pauseDateHeader}>
                   <label className={styles.fieldLabel} htmlFor="expensePause">
-                    Pause date
+                    {t("expenseForm.pauseDate")}
                   </label>
                   {form.pauseDate ? (
                     <button
@@ -774,7 +791,7 @@ export default function ExpenseFormModal({
                         setForm((prev) => ({ ...prev, pauseDate: "" }))
                       }
                     >
-                      Clear
+                      {t("common.clear")}
                     </button>
                   ) : null}
                 </div>
@@ -809,7 +826,7 @@ export default function ExpenseFormModal({
                   className={styles.fieldLabel}
                   htmlFor="expenseInstallments"
                 >
-                  Installments
+                  {t("expenseForm.installments")}
                 </label>
                 <div className={styles.stepperRow}>
                   <button
@@ -822,7 +839,7 @@ export default function ExpenseFormModal({
                     className={`${styles.stepperBtn} ${
                       stepPulse.side === "dec" ? styles.stepperBtnPulse : ""
                     }`}
-                    aria-label="Decrease installments"
+                    aria-label={t("expenseForm.decreaseInstallments")}
                     disabled={isSaving}
                     onClick={(event) => {
                       event.currentTarget.blur();
@@ -868,7 +885,7 @@ export default function ExpenseFormModal({
                     className={`${styles.stepperBtn} ${
                       stepPulse.side === "inc" ? styles.stepperBtnPulse : ""
                     }`}
-                    aria-label="Increase installments"
+                    aria-label={t("expenseForm.increaseInstallments")}
                     disabled={isSaving}
                     onClick={(event) => {
                       event.currentTarget.blur();
@@ -899,10 +916,10 @@ export default function ExpenseFormModal({
                 disabled={isSaving}
               >
                 {isSaving
-                  ? "Saving…"
+                  ? t("common.saving")
                   : isCreate
-                    ? "Add"
-                    : "Edit"}
+                    ? t("common.add")
+                    : t("common.edit")}
               </button>
               <button
                 type="button"
@@ -910,7 +927,7 @@ export default function ExpenseFormModal({
                 onClick={onClose}
                 disabled={isSaving}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </div>
@@ -928,11 +945,11 @@ export default function ExpenseFormModal({
         className={styles.categorySheet}
       >
         <header className={styles.categoryPickerHeader}>
-          <h3 id="category-picker-title">Category</h3>
+          <h3 id="category-picker-title">{t("expenseForm.category")}</h3>
           <button
             type="button"
             className={styles.iconBtn}
-            aria-label="Close"
+            aria-label={t("common.close")}
             onClick={() => {
               setCategoryPickerOpen(false);
               setCategorySearch("");
@@ -948,7 +965,7 @@ export default function ExpenseFormModal({
             ref={categorySearchRef}
             type="search"
             className={styles.categorySearchInput}
-            placeholder="Search categories…"
+            placeholder={t("expenseForm.searchCategories")}
             value={categorySearch}
             onChange={(e) => setCategorySearch(e.target.value)}
             autoComplete="off"
@@ -957,7 +974,9 @@ export default function ExpenseFormModal({
 
         <div className={styles.categoryList}>
           {filteredCategories.length === 0 && (
-            <p className={styles.categoryEmpty}>No categories found</p>
+            <p className={styles.categoryEmpty}>
+              {t("expenseForm.noCategories")}
+            </p>
           )}
           {filteredCategories.map((category) => {
             const active = form.categoryId === category.id;
@@ -996,8 +1015,10 @@ export default function ExpenseFormModal({
       <PaywallModal
         isOpen={paywallOpen}
         onClose={() => setPaywallOpen(false)}
-        title={PRO_COPY.favoritesPaywallTitle}
-        message={PRO_COPY.favoritesPaywallMessage}
+        title={t(PRO_COPY_KEYS.favoritesPaywallTitle)}
+        message={t(PRO_COPY_KEYS.favoritesPaywallMessage, {
+          limit: FREE_FAVORITE_LIMIT,
+        })}
         canStartTrial={canStartTrial}
       />
     </>

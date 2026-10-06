@@ -1,8 +1,10 @@
 import { toast } from "react-toastify";
 import { usePwaInstall } from "../../hooks/usePwaInstall";
+import { useT } from "../../i18n/useT";
 import styles from "./PwaInstallCard.module.scss";
 
 export default function PwaInstallCard() {
+  const t = useT();
   const {
     showProfileGuide,
     ios,
@@ -18,11 +20,11 @@ export default function PwaInstallCard() {
   const handleInstall = async () => {
     const result = await promptInstall();
     if (result.outcome === "accepted") {
-      toast.success("MyWallet installed.");
+      toast.success(t("pwa.installed"));
       return;
     }
     if (!result.ok) {
-      toast.info("Use your browser menu → Install app.");
+      toast.info(t("pwa.hintMenu"));
     }
   };
 
@@ -30,17 +32,15 @@ export default function PwaInstallCard() {
     <section className={styles.card}>
       <div className={styles.header}>
         <div>
-          <p className={styles.label}>On your phone</p>
-          <h2 className={styles.title}>Install MyWallet</h2>
-          <p className={styles.lead}>
-            Open it like an app — full screen, home screen icon, faster launch.
-          </p>
+          <p className={styles.label}>{t("pwa.onYourPhone")}</p>
+          <h2 className={styles.title}>{t("pwa.installTitle")}</h2>
+          <p className={styles.lead}>{t("pwa.cardLead")}</p>
         </div>
         <button
           type="button"
           className={styles.dismiss}
           onClick={dismissProfile}
-          aria-label="Dismiss install guide"
+          aria-label={t("pwa.dismissGuide")}
         >
           ×
         </button>
@@ -48,50 +48,34 @@ export default function PwaInstallCard() {
 
       {canNativeInstall ? (
         <button type="button" className={styles.primaryBtn} onClick={handleInstall}>
-          Install app
+          {t("pwa.installApp")}
         </button>
       ) : ios && iosSafari ? (
         <ol className={styles.steps}>
-          <li>
-            Tap <strong>Share</strong> in Safari
-          </li>
-          <li>
-            Choose <strong>Add to Home Screen</strong>
-          </li>
-          <li>
-            Tap <strong>Add</strong>
-          </li>
+          <li>{t("pwa.iosSafari.step1")}</li>
+          <li>{t("pwa.iosSafari.step2")}</li>
+          <li>{t("pwa.iosSafari.step3")}</li>
         </ol>
       ) : ios ? (
         <ol className={styles.steps}>
-          <li>
-            Open this site in <strong>Safari</strong>
-          </li>
-          <li>
-            Tap <strong>Share</strong> → <strong>Add to Home Screen</strong>
-          </li>
-          <li>
-            Tap <strong>Add</strong>
-          </li>
+          <li>{t("pwa.iosOther.step1")}</li>
+          <li>{t("pwa.iosOther.step2")}</li>
+          <li>{t("pwa.iosOther.step3")}</li>
         </ol>
       ) : android ? (
         <ol className={styles.steps}>
-          <li>
-            Open the browser <strong>menu</strong> (⋮)
-          </li>
-          <li>
-            Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>
-          </li>
+          <li>{t("pwa.android.step1")}</li>
+          <li>{t("pwa.android.step2")}</li>
         </ol>
       ) : (
         <ol className={styles.steps}>
-          <li>Use your browser menu to install or add to home screen.</li>
+          <li>{t("pwa.generic.step1")}</li>
         </ol>
       )}
 
       {!canNativeInstall && (
         <button type="button" className={styles.secondaryBtn} onClick={dismissProfile}>
-          Not now
+          {t("pwa.notNow")}
         </button>
       )}
     </section>

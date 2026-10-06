@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { TRIAL_DAYS } from "../../constants/subscription";
+import { useT } from "../../i18n/useT";
 import styles from "./styles.module.scss";
 
 const ease = [0.16, 1, 0.3, 1];
@@ -26,7 +27,22 @@ const previewBars = [
 ];
 
 export default function HomeNoAuth() {
+  const t = useT();
   const reduceMotion = useReducedMotion();
+  const featureItems = [
+    {
+      title: t("landing.features.capture.title"),
+      text: t("landing.features.capture.text"),
+    },
+    {
+      title: t("landing.features.month.title"),
+      text: t("landing.features.month.text"),
+    },
+    {
+      title: t("landing.features.plan.title"),
+      text: t("landing.features.plan.text"),
+    },
+  ];
 
   return (
     <div className={styles.page}>
@@ -58,8 +74,8 @@ export default function HomeNoAuth() {
             animate="show"
             custom={0.14}
           >
-            Money, finally
-            <span> under control.</span>
+            {t("landing.hero.headlineLead")}
+            <span> {t("landing.hero.headlineAccent")}</span>
           </motion.h1>
 
           <motion.p
@@ -69,8 +85,7 @@ export default function HomeNoAuth() {
             animate="show"
             custom={0.26}
           >
-            Track expenses, income, and forecasts in one calm place. Built for
-            real life on your phone.
+            {t("landing.hero.lead")}
           </motion.p>
 
           <motion.div
@@ -82,14 +97,14 @@ export default function HomeNoAuth() {
           >
             <div className={styles.ctaRow}>
               <Link to="/signup" className={styles.ctaPrimary}>
-                <span>Try it free</span>
+                <span>{t("landing.hero.tryFree")}</span>
               </Link>
               <Link to="/signin" className={styles.ctaGhost}>
-                <span>Sign in</span>
+                <span>{t("landing.hero.signIn")}</span>
               </Link>
             </div>
             <p className={styles.ctaHint}>
-              Free to start. {TRIAL_DAYS}-day Pro trial when you are ready.
+              {t("landing.hero.hint", { days: TRIAL_DAYS })}
             </p>
           </motion.div>
 
@@ -104,7 +119,7 @@ export default function HomeNoAuth() {
             <div className={styles.previewShell}>
               <div className={styles.previewGlow} />
               <div className={styles.previewTop}>
-                <span>This month</span>
+                <span>{t("landing.preview.thisMonth")}</span>
                 <strong>+$1,063</strong>
               </div>
               <div className={styles.previewBars}>
@@ -124,7 +139,7 @@ export default function HomeNoAuth() {
                 ))}
               </div>
               <div className={styles.previewMeta}>
-                <span>Spendings</span>
+                <span>{t("landing.preview.spendings")}</span>
                 <span>$2,496</span>
               </div>
             </div>
@@ -139,29 +154,13 @@ export default function HomeNoAuth() {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.7, ease }}
           >
-            <p className={styles.eyebrow}>Everyday clarity</p>
-            <h2>See where your money goes, without the spreadsheet stress.</h2>
-            <p>
-              Quick capture, categories, income tracking, and a forecast that
-              helps you plan ahead. Designed to feel fast on mobile.
-            </p>
+            <p className={styles.eyebrow}>{t("landing.about.eyebrow")}</p>
+            <h2>{t("landing.about.title")}</h2>
+            <p>{t("landing.about.text")}</p>
           </motion.div>
 
           <div className={styles.featureGrid}>
-            {[
-              {
-                title: "Capture in seconds",
-                text: "Add expenses with a fluid form built for thumbs, not desktops.",
-              },
-              {
-                title: "Know your month",
-                text: "Spendings, received income, and what’s left, at a glance.",
-              },
-              {
-                title: "Plan forward",
-                text: "Project savings and adjust months before surprises hit.",
-              },
-            ].map((item, index) => (
+            {featureItems.map((item, index) => (
               <motion.article
                 key={item.title}
                 className={styles.featureItem}
@@ -189,10 +188,10 @@ export default function HomeNoAuth() {
             viewport={{ once: true, amount: 0.45 }}
             transition={{ duration: 0.7, ease }}
           >
-            <h2>Ready when you are.</h2>
-            <p>Open the app, add a couple expenses, and feel the calm kick in.</p>
+            <h2>{t("landing.close.title")}</h2>
+            <p>{t("landing.close.text")}</p>
             <Link to="/signup" className={styles.ctaPrimary}>
-              <span>Create free account</span>
+              <span>{t("landing.close.cta")}</span>
             </Link>
           </motion.div>
         </section>

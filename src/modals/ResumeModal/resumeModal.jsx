@@ -1,7 +1,7 @@
-import { useEffect } from "react";
 import { motion } from "framer-motion";
 import styles from "./resumeModal.module.scss";
 import PropTypes from "prop-types";
+import { useT } from "../../i18n/useT";
 
 const ResumeModal = ({
   isOpen,
@@ -9,6 +9,7 @@ const ResumeModal = ({
   onConfirm,
   onRequestClose,
 }) => {
+  const t = useT();
   if (!isOpen) return null;
 
   return (
@@ -21,9 +22,9 @@ const ResumeModal = ({
         exit={{ scale: 0.1 }}
         transition={{ duration: 0.3, ease: "linear" }}
       >
-        <h2>Resume Expense</h2>
+        <h2>{t("modal.resume.title")}</h2>
         <p className={styles.message}>
-          Are you sure you want to resume the expense
+          {t("modal.resume.message")}
           <b className={styles.identifier}>
             {` `}&rdquo;{selectedExpense?.name}&rdquo;
           </b>
@@ -31,10 +32,10 @@ const ResumeModal = ({
         </p>
         <div className={styles.buttons}>
           <button className={styles.confirmButton} onClick={onConfirm}>
-            Confirm
+            {t("common.confirm")}
           </button>
           <button className={styles.cancelButton} onClick={onRequestClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       </motion.div>

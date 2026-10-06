@@ -6,6 +6,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../config/firebase";
+import { tNow } from "../i18n/translate";
 import {
   DEFAULT_SUBSCRIPTION,
   PLAN_ID,
@@ -65,6 +66,22 @@ export function getTrialDaysLeft(subscription) {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+/** Returns an i18n key: subscription.plan.proTrial | pro | pastDue | free */
+export function getPlanLabelKey(subscription) {
+  const normalized = normalizeSubscription(subscription);
+  if (hasProAccess(normalized)) {
+    if (normalized.status === SUBSCRIPTION_STATUS.TRIALING) {
+      return "subscription.plan.proTrial";
+    }
+    return "subscription.plan.pro";
+  }
+  if (normalized.status === SUBSCRIPTION_STATUS.PAST_DUE) {
+    return "subscription.plan.pastDue";
+  }
+  return "subscription.plan.free";
+}
+
+/** @deprecated English-only label; prefer getPlanLabelKey + t(). */
 export function getPlanLabel(subscription) {
   const normalized = normalizeSubscription(subscription);
   if (hasProAccess(normalized)) {
@@ -168,7 +185,9 @@ function getFunctionsBaseUrl() {
 async function getIdToken() {
   const user = auth.currentUser;
   if (!user) {
-    throw new Error("You must be signed in to manage billing.");
+    const error = new Error(tNow("validation.billing.signInRequired"));
+    error.code = "auth_required";
+    throw error;
   }
   return user.getIdToken();
 }
@@ -195,7 +214,7 @@ async function postBillingFunction(functionName, body = {}) {
     const message =
       payload?.error ||
       payload?.message ||
-      `Billing request failed (${response.status})`;
+      tNow("validation.billing.requestFailed", { status: response.status });
     const error = new Error(message);
     error.status = response.status;
     error.code = payload?.code;
@@ -234,7 +253,9 @@ export async function openStripeSession(createSession) {
     const result = await createSession();
     const url = result?.url;
     if (!url) {
-      throw new Error("Billing URL missing.");
+      const error = new Error(tNow("profile.billingUrlMissing"));
+      error.code = "url_missing";
+      throw error;
     }
 
     if (tab && !tab.closed) {

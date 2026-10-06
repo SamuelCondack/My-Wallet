@@ -8,6 +8,7 @@ import {
 import {
   ensureUserProfile,
   getPlanLabel,
+  getPlanLabelKey,
   getTrialDaysLeft,
   hasProAccess,
   canStartTrial as checkCanStartTrial,
@@ -92,6 +93,7 @@ export function useSubscription() {
   const isPro = hasProAccess(subscription);
   const trialDaysLeft = getTrialDaysLeft(subscription);
   const planLabel = getPlanLabel(subscription);
+  const planLabelKey = getPlanLabelKey(subscription);
   const isTrialing = subscription.status === SUBSCRIPTION_STATUS.TRIALING;
   const isPastDue = subscription.status === SUBSCRIPTION_STATUS.PAST_DUE;
   const canStartTrial = checkCanStartTrial(subscription);
@@ -118,6 +120,7 @@ export function useSubscription() {
     isPastDue,
     trialDaysLeft,
     planLabel,
+    planLabelKey,
     canStartTrial,
     requirePro,
   };

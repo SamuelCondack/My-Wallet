@@ -11,6 +11,7 @@ import {
   periodToDateInput,
 } from "../../utils/incomeCalculations";
 import { DEFAULT_INCOME_CATEGORY_ID } from "../../constants/defaultCategories";
+import { useLanguage } from "../../i18n/useLanguage";
 import styles from "./IncomeModal.module.scss";
 
 const EMPTY_FORM = {
@@ -36,6 +37,7 @@ export default function IncomeModal({
   categories = [],
   isSubmitting = false,
 }) {
+  const { t, locale, language } = useLanguage();
   const [form, setForm] = useState(EMPTY_FORM);
   const [stepPulse, setStepPulse] = useState({ side: null, tick: 0 });
   const nameInputRef = useRef(null);
@@ -119,10 +121,10 @@ export default function IncomeModal({
   const isConfirmMode = mode === "confirm";
   const title =
     mode === "edit"
-      ? "Edit income"
+      ? t("incomeForm.editTitle")
       : mode === "confirm"
-        ? "Confirm income"
-        : "Add income";
+        ? t("incomeForm.confirmTitle")
+        : t("incomeForm.addTitle");
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -185,7 +187,7 @@ export default function IncomeModal({
             type="button"
             className={sheetStyles.iconBtn}
             onClick={onRequestClose}
-            aria-label="Close"
+            aria-label={t("common.close")}
             disabled={isSubmitting}
           >
             <FaTimes />
@@ -198,7 +200,7 @@ export default function IncomeModal({
           {!isConfirmMode && (
             <>
               <label className={sheetStyles.fieldLabel} htmlFor="income-description">
-                Name
+                {t("incomeForm.name")}
               </label>
               <input
                 ref={nameInputRef}
@@ -209,12 +211,12 @@ export default function IncomeModal({
                 required
                 disabled={isSubmitting}
                 className={sheetStyles.textInput}
-                placeholder="Salary, freelance, refund…"
+                placeholder={t("incomeForm.namePlaceholder")}
                 autoComplete="off"
               />
 
               <label className={sheetStyles.amountLabel} htmlFor="income-amount">
-                Amount
+                {t("incomeForm.amount")}
               </label>
               <div className={sheetStyles.amountRow}>
                 <span aria-hidden="true">$</span>
@@ -234,7 +236,7 @@ export default function IncomeModal({
               </div>
 
               <label className={sheetStyles.fieldLabel} htmlFor="income-category">
-                Category
+                {t("incomeForm.category")}
               </label>
               <select
                 id="income-category"
@@ -252,7 +254,7 @@ export default function IncomeModal({
               </select>
 
               <label className={sheetStyles.fieldLabel} htmlFor="income-period">
-                Income period
+                {t("incomeForm.incomePeriod")}
               </label>
               <input
                 id="income-period"
@@ -265,11 +267,16 @@ export default function IncomeModal({
                 className={sheetStyles.textInput}
               />
               <span className={sheetStyles.fieldHint}>
-                Belongs to {formatPeriodLabel(dateInputToPeriod(form.incomePeriodDate))}
+                {t("incomeForm.belongsTo", {
+                  period: formatPeriodLabel(
+                    dateInputToPeriod(form.incomePeriodDate),
+                    locale
+                  ),
+                })}
               </span>
 
               <label className={sheetStyles.fieldLabel} htmlFor="income-expected">
-                Expected date
+                {t("incomeForm.expectedDate")}
               </label>
               <input
                 id="income-expected"
@@ -282,13 +289,17 @@ export default function IncomeModal({
                 className={sheetStyles.textInput}
               />
 
-              <p className={sheetStyles.fieldLabel}>Status</p>
+              <p className={sheetStyles.fieldLabel}>{t("incomeForm.status")}</p>
               <div className={sheetStyles.statusRow}>
                 {[
-                  { id: INCOME_STATUS.PENDING, label: "Pending", color: "#ebab3d" },
+                  {
+                    id: INCOME_STATUS.PENDING,
+                    label: t("income.pending"),
+                    color: "#ebab3d",
+                  },
                   {
                     id: INCOME_STATUS.CONFIRMED,
-                    label: "Confirmed",
+                    label: t("income.confirmed"),
                     color: "#3e92eb",
                   },
                 ].map((item) => {
@@ -323,7 +334,7 @@ export default function IncomeModal({
               </div>
 
               <div className={styles.toggleRow}>
-                  <span>Monthly income</span>
+                  <span>{t("incomeForm.monthlyIncome")}</span>
                   <button
                     type="button"
                     role="switch"
@@ -352,7 +363,7 @@ export default function IncomeModal({
                       className={sheetStyles.fieldLabel}
                       htmlFor="income-pause"
                     >
-                      Pause date
+                      {t("incomeForm.pauseDate")}
                     </label>
                     {form.pauseDate ? (
                       <button
@@ -363,7 +374,7 @@ export default function IncomeModal({
                         }
                         disabled={isSubmitting}
                       >
-                        Clear
+                        {t("common.clear")}
                       </button>
                     ) : null}
                   </div>
@@ -394,7 +405,7 @@ export default function IncomeModal({
                     className={sheetStyles.fieldLabel}
                     htmlFor="income-installments"
                   >
-                    Installments
+                    {t("incomeForm.installments")}
                   </label>
                   <div className={styles.stepperRow}>
                     <button
@@ -407,7 +418,7 @@ export default function IncomeModal({
                       className={`${styles.stepperBtn} ${
                         stepPulse.side === "dec" ? styles.stepperBtnPulse : ""
                       }`}
-                      aria-label="Decrease installments"
+                      aria-label={t("incomeForm.decreaseInstallments")}
                       disabled={isSubmitting}
                       onClick={(event) => {
                         event.currentTarget.blur();
@@ -449,7 +460,7 @@ export default function IncomeModal({
                       className={`${styles.stepperBtn} ${
                         stepPulse.side === "inc" ? styles.stepperBtnPulse : ""
                       }`}
-                      aria-label="Increase installments"
+                      aria-label={t("incomeForm.increaseInstallments")}
                       disabled={isSubmitting}
                       onClick={(event) => {
                         event.currentTarget.blur();
@@ -479,27 +490,43 @@ export default function IncomeModal({
                 <strong>{form.description}</strong>
               </p>
               {initialValues?.isMonthly && (
-                <p className={styles.installmentBadge}>Monthly income</p>
+                <p className={styles.installmentBadge}>
+                  {t("incomeForm.monthlyIncome")}
+                </p>
               )}
               {Number(initialValues?.installments) > 1 && (
                 <p className={styles.installmentBadge}>
-                  Installment {initialValues.installmentNumber}/
-                  {initialValues.installments}
+                  {t("incomeForm.installmentBadge", {
+                    n: initialValues.installmentNumber,
+                    count: initialValues.installments,
+                  })}
                 </p>
               )}
-              <p>Amount: ${Number(form.amount || 0).toFixed(2)}</p>
               <p>
-                Income Period:{" "}
-                {formatPeriodLabel(dateInputToPeriod(form.incomePeriodDate))}
+                {t("incomeForm.amountLine", {
+                  amount: `$${Number(form.amount || 0).toFixed(2)}`,
+                })}
               </p>
-              <p>Expected: {formatDisplayDate(form.expectedDate)}</p>
+              <p>
+                {t("income.periodLabel", {
+                  period: formatPeriodLabel(
+                    dateInputToPeriod(form.incomePeriodDate),
+                    locale
+                  ),
+                })}
+              </p>
+              <p>
+                {t("incomeForm.expectedLine", {
+                  date: formatDisplayDate(form.expectedDate, language),
+                })}
+              </p>
             </div>
           )}
 
           {(form.status === INCOME_STATUS.CONFIRMED || isConfirmMode) && (
             <>
               <label className={sheetStyles.fieldLabel} htmlFor="income-received">
-                Received date
+                {t("incomeForm.receivedDate")}
               </label>
               <input
                 id="income-received"
@@ -517,7 +544,7 @@ export default function IncomeModal({
           {!isConfirmMode && (
             <>
               <label className={sheetStyles.fieldLabel} htmlFor="income-notes">
-                Notes
+                {t("incomeForm.notes")}
               </label>
               <textarea
                 id="income-notes"
@@ -527,7 +554,7 @@ export default function IncomeModal({
                 rows={3}
                 disabled={isSubmitting}
                 className={sheetStyles.textarea}
-                placeholder="Optional"
+                placeholder={t("incomeForm.notesPlaceholder")}
               />
             </>
           )}
@@ -541,12 +568,12 @@ export default function IncomeModal({
               disabled={isSubmitting}
             >
               {isSubmitting
-                ? "Saving…"
+                ? t("common.saving")
                 : isConfirmMode
-                  ? "Confirm"
+                  ? t("common.confirm")
                   : mode === "edit"
-                    ? "Edit"
-                    : "Add"}
+                    ? t("common.edit")
+                    : t("common.add")}
             </button>
             <button
               type="button"
@@ -554,7 +581,7 @@ export default function IncomeModal({
               onClick={onRequestClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>

@@ -1,5 +1,7 @@
+import PropTypes from "prop-types";
 import styles from "./CategoryPieChart.module.scss";
 import { formatCurrency } from "../../utils/finance";
+import { useT } from "../../i18n/useT";
 
 function polarToCartesian(cx, cy, radius, angleDeg) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -48,10 +50,11 @@ export default function CategoryPieChart({
   categoriesMap,
   onSliceClick,
 }) {
+  const t = useT();
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   if (!total) {
-    return <p className={styles.empty}>No spending in this period.</p>;
+    return <p className={styles.empty}>{t("chart.empty")}</p>;
   }
 
   const size = 180;
@@ -86,11 +89,11 @@ export default function CategoryPieChart({
           width={size}
           height={size}
           role="img"
-          aria-label="Spending by category"
+          aria-label={t("chart.spendingByCategory")}
         >
           {slices.map((slice) => {
             const category = categoriesMap[slice.categoryId];
-            const label = category?.name || "Other";
+            const label = category?.name || t("common.other");
             return (
               <path
                 key={slice.categoryId}
@@ -101,7 +104,10 @@ export default function CategoryPieChart({
                 tabIndex={clickable ? 0 : undefined}
                 aria-label={
                   clickable
-                    ? `View ${label} expenses (${formatCurrency(slice.value)})`
+                    ? t("chart.viewExpenses", {
+                        label,
+                        amount: formatCurrency(slice.value),
+                      })
                     : undefined
                 }
                 onClick={
@@ -128,7 +134,7 @@ export default function CategoryPieChart({
           })}
         </svg>
         <div className={styles.donutCenter} aria-hidden="true">
-          <span className={styles.donutCenterLabel}>Total</span>
+          <span className={styles.donutCenterLabel}>{t("common.total")}</span>
           <strong className={styles.donutCenterValue}>
             {formatCurrency(total)}
           </strong>
@@ -140,7 +146,7 @@ export default function CategoryPieChart({
           const category = categoriesMap[item.categoryId];
           const percent = ((item.value / total) * 100).toFixed(1);
           const label = `${category?.icon || ""} ${
-            category?.name || "Other"
+            category?.name || t("common.other")
           }`.trim();
 
           const content = (
@@ -177,3 +183,14 @@ export default function CategoryPieChart({
     </div>
   );
 }
+
+CategoryPieChart.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      categoryId: PropTypes.string,
+      value: PropTypes.number,
+    })
+  ).isRequired,
+  categoriesMap: PropTypes.object.isRequired,
+  onSliceClick: PropTypes.func,
+};

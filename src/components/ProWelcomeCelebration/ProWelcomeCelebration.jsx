@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
+import { useT } from "../../i18n/useT";
 import styles from "./ProWelcomeCelebration.module.scss";
 
 const BLOBS = [styles.blobA, styles.blobB, styles.blobC];
@@ -28,6 +29,7 @@ export default function ProWelcomeCelebration({
   photoURL = null,
   isTrial = true,
 }) {
+  const t = useT();
   const [photoFailed, setPhotoFailed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -136,18 +138,20 @@ export default function ProWelcomeCelebration({
               )}
             </div>
             <span className={styles.proChip} aria-hidden="true">
-              Pro
+              {t("common.pro")}
             </span>
           </div>
 
-          <p className={styles.kicker}>You&apos;re in</p>
+          <p className={styles.kicker}>{t("proWelcome.kicker")}</p>
           <h2 id="pro-welcome-title" className={styles.title}>
-            Welcome{firstName ? `, ${firstName}` : ""}
+            {firstName
+              ? t("proWelcome.titleNamed", { name: firstName })
+              : t("proWelcome.title")}
           </h2>
           <p className={styles.subtitle}>
             {isTrial
-              ? "Your Pro trial is live. The tools that make money feel lighter start now."
-              : "MyWallet Pro is active. Your next level of clarity just unlocked."}
+              ? t("proWelcome.subtitleTrial")
+              : t("proWelcome.subtitleActive")}
           </p>
 
           <button
@@ -156,7 +160,7 @@ export default function ProWelcomeCelebration({
             onClick={finish}
             disabled={phase !== "idle"}
           >
-            Let&apos;s go
+            {t("proWelcome.cta")}
           </button>
         </div>
       </div>

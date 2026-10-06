@@ -1,5 +1,9 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { createTranslator } from "../i18n/translate";
+import { PAYMENT_METHOD_LABEL_KEYS } from "../constants/quickAdd";
+
+const defaultT = createTranslator("en");
 
 function money(value) {
   return Number(value || 0).toLocaleString("en-US", {
@@ -8,23 +12,31 @@ function money(value) {
   });
 }
 
-function shortDate(value) {
+function shortDate(value, locale = "en-US") {
   if (!value) return "—";
   const [year, month, day] = String(value).split("-");
   if (!year || !month) return String(value);
+  if (String(locale).toLowerCase().startsWith("pt")) {
+    return `${day || "01"}/${month}/${year}`;
+  }
   return `${month}/${day || "01"}/${year}`;
 }
 
 /**
  * Build and download a monthly expenses PDF for the visible Dashboard period.
+ *
+ * Optional `t` (translate function from useT()) and `locale` (e.g. "pt-BR")
+ * localize all PDF strings. Defaults to English.
  */
 export function downloadMonthExpensesPdf({
   expenses = [],
   categoriesMap = {},
   categoryTotals = [],
-  periodLabel = "Period",
+  periodLabel,
   fileStem = "mywallet-expenses",
   totalSpendings = 0,
+  t = defaultT,
+  locale = "en-US",
 } = {}) {
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -39,25 +51,35 @@ export function downloadMonthExpensesPdf({
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(113, 113, 122);
-  doc.text("Expense report", marginX, cursorY + 18);
+  doc.text(t("export.pdf.expenseReport"), marginX, cursorY + 18);
 
   cursorY += 48;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(11, 18, 32);
-  doc.text(String(periodLabel), marginX, cursorY);
+  doc.text(String(periodLabel || t("export.pdf.defaultPeriod")), marginX, cursorY);
 
   cursorY += 22;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(51, 65, 85);
-  doc.text(`Total spendings: ${money(totalSpendings)}`, marginX, cursorY);
-  doc.text(`Expenses: ${expenses.length}`, marginX + 220, cursorY);
+  doc.text(
+    t("export.pdf.totalSpendings", { amount: money(totalSpendings) }),
+    marginX,
+    cursorY
+  );
+  doc.text(
+    t("export.pdf.expensesCount", { count: expenses.length }),
+    marginX + 220,
+    cursorY
+  );
 
   const categoryRows = [...categoryTotals]
     .sort((a, b) => Number(b.value || 0) - Number(a.value || 0))
     .map((item) => [
-      categoriesMap[item.categoryId]?.name || item.categoryId || "Other",
+      categoriesMap[item.categoryId]?.name ||
+        item.categoryId ||
+        t("common.other"),
       money(item.value),
     ]);
 
@@ -65,7 +87,7 @@ export function downloadMonthExpensesPdf({
     cursorY += 18;
     autoTable(doc, {
       startY: cursorY,
-      head: [["Category", "Spent"]],
+      head: [[t("export.pdf.colCategory"), t("export.pdf.colSpent")]],
       body: categoryRows,
       margin: { left: marginX, right: marginX },
       styles: {
@@ -91,19 +113,29 @@ export function downloadMonthExpensesPdf({
 
   const expenseRows = expenses.map((expense) => [
     expense.name || "—",
-    shortDate(expense.inclusionDate),
+    shortDate(expense.inclusionDate, locale),
     money(expense.value),
     categoriesMap[expense.categoryId]?.name || expense.categoryId || "—",
-    expense.method || "—",
+    PAYMENT_METHOD_LABEL_KEYS[expense.method]
+      ? t(PAYMENT_METHOD_LABEL_KEYS[expense.method])
+      : expense.method || "—",
   ]);
 
   autoTable(doc, {
     startY: cursorY,
-    head: [["Name", "Date", "Amount", "Category", "Method"]],
+    head: [
+      [
+        t("export.pdf.colName"),
+        t("export.pdf.colDate"),
+        t("export.pdf.colAmount"),
+        t("export.pdf.colCategory"),
+        t("export.pdf.colMethod"),
+      ],
+    ],
     body:
       expenseRows.length > 0
         ? expenseRows
-        : [["No expenses in this period", "", "", "", ""]],
+        : [[t("export.pdf.noExpenses"), "", "", "", ""]],
     margin: { left: marginX, right: marginX },
     styles: {
       font: "helvetica",
@@ -133,12 +165,14 @@ export function downloadMonthExpensesPdf({
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `Generated ${new Date().toLocaleString()} · MyWallet Pro`,
+      t("export.pdf.generatedPro", {
+        date: new Date().toLocaleString(locale),
+      }),
       marginX,
       doc.internal.pageSize.getHeight() - 24
     );
     doc.text(
-      `Page ${page} of ${pageCount}`,
+      t("export.pdf.pageOf", { page, total: pageCount }),
       pageWidth - marginX,
       doc.internal.pageSize.getHeight() - 24,
       { align: "right" }

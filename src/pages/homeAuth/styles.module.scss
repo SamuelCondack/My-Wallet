@@ -301,6 +301,9 @@
     justify-content: center;
     align-items: stretch;
     gap: 0;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
   }
 
   .content {
@@ -309,6 +312,12 @@
     padding-right: env(safe-area-inset-right, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     box-sizing: border-box;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .iconDiv {

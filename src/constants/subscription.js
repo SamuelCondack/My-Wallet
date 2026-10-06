@@ -30,45 +30,52 @@ export const DEFAULT_SUBSCRIPTION = {
   updatedAt: null,
 };
 
+/** i18n key for the localized price label (see pro.priceLabel in the catalogs). */
+export const PRO_PRICE_LABEL_KEY = "pro.priceLabel";
+
 /**
  * Canonical Pro feature list — Profile, paywall, banners, and ProGate copy
  * should read from here. `shipped: false` = Soon (never "Included").
+ *
+ * Text lives in the i18n catalogs: render with `t(feature.titleKey)`,
+ * `t(feature.shortLabelKey)` and `t(feature.descriptionKey, { limit })`.
  */
 export const PRO_FEATURES = [
   {
     id: "budgets",
-    title: "Category budgets & alerts",
-    shortLabel: "budgets",
-    description: "Set monthly limits and get warned before you overspend.",
+    titleKey: "pro.feature.budgets.title",
+    shortLabelKey: "pro.feature.budgets.short",
+    descriptionKey: "pro.feature.budgets.description",
     shipped: true,
   },
   {
     id: "export",
-    title: "CSV & PDF export",
-    shortLabel: "CSV & PDF export",
-    description:
-      "Download expense CSV/PDF reports or a pending income PDF for collections.",
+    titleKey: "pro.feature.export.title",
+    shortLabelKey: "pro.feature.export.short",
+    descriptionKey: "pro.feature.export.description",
     shipped: true,
   },
   {
     id: "favorites",
-    title: "Unlimited favorites",
-    shortLabel: "unlimited favorites",
-    description: `Save more than ${FREE_FAVORITE_LIMIT} quick-add favorites. Pro has no limit.`,
+    titleKey: "pro.feature.favorites.title",
+    shortLabelKey: "pro.feature.favorites.short",
+    descriptionKey: "pro.feature.favorites.description",
+    /** Interpolation values for the translation keys above. */
+    vars: { limit: FREE_FAVORITE_LIMIT },
     shipped: true,
   },
   {
     id: "ocr",
-    title: "Receipt photo capture",
-    shortLabel: "receipt capture",
-    description: "Snap a receipt and auto-fill amount, date, and merchant.",
+    titleKey: "pro.feature.ocr.title",
+    shortLabelKey: "pro.feature.ocr.short",
+    descriptionKey: "pro.feature.ocr.description",
     shipped: false,
   },
   {
     id: "ai_review",
-    title: "AI month review",
-    shortLabel: "AI review",
-    description: "Get a clear critique of the month with practical tips.",
+    titleKey: "pro.feature.ai_review.title",
+    shortLabelKey: "pro.feature.ai_review.short",
+    descriptionKey: "pro.feature.ai_review.description",
     shipped: false,
   },
 ];
@@ -81,37 +88,21 @@ export function getProFeature(id) {
   return PRO_FEATURES.find((feature) => feature.id === id) ?? null;
 }
 
-export function getProFeatureBadge(feature, { isPro = false } = {}) {
-  if (!feature?.shipped) return "Soon";
-  return isPro ? "Included" : "Pro";
+/** Returns the i18n key for the badge: pro.badge.soon | included | pro */
+export function getProFeatureBadgeKey(feature, { isPro = false } = {}) {
+  if (!feature?.shipped) return "pro.badge.soon";
+  return isPro ? "pro.badge.included" : "pro.badge.pro";
 }
 
-function joinEnglish(parts) {
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return parts[0];
-  if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
-  return `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
-}
-
-function capitalizeSentence(value) {
-  if (!value) return "";
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-/** e.g. "budgets, CSV & PDF export, and unlimited favorites" */
-export function getProShippedSummary() {
-  return joinEnglish(PRO_FEATURES_SHIPPED.map((feature) => feature.shortLabel));
-}
-
-/** e.g. "receipt capture and AI review" */
-export function getProSoonSummary() {
-  return joinEnglish(PRO_FEATURES_SOON.map((feature) => feature.shortLabel));
-}
-
-export const PRO_COPY = {
-  trialLead: `${capitalizeSentence(getProShippedSummary())} — no charge today.`,
-  subscribeLead: `${capitalizeSentence(getProShippedSummary())}. ${capitalizeSentence(getProSoonSummary())} coming soon.`,
-  trialBanner: `${TRIAL_DAYS}-day trial · ${getProShippedSummary()} on Pro.`,
-  favoritesPaywallTitle: "Unlimited favorites",
-  favoritesPaywallMessage: `Free plan allows ${FREE_FAVORITE_LIMIT} favorites. Upgrade for ${getProShippedSummary()}.`,
+/**
+ * Translation keys for shared Pro marketing copy. Resolve in the UI with
+ * `t(PRO_COPY_KEYS.trialLead)`. `trialBanner` needs { days }, and
+ * `favoritesPaywallMessage` needs { limit } (use FREE_FAVORITE_LIMIT).
+ */
+export const PRO_COPY_KEYS = {
+  trialLead: "pro.copy.trialLead",
+  subscribeLead: "pro.copy.subscribeLead",
+  trialBanner: "pro.copy.trialBanner",
+  favoritesPaywallTitle: "pro.copy.favoritesPaywallTitle",
+  favoritesPaywallMessage: "pro.copy.favoritesPaywallMessage",
 };

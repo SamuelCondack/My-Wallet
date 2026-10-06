@@ -9,12 +9,14 @@ import { FaUser } from "react-icons/fa";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import PullToRefresh from "../../components/PullToRefresh/PullToRefresh";
+import { useT } from "../../i18n/useT";
 
 const OPEN_DX = 72;
 const MAX_DY = 40;
 
 function HomeAuth() {
   const navigate = useNavigate();
+  const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const edgeZoneRef = useRef(null);
@@ -124,29 +126,29 @@ function HomeAuth() {
           id="closeMenu"
           onClick={closeMenu}
           className={styles.closeMenu}
-          aria-label="Fechar menu"
+          aria-label={t("nav.closeMenu")}
         >
           <img src={x} alt="" aria-hidden="true" />
         </button>
       )}
 
       <NavLink to="/home/expenses" onClick={handleNavClick} className={styles.iconDiv}>
-        <img src={walletIcon} alt="Wallet Icon" className={styles.icon} />
+        <img src={walletIcon} alt={t("nav.walletIconAlt")} className={styles.icon} />
         <p className={styles.namep}>MyWallet</p>
       </NavLink>
 
       <ul className={styles.options}>
         <NavLink to="/home/expenses" onClick={handleNavClick} className={navClassName}>
-          Expenses
+          {t("nav.expenses")}
         </NavLink>
         <NavLink to="/home/income" onClick={handleNavClick} className={navClassName}>
-          Income
+          {t("nav.income")}
         </NavLink>
         <NavLink to="/home/dashboard" onClick={handleNavClick} className={navClassName}>
-          Dashboard
+          {t("nav.dashboard")}
         </NavLink>
         <NavLink to="/home/categories" onClick={handleNavClick} className={navClassName}>
-          Categories
+          {t("nav.categories")}
         </NavLink>
         <div className={styles.profileSlot}>
           <NavLink
@@ -155,8 +157,8 @@ function HomeAuth() {
             className={({ isActive }) =>
               `${styles.profileIconBtn} ${isActive ? styles.profileIconBtnActive : ""}`
             }
-            aria-label="Profile"
-            title="Profile"
+            aria-label={t("nav.profile")}
+            title={t("nav.profile")}
           >
             <FaUser aria-hidden="true" />
           </NavLink>
@@ -180,7 +182,7 @@ function HomeAuth() {
             id="openMenu"
             onClick={openMenu}
             className={styles.menuButton}
-            aria-label="Abrir menu"
+            aria-label={t("nav.openMenu")}
           >
             <img src={menu} alt="" className={styles.menuImg} aria-hidden="true" />
           </button>

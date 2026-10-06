@@ -2,6 +2,7 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { useSubscription } from "../../hooks/useSubscription";
+import { useT } from "../../i18n/useT";
 import PaywallModal from "../PaywallModal/PaywallModal";
 import styles from "./ProGate.module.scss";
 
@@ -11,12 +12,15 @@ import styles from "./ProGate.module.scss";
  */
 export default function ProGate({
   children,
-  title = "Pro feature",
-  description = "Available on MyWallet Pro.",
+  title,
+  description,
   fallback = null,
   preview = null,
 }) {
+  const t = useT();
   const { requirePro, loading, canStartTrial } = useSubscription();
+  const resolvedTitle = title || t("proGate.defaultTitle");
+  const resolvedDescription = description || t("proGate.defaultDescription");
   const [paywallOpen, setPaywallOpen] = useState(false);
   const gate = requirePro();
 
@@ -31,9 +35,9 @@ export default function ProGate({
   return (
     <>
       <div className={styles.locked}>
-        <div className={styles.lockBadge}>Pro</div>
-        <h3>{title}</h3>
-        <p>{description}</p>
+        <div className={styles.lockBadge}>{t("common.pro")}</div>
+        <h3>{resolvedTitle}</h3>
+        <p>{resolvedDescription}</p>
         {preview ? <div className={styles.preview}>{preview}</div> : null}
         <div className={styles.actions}>
           <button
@@ -41,18 +45,18 @@ export default function ProGate({
             className={styles.unlockBtn}
             onClick={() => setPaywallOpen(true)}
           >
-            Unlock with Pro
+            {t("proGate.unlock")}
           </button>
           <Link to="/home/profile" className={styles.profileLink}>
-            View plans
+            {t("proGate.viewPlans")}
           </Link>
         </div>
       </div>
       <PaywallModal
         isOpen={paywallOpen}
         onClose={() => setPaywallOpen(false)}
-        title={title}
-        message={description}
+        title={resolvedTitle}
+        message={resolvedDescription}
         canStartTrial={canStartTrial}
       />
     </>

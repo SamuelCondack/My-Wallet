@@ -1,3 +1,8 @@
+import { createTranslator } from "../i18n/translate";
+import { PAYMENT_METHOD_LABEL_KEYS } from "../constants/quickAdd";
+
+const defaultT = createTranslator("en");
+
 function escapeCsvCell(value) {
   const str = String(value ?? "");
   if (/[",\n\r]/.test(str)) {
@@ -8,9 +13,20 @@ function escapeCsvCell(value) {
 
 /**
  * Build a CSV string for expense rows (name, date, value, category, method).
+ * Optional `t` localizes the header row and payment method labels.
  */
-export function buildMonthExpensesCsv(expenses, categoriesMap = {}) {
-  const header = ["name", "date", "value", "category", "method"];
+export function buildMonthExpensesCsv(
+  expenses,
+  categoriesMap = {},
+  t = defaultT
+) {
+  const header = [
+    t("export.csv.name"),
+    t("export.csv.date"),
+    t("export.csv.value"),
+    t("export.csv.category"),
+    t("export.csv.method"),
+  ];
   const lines = [header.join(",")];
 
   for (const expense of expenses) {
@@ -22,7 +38,11 @@ export function buildMonthExpensesCsv(expenses, categoriesMap = {}) {
         escapeCsvCell(expense.inclusionDate || ""),
         escapeCsvCell(Number(expense.value || 0).toFixed(2)),
         escapeCsvCell(category),
-        escapeCsvCell(expense.method || ""),
+        escapeCsvCell(
+          PAYMENT_METHOD_LABEL_KEYS[expense.method]
+            ? t(PAYMENT_METHOD_LABEL_KEYS[expense.method])
+            : expense.method || ""
+        ),
       ].join(",")
     );
   }

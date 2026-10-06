@@ -1,3 +1,4 @@
+import { tNow } from "../i18n/translate";
 import {
   collection,
   deleteDoc,
@@ -33,10 +34,10 @@ export async function fetchCategoryBudgets(userId) {
 export async function upsertCategoryBudget(userId, categoryId, amount) {
   const value = Number(amount);
   if (!userId || !categoryId) {
-    throw new Error("Missing budget target.");
+    throw new Error(tNow("validation.budget.missingTarget"));
   }
   if (!Number.isFinite(value) || value <= 0) {
-    throw new Error("Enter a valid monthly limit.");
+    throw new Error(tNow("budgets.toast.invalidLimit"));
   }
 
   const payload = {

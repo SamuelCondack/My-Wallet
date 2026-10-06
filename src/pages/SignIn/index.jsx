@@ -7,8 +7,10 @@ import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { signInWithGoogle } from "../../utils/googleAuth";
+import { useT } from "../../i18n/useT";
 
 export default function SignIn() {
+  const t = useT();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +37,7 @@ export default function SignIn() {
       navigate("/home/expenses");
       setErrorMessage(""); // Limpa a mensagem de erro ao fazer login com sucesso
     } catch (error) {
-      setErrorMessage("Incorrect password. Please check your password and try again.");
+      setErrorMessage(t("auth.signIn.errorIncorrect"));
     }
   };
 
@@ -48,7 +50,7 @@ export default function SignIn() {
       setErrorMessage("");
     } catch (err) {
       console.error("Error with Google sign-in:", err.message);
-      setErrorMessage("Google sign-in failed. Please try again.");
+      setErrorMessage(t("auth.common.googleFailed"));
     }
   };
 
@@ -56,22 +58,22 @@ export default function SignIn() {
     <div className={styles.authPage}>
       <div className={styles.header}>
         <Link to="/" className={styles.backButton}>
-          <p className={styles.backText}>Home</p>
+          <p className={styles.backText}>{t("auth.common.home")}</p>
         </Link>
         <div className={styles.brand}>
-          <img className={styles.logo} src={logo} alt="walletIcon" />
+          <img className={styles.logo} src={logo} alt={t("auth.common.logoAlt")} />
           <h3>MyWallet</h3>
         </div>
       </div>
       <div className={styles.formContainer}>
         <form onSubmit={signIn} className={styles.form}>
-          <h2 className={styles.title}>Welcome Back</h2>
+          <h2 className={styles.title}>{t("auth.signIn.title")}</h2>
           <label className={styles.formLabel} htmlFor="email">
-            Email
+            {t("auth.common.email")}
           </label>
           <input
             className={styles.formInput}
-            placeholder="Enter your email"
+            placeholder={t("auth.signIn.emailPlaceholder")}
             type="email"
             id="email"
             autoComplete="email"
@@ -80,12 +82,12 @@ export default function SignIn() {
           />
 
           <label className={styles.formLabel} htmlFor="password">
-            Password
+            {t("auth.common.password")}
           </label>
           <div className={styles.passwordField}>
             <input
               className={styles.formInput}
-              placeholder="Enter your password"
+              placeholder={t("auth.signIn.passwordPlaceholder")}
               type={showPassword ? "text" : "password"}
               id="password"
               autoComplete="password"
@@ -96,7 +98,11 @@ export default function SignIn() {
               type="button"
               className={styles.showPasswordButtonSignIn}
               onClick={toggleShowPassword}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={
+                showPassword
+                  ? t("auth.common.hidePassword")
+                  : t("auth.common.showPassword")
+              }
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
@@ -105,7 +111,7 @@ export default function SignIn() {
 
           <div className={styles.buttons}>
             <button className={styles.signUpBtn} type="submit">
-              Sign In
+              {t("auth.signIn.submit")}
             </button>
             <button
               type="button"
@@ -137,15 +143,15 @@ export default function SignIn() {
                 ></path>
                 <path fill="none" d="M0 0h48v48H0z"></path>
               </svg>{" "}
-              Continue with Google
+              {t("auth.common.continueWithGoogle")}
             </button>
             <div className={styles.authOptionsSeparator}>
-              <p>or</p>
+              <p>{t("common.or")}</p>
             </div>
             <div className={styles.createAccountDiv}>
-              <p>Don't have an account?</p>
+              <p>{t("auth.signIn.noAccount")}</p>
               <Link to="/signup" className={styles.createAccountBtn}>
-                Create free account
+                {t("auth.signIn.createAccount")}
               </Link>
             </div>
           </div>

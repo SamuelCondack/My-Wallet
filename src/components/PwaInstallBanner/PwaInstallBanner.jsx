@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { usePwaInstall } from "../../hooks/usePwaInstall";
+import { useT } from "../../i18n/useT";
 import styles from "./PwaInstallBanner.module.scss";
 
 export default function PwaInstallBanner() {
+  const t = useT();
   const {
     showDashboardBanner,
     ios,
@@ -17,44 +19,38 @@ export default function PwaInstallBanner() {
   const handleInstall = async () => {
     const result = await promptInstall();
     if (result.outcome === "accepted") {
-      toast.success("MyWallet installed.");
+      toast.success(t("pwa.installed"));
       dismissBanner();
       return;
     }
     if (!result.ok) {
-      toast.info(
-        ios
-          ? "Safari → Share → Add to Home Screen."
-          : "Browser menu → Install app."
-      );
+      toast.info(ios ? t("pwa.hintIos") : t("pwa.hintBrowser"));
     }
   };
 
   return (
     <div className={`${styles.banner} ${styles.promo}`}>
       <div className={styles.copy}>
-        <strong>Install MyWallet</strong>
+        <strong>{t("pwa.installTitle")}</strong>
         <span>
-          {ios
-            ? "Add to Home Screen for a full app experience."
-            : "Install for a home screen icon and faster launch."}
+          {ios ? t("pwa.bannerIosText") : t("pwa.bannerText")}
         </span>
       </div>
       <div className={styles.actions}>
         {canNativeInstall ? (
           <button type="button" className={styles.primaryBtn} onClick={handleInstall}>
-            Install
+            {t("pwa.install")}
           </button>
         ) : (
           <Link to="/home/profile" className={styles.primaryLink}>
-            How to
+            {t("pwa.howTo")}
           </Link>
         )}
         <button
           type="button"
           className={styles.dismiss}
           onClick={dismissBanner}
-          aria-label="Dismiss"
+          aria-label={t("common.dismiss")}
         >
           ×
         </button>

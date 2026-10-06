@@ -17,6 +17,7 @@ import { completeGoogleRedirectSignIn } from './utils/googleAuth.js'
 import { bindPwaInstallEvents } from './utils/pwaInstall.js'
 import ToastComponent from './components/Toast/ToastComponent.jsx'
 import ThemeSync from './components/ThemeSync/ThemeSync.jsx'
+import LanguageSync from './components/LanguageSync/LanguageSync.jsx'
 import 'react-toastify/dist/ReactToastify.css'
 
 Modal.setAppElement('#root');
@@ -72,9 +73,11 @@ async function startApp() {
 
   ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-      <ThemeSync />
-      <ToastComponent />
-      <RouterProvider router={router} />
+      <LanguageSync>
+        <ThemeSync />
+        <ToastComponent />
+        <RouterProvider router={router} />
+      </LanguageSync>
     </React.StrictMode>,
   )
 }

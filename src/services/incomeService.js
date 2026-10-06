@@ -1,3 +1,4 @@
+import { tNow } from "../i18n/translate";
 import {
   collection,
   deleteDoc,
@@ -108,28 +109,28 @@ export function validateIncomePayload(payload, { isConfirm = false } = {}) {
   const status = payload.status;
 
   if (!description) {
-    errors.push("Description is required.");
+    errors.push(tNow("validation.income.description"));
   }
   if (!(amount > 0)) {
-    errors.push("Amount must be greater than 0.");
+    errors.push(tNow("validation.income.amount"));
   }
   if (!payload.categoryId) {
-    errors.push("Category is required.");
+    errors.push(tNow("validation.income.category"));
   }
   if (!payload.incomePeriod || !/^\d{4}-\d{2}$/.test(payload.incomePeriod)) {
-    errors.push("Income period is required.");
+    errors.push(tNow("validation.income.period"));
   }
   if (!payload.expectedDate) {
-    errors.push("Expected date is required.");
+    errors.push(tNow("validation.income.expectedDate"));
   }
   if (status !== INCOME_STATUS.PENDING && status !== INCOME_STATUS.CONFIRMED) {
-    errors.push("Status must be pending or confirmed.");
+    errors.push(tNow("validation.income.status"));
   }
   if (
     (status === INCOME_STATUS.CONFIRMED || isConfirm) &&
     !payload.receivedDate
   ) {
-    errors.push("Received date is required for confirmed income.");
+    errors.push(tNow("validation.income.receivedDateConfirmed"));
   }
 
   return errors;
@@ -486,7 +487,7 @@ export async function convertMonthlyIncomeToOneOff(userId, income, payload) {
  */
 export async function pauseMonthlyIncome(userId, income, pauseDate) {
   if (!income?.monthlyGroupId) {
-    throw new Error("Not a monthly income.");
+    throw new Error(tNow("validation.income.notMonthly"));
   }
   const date =
     pauseDate || new Date().toLocaleDateString("en-CA");
@@ -520,7 +521,7 @@ export async function pauseMonthlyIncome(userId, income, pauseDate) {
 
 export async function resumeMonthlyIncome(userId, income) {
   if (!income?.monthlyGroupId) {
-    throw new Error("Not a monthly income.");
+    throw new Error(tNow("validation.income.notMonthly"));
   }
   const groupId = income.monthlyGroupId;
   const incomes = await fetchIncomes(userId);
@@ -578,7 +579,7 @@ export async function setIncomesExcludedFromTotals(userId, incomeIds, excluded) 
 
 export async function confirmIncome(userId, incomeId, receivedDate) {
   if (!receivedDate) {
-    throw new Error("Received date is required.");
+    throw new Error(tNow("validation.income.receivedDate"));
   }
 
   const data = {

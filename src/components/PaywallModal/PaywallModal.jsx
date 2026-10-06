@@ -1,36 +1,42 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
-import { PRO_FEATURES_SHIPPED, PRO_PRICE_LABEL, TRIAL_DAYS } from "../../constants/subscription";
+import {
+  PRO_FEATURES_SHIPPED,
+  PRO_PRICE_LABEL_KEY,
+  TRIAL_DAYS,
+} from "../../constants/subscription";
 import { startCheckout, openStripeSession } from "../../services/subscriptionService";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { useT } from "../../i18n/useT";
 import styles from "./PaywallModal.module.scss";
 
 export default function PaywallModal({
   isOpen,
   onClose,
-  title = "Unlock MyWallet Pro",
+  title,
   message,
   canStartTrial = true,
 }) {
+  const t = useT();
   const [isStarting, setIsStarting] = useState(false);
   useBodyScrollLock(Boolean(isOpen));
 
   if (!isOpen) return null;
 
+  const priceLabel = t(PRO_PRICE_LABEL_KEY);
+  const resolvedTitle = title || t("paywall.title");
   const resolvedMessage =
     message ||
-    (canStartTrial
-      ? "Get the tools that make tracking effortless — no charge today."
-      : "Get the tools that make tracking effortless.");
+    (canStartTrial ? t("paywall.messageTrial") : t("paywall.message"));
 
   const trustLine = canStartTrial
-    ? `Then ${PRO_PRICE_LABEL}. Cancel anytime.`
-    : "Secure checkout · Cancel anytime";
+    ? t("paywall.thenPrice", { price: priceLabel })
+    : t("paywall.secureCheckout");
 
   const ctaLabel = canStartTrial
-    ? `Start ${TRIAL_DAYS}-day free trial`
-    : `Get Pro — ${PRO_PRICE_LABEL}`;
+    ? t("paywall.startTrial", { days: TRIAL_DAYS })
+    : t("paywall.getPro", { price: priceLabel });
 
   const handleCheckout = async () => {
     setIsStarting(true);
@@ -39,10 +45,10 @@ export default function PaywallModal({
       onClose();
     } catch (err) {
       console.error(err);
-      toast.error(
-        err.message ||
-          "Billing is not configured yet. Add Stripe keys to enable checkout."
-      );
+      let message = err?.message;
+      if (err?.code === "auth_required") message = t("toast.needSignIn");
+      else if (err?.code === "url_missing") message = t("profile.billingUrlMissing");
+      toast.error(message || t("paywall.billingNotConfigured"));
     } finally {
       setIsStarting(false);
     }
@@ -61,20 +67,20 @@ export default function PaywallModal({
           type="button"
           className={styles.closeBtn}
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("common.close")}
         >
           ×
         </button>
 
-        <p className={styles.eyebrow}>MyWallet Pro</p>
-        <h2 id="paywall-title">{title}</h2>
+        <p className={styles.eyebrow}>{t("paywall.eyebrow")}</p>
+        <h2 id="paywall-title">{resolvedTitle}</h2>
         <p className={styles.message}>{resolvedMessage}</p>
 
         <ul className={styles.featureList}>
           {PRO_FEATURES_SHIPPED.map((feature) => (
             <li key={feature.id}>
-              <strong>{feature.title}</strong>
-              <span>{feature.description}</span>
+              <strong>{t(feature.titleKey)}</strong>
+              <span>{t(feature.descriptionKey, feature.vars)}</span>
             </li>
           ))}
         </ul>
@@ -86,7 +92,7 @@ export default function PaywallModal({
             onClick={handleCheckout}
             disabled={isStarting}
           >
-            {isStarting ? "Opening…" : ctaLabel}
+            {isStarting ? t("common.opening") : ctaLabel}
           </button>
           <p className={styles.price}>{trustLine}</p>
           <button
@@ -95,7 +101,7 @@ export default function PaywallModal({
             onClick={onClose}
             disabled={isStarting}
           >
-            Not now
+            {t("paywall.notNow")}
           </button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { tNow } from "../i18n/translate";
 import {
   addDoc,
   collection,
@@ -49,7 +50,7 @@ export async function createExpenseFavorite(userId, favorite) {
   };
 
   if (!payload.name) {
-    throw new Error("Favorite needs a name.");
+    throw new Error(tNow("expenseForm.toast.favoriteNameRequired"));
   }
 
   const ref = await addDoc(favoritesCollection(userId), payload);

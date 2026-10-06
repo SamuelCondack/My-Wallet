@@ -19,6 +19,7 @@ import {
   saveCategory,
 } from "../../services/categoriesService";
 import { CATEGORY_TYPE } from "../../constants/defaultCategories";
+import { useT } from "../../i18n/useT";
 import {
   extractEmoji,
   filterEmojiCatalog,
@@ -60,6 +61,7 @@ function useDesktopPickers() {
 }
 
 export default function Categories() {
+  const t = useT();
   const isDesktop = useDesktopPickers();
   const [userId, setUserId] = useState(null);
   const { categories, loading, setCategories } = useCategories(userId);
@@ -210,12 +212,12 @@ export default function Categories() {
     event.preventDefault();
 
     if (!userId) {
-      toast.error("You need to be signed in to manage categories.");
+      toast.error(t("categories.toast.needSignIn"));
       return;
     }
 
     if (!form.name.trim()) {
-      toast.error("Enter a category name.");
+      toast.error(t("categories.toast.enterName"));
       return;
     }
 
@@ -252,12 +254,12 @@ export default function Categories() {
       resetForm();
       toast.success(
         editingId
-          ? `Category "${category.name}" updated!`
-          : `Category "${category.name}" added!`
+          ? t("categories.toast.updated", { name: category.name })
+          : t("categories.toast.added", { name: category.name })
       );
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save category. Please try again.");
+      toast.error(t("categories.toast.saveFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -278,12 +280,14 @@ export default function Categories() {
         setModalOpen(false);
         resetForm();
       }
-      toast.success(`Category "${categoryToDelete.name}" deleted.`);
+      toast.success(
+        t("categories.toast.deleted", { name: categoryToDelete.name })
+      );
       setShowDeleteModal(false);
       setCategoryToDelete(null);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete category.");
+      toast.error(t("categories.toast.deleteFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -309,10 +313,8 @@ export default function Categories() {
   return (
     <div className={styles.pageWrapper}>
       <div className={styles.page}>
-        <h2>Categories</h2>
-        <p className={styles.subtitle}>
-          Manage expense and income categories separately
-        </p>
+        <h2>{t("categories.title")}</h2>
+        <p className={styles.subtitle}>{t("categories.subtitle")}</p>
 
         <div className={styles.typeToggleWrap}>
           <ExpenseIncomeToggle
@@ -323,25 +325,25 @@ export default function Categories() {
               resetForm();
               setModalOpen(false);
             }}
-            ariaLabel="Category type"
+            ariaLabel={t("categories.typeAria")}
           />
         </div>
 
         <div className={styles.searchContainer}>
           <input
             type="search"
-            placeholder="Search categories..."
+            placeholder={t("categories.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={styles.searchInput}
-            aria-label="Search categories"
+            aria-label={t("categories.searchAria")}
           />
           {searchQuery && (
             <button
               type="button"
               className={styles.searchClearButton}
               onClick={() => setSearchQuery("")}
-              aria-label="Clear search"
+              aria-label={t("categories.clearSearch")}
             >
               ×
             </button>
@@ -352,10 +354,12 @@ export default function Categories() {
           <div className={styles.emptyState}>
             <p>
               {searchQuery.trim()
-                ? `No categories found for "${searchQuery.trim()}".`
-                : `No ${activeType} categories yet.`}
+                ? t("categories.emptySearch", { query: searchQuery.trim() })
+                : activeType === CATEGORY_TYPE.INCOME
+                  ? t("categories.emptyIncome")
+                  : t("categories.emptyExpense")}
             </p>
-            <p>Tap + to add one.</p>
+            <p>{t("categories.tapToAdd")}</p>
           </div>
         ) : (
           <div className={styles.cards}>
@@ -388,8 +392,8 @@ export default function Categories() {
                       type="button"
                       className={styles.expenseEditButton}
                       onClick={() => openEdit(category)}
-                      title="Edit category"
-                      aria-label={`Edit ${category.name}`}
+                      title={t("categories.editTitle")}
+                      aria-label={t("categories.editAria", { name: category.name })}
                     >
                       <FaPencilAlt className={styles.expensePencilIcon} />
                     </button>
@@ -409,12 +413,12 @@ export default function Categories() {
                         setCategoryToDelete(category);
                         setShowDeleteModal(true);
                       }}
-                      aria-label={`Delete ${category.name}`}
+                      aria-label={t("categories.deleteAria", { name: category.name })}
                     >
                       <img
                         className={styles.binImg}
                         src={bin}
-                        alt="delete button"
+                        alt={t("categories.deleteIconAlt")}
                       />
                     </button>
                   </div>
@@ -429,13 +433,13 @@ export default function Categories() {
         type="button"
         className={styles.floatingAddButton}
         onClick={openCreate}
-        aria-label="Add category"
-        title="Add category"
+        aria-label={t("categories.add")}
+        title={t("categories.add")}
       >
         <span className={styles.fabIcon} aria-hidden="true">
           +
         </span>
-        <span className={styles.fabLabel}>Add category</span>
+        <span className={styles.fabLabel}>{t("categories.add")}</span>
       </button>
 
       <BottomSheet
@@ -445,14 +449,14 @@ export default function Categories() {
       >
         <header className={sheetStyles.header}>
           <h2 id="category-form-title">
-            {editingId ? "Edit category" : "Add category"}
+            {editingId ? t("categories.edit") : t("categories.add")}
           </h2>
           <div className={sheetStyles.headerActions}>
             <button
               type="button"
               className={sheetStyles.iconBtn}
               onClick={closeModal}
-              aria-label="Close"
+              aria-label={t("common.close")}
               disabled={isSubmitting}
             >
               <FaTimes />
@@ -463,12 +467,12 @@ export default function Categories() {
         <form className={sheetStyles.form} onSubmit={handleSubmit}>
           <div className={sheetStyles.scrollBody}>
             <label className={sheetStyles.fieldLabel} htmlFor="categoryName">
-              Name
+              {t("categories.name")}
             </label>
             <input
               id="categoryName"
               className={sheetStyles.textInput}
-              placeholder="Category name"
+              placeholder={t("categories.namePlaceholder")}
               value={form.name}
               onChange={(e) =>
                 setForm((current) => ({
@@ -483,7 +487,7 @@ export default function Categories() {
             />
 
             <label className={sheetStyles.fieldLabel} htmlFor="categoryIcon">
-              Icon
+              {t("categories.icon")}
             </label>
             {isDesktop ? (
               <div className={styles.desktopPickers}>
@@ -505,12 +509,12 @@ export default function Categories() {
                   }}
                   disabled={isSubmitting}
                   aria-expanded={showEmojiPanel}
-                  aria-label="Choose emoji"
+                  aria-label={t("categories.chooseEmoji")}
                 >
                   <span className={styles.emojiTriggerPreview}>
                     {form.icon || "📦"}
                   </span>
-                  <span>Choose emoji</span>
+                  <span>{t("categories.chooseEmoji")}</span>
                 </button>
 
                 <AnimatePresence>
@@ -526,19 +530,19 @@ export default function Categories() {
                         ref={emojiSearchRef}
                         type="text"
                         className={styles.emojiSearch}
-                        placeholder="Search or paste any emoji…"
+                        placeholder={t("categories.emojiSearchPlaceholder")}
                         value={emojiSearch}
                         onChange={(e) =>
                           handleEmojiSearchChange(e.target.value)
                         }
                         onKeyDown={handleEmojiSearchKeyDown}
                         disabled={isSubmitting}
-                        aria-label="Search emoji"
+                        aria-label={t("categories.emojiSearchAria")}
                       />
                       <div className={styles.emojiGrid}>
                         {filteredEmojis.length === 0 ? (
                           <p className={styles.emojiEmpty}>
-                            No matches. Paste an emoji above
+                            {t("categories.emojiEmpty")}
                           </p>
                         ) : (
                           filteredEmojis.map(({ emoji }) => (
@@ -551,7 +555,7 @@ export default function Categories() {
                                   : ""
                               }`}
                               onClick={() => applyEmoji(emoji)}
-                              aria-label={`Select ${emoji}`}
+                              aria-label={t("categories.selectEmoji", { emoji })}
                             >
                               {emoji}
                             </button>
@@ -559,13 +563,13 @@ export default function Categories() {
                         )}
                       </div>
                       <p className={styles.emojiHint}>
-                        Tip: Win + . (Windows) or Ctrl + Cmd + Space (Mac)
+                        {t("categories.emojiTip")}
                       </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                <p className={sheetStyles.fieldLabel}>Color</p>
+                <p className={sheetStyles.fieldLabel}>{t("categories.color")}</p>
                 <div className={styles.colorGrid}>
                   {DESKTOP_COLORS.map((color) => (
                     <button
@@ -581,7 +585,7 @@ export default function Categories() {
                         setForm((current) => ({ ...current, color }))
                       }
                       disabled={isSubmitting}
-                      aria-label={`Select color ${color}`}
+                      aria-label={t("categories.selectColor", { color })}
                     />
                   ))}
                   <button
@@ -589,8 +593,8 @@ export default function Categories() {
                     className={styles.customColorBtn}
                     onClick={() => customColorRef.current?.click()}
                     disabled={isSubmitting}
-                    title="Custom color"
-                    aria-label="Custom color"
+                    title={t("categories.customColor")}
+                    aria-label={t("categories.customColor")}
                   >
                     <span
                       className={styles.customColorPreview}
@@ -620,7 +624,7 @@ export default function Categories() {
                 <input
                   id="categoryIcon"
                   className={sheetStyles.textInput}
-                  placeholder="Icon"
+                  placeholder={t("categories.icon")}
                   value={form.icon}
                   onChange={(e) =>
                     setForm((current) => ({
@@ -634,7 +638,7 @@ export default function Categories() {
                 />
                 <label
                   className={styles.mobileColorPicker}
-                  title="Category color"
+                  title={t("categories.categoryColor")}
                 >
                   <span
                     className={styles.mobileColorPreview}
@@ -656,7 +660,7 @@ export default function Categories() {
                       }))
                     }
                     disabled={isSubmitting}
-                    aria-label="Category color"
+                    aria-label={t("categories.categoryColor")}
                   />
                 </label>
               </div>
@@ -670,7 +674,11 @@ export default function Categories() {
                 className={sheetStyles.primaryBtn}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving…" : editingId ? "Edit" : "Add"}
+                {isSubmitting
+                  ? t("common.saving")
+                  : editingId
+                    ? t("common.edit")
+                    : t("common.add")}
               </button>
               <button
                 type="button"
@@ -678,7 +686,7 @@ export default function Categories() {
                 onClick={closeModal}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </div>
@@ -694,8 +702,8 @@ export default function Categories() {
           }
         }}
         onConfirm={handleDelete}
-        title="Delete Category"
-        message="Are you sure you want to delete"
+        title={t("categories.deleteTitle")}
+        message={t("categories.deleteMessage")}
         expenseName={categoryToDelete?.name}
         isSubmitting={isSubmitting}
       />

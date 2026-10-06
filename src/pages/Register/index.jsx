@@ -7,8 +7,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { signInWithGoogle } from "../../utils/googleAuth";
+import { useT } from "../../i18n/useT";
 
 export default function Register() {
+  const t = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,7 +36,7 @@ export default function Register() {
     const passwordRegex = /^(?=.*[!@#$]).{6,}$/;
 
     if (!passwordRegex.test(password)) {
-      setErrorMessage(`Password must be at least 6 characters long\nand include a special character (!@#$).`);
+      setErrorMessage(t("auth.signUp.errorPasswordRules"));
       return;
     }
 
@@ -47,7 +49,7 @@ export default function Register() {
         setErrorMessage(err.message);
       }
     } else {
-      setErrorMessage("Password and confirm password don't match.");
+      setErrorMessage(t("auth.signUp.errorMismatch"));
     }
   };
 
@@ -60,7 +62,7 @@ export default function Register() {
       setErrorMessage("");
     } catch (err) {
       console.error(err);
-      setErrorMessage("Google sign-in failed. Please try again.");
+      setErrorMessage(t("auth.common.googleFailed"));
     }
   };
 
@@ -68,22 +70,22 @@ export default function Register() {
     <div className={styles.authPage}>
       <div className={styles.header}>
         <Link to="/" className={styles.backButton}>
-          <p className={styles.backText}>Home</p>
+          <p className={styles.backText}>{t("auth.common.home")}</p>
         </Link>
         <div className={styles.brand}>
-          <img className={styles.logo} src={logo} alt="walletIcon" />
+          <img className={styles.logo} src={logo} alt={t("auth.common.logoAlt")} />
           <h3>MyWallet</h3>
         </div>
       </div>
       <div className={styles.formContainer}>
         <form onSubmit={signUp} className={styles.form}>
-          <h2 className={styles.title}>Create a free account</h2>
+          <h2 className={styles.title}>{t("auth.signUp.title")}</h2>
           <label className={styles.formLabel} htmlFor="email">
-            Email
+            {t("auth.common.email")}
           </label>
           <input
             className={styles.formInput}
-            placeholder="Insert your best email"
+            placeholder={t("auth.signUp.emailPlaceholder")}
             type="email"
             id="email"
             autoComplete="email"
@@ -92,12 +94,12 @@ export default function Register() {
           />
 
           <label className={styles.formLabel} htmlFor="password">
-            Password
+            {t("auth.common.password")}
           </label>
           <div className={styles.passwordField}>
             <input
               className={styles.formInput}
-              placeholder="Insert your password"
+              placeholder={t("auth.signUp.passwordPlaceholder")}
               type={showPassword ? "text" : "password"}
               id="password"
               autoComplete="password"
@@ -108,19 +110,23 @@ export default function Register() {
               type="button"
               className={styles.showPasswordButton}
               onClick={toggleShowPassword}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={
+                showPassword
+                  ? t("auth.common.hidePassword")
+                  : t("auth.common.showPassword")
+              }
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>
 
           <label className={styles.formLabel} htmlFor="confirmPassword">
-            Confirm Password
+            {t("auth.common.confirmPassword")}
           </label>
           <div className={styles.passwordField}>
             <input
               className={styles.formInput}
-              placeholder="Confirm your password"
+              placeholder={t("auth.signUp.confirmPlaceholder")}
               type={showPassword ? "text" : "password"}
               id="confirmPassword"
               autoComplete="confirm-password"
@@ -135,7 +141,7 @@ export default function Register() {
 
           <div className={styles.buttons}>
             <button className={styles.signUpBtn} type="submit">
-              Sign Up
+              {t("auth.signUp.submit")}
             </button>
             <button
               type="button"
@@ -167,7 +173,7 @@ export default function Register() {
                 ></path>
                 <path fill="none" d="M0 0h48v48H0z"></path>
               </svg>{" "}
-              Continue with Google
+              {t("auth.common.continueWithGoogle")}
             </button>
           </div>
         </form>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { useT } from "../../i18n/useT";
 import styles from "./BottomSheet.module.scss";
 
 /* Close only when dragged well down — mid release springs back smoothly. */
@@ -17,6 +18,7 @@ export default function BottomSheet({
   lockScroll = true,
   zIndex,
 }) {
+  const t = useT();
   const [mounted, setMounted] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [entered, setEntered] = useState(false);
@@ -229,7 +231,7 @@ export default function BottomSheet({
         className={`${styles.backdrop} ${
           entered && !dismissing ? styles.backdropVisible : ""
         }`}
-        aria-label="Close"
+        aria-label={t("common.close")}
         onClick={onClose}
       />
       <div className={styles.sheetRail}>

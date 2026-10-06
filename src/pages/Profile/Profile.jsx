@@ -9,10 +9,10 @@ import ProWelcomeCelebration from "../../components/ProWelcomeCelebration/ProWel
 import PwaInstallCard from "../../components/PwaInstallCard/PwaInstallCard";
 import ConfirmationModal from "../../modals/ConfirmationModal/ConfirmationModal";
 import {
-  PRO_COPY,
+  PRO_COPY_KEYS,
   PRO_FEATURES,
-  PRO_PRICE_LABEL,
-  getProFeatureBadge,
+  PRO_PRICE_LABEL_KEY,
+  getProFeatureBadgeKey,
   SUBSCRIPTION_STATUS,
   TRIAL_DAYS,
 } from "../../constants/subscription";
@@ -28,11 +28,19 @@ import {
   getThemeFromProfile,
   updateUserTheme,
 } from "../../services/themeService";
+import {
+  getLanguageFromProfile,
+  updateUserLanguage,
+} from "../../services/languageService";
+import { LANGUAGE, getLocale, resolveLanguage } from "../../i18n/language";
+import { useLanguage } from "../../i18n/useLanguage";
+import { useT } from "../../i18n/useT";
+import { translate } from "../../i18n/translate";
 import styles from "./Profile.module.scss";
 
-function formatDate(ms) {
+function formatDate(ms, locale) {
   if (!ms) return "—";
-  return new Date(ms).toLocaleDateString(undefined, {
+  return new Date(ms).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -42,6 +50,9 @@ function formatDate(ms) {
 export default function Profile() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const t = useT();
+  const { language, setPreference: setLanguagePreference } = useLanguage();
+  const locale = getLocale(language);
   const {
     user,
     profile,
@@ -51,7 +62,7 @@ export default function Profile() {
     isTrialing,
     isPastDue,
     trialDaysLeft,
-    planLabel,
+    planLabelKey,
     canStartTrial,
   } = useSubscription();
 
@@ -61,6 +72,7 @@ export default function Profile() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [themeBusy, setThemeBusy] = useState(false);
+  const [languageBusy, setLanguageBusy] = useState(false);
   const welcomeShownRef = useRef(false);
   const checkoutHandledRef = useRef(false);
   const billingHandledRef = useRef(false);
@@ -147,7 +159,7 @@ export default function Profile() {
       sessionStorage.removeItem("mw_billing_dirty");
       runSync().catch((err) => {
         console.error("Portal return sync failed:", err);
-        toast.error("Could not refresh your plan status. Try again in a moment.");
+        toast.error(t("profile.refreshFailed"));
       });
     }
 
@@ -159,7 +171,7 @@ export default function Profile() {
     setSearchParams(next, { replace: true });
 
     if (checkout === "cancel") {
-      toast.info("Checkout canceled. You can start anytime.");
+      toast.info(t("profile.checkoutCanceled"));
       return;
     }
 
@@ -177,9 +189,7 @@ export default function Profile() {
               if (!hasCelebrated()) openWelcome();
             })
             .catch(() => {
-              toast.error(
-                "Payment received. Your Pro plan should appear in a moment. Reopen Profile if needed."
-              );
+              toast.error(t("profile.paymentReceivedPending"));
             });
         }, 1500);
       }
@@ -191,6 +201,7 @@ export default function Profile() {
     hasCelebrated,
     openWelcome,
     celebratedKey,
+    t,
   ]);
 
   // First time we detect Pro on this device: celebrate once.
@@ -208,6 +219,12 @@ export default function Profile() {
     setShowProWelcome(false);
   }, [markCelebrated]);
 
+  const getBillingErrorMessage = (err, fallbackKey) => {
+    if (err?.code === "auth_required") return t("toast.needSignIn");
+    if (err?.code === "url_missing") return t("profile.billingUrlMissing");
+    return err?.message || t(fallbackKey);
+  };
+
   const handleStartCheckout = async () => {
     setBusyAction("checkout");
     try {
@@ -216,10 +233,7 @@ export default function Profile() {
     } catch (err) {
       console.error(err);
       sessionStorage.removeItem("mw_billing_dirty");
-      toast.error(
-        err.message ||
-          "Billing is not configured yet. Add Stripe keys on the server."
-      );
+      toast.error(getBillingErrorMessage(err, "profile.billingNotConfigured"));
     } finally {
       setBusyAction(null);
     }
@@ -233,10 +247,7 @@ export default function Profile() {
     } catch (err) {
       console.error(err);
       sessionStorage.removeItem("mw_billing_dirty");
-      toast.error(
-        err.message ||
-          "Could not open the billing portal. Check Stripe configuration."
-      );
+      toast.error(getBillingErrorMessage(err, "profile.billingPortalFailed"));
     } finally {
       setBusyAction(null);
     }
@@ -255,7 +266,7 @@ export default function Profile() {
       navigate("/");
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Could not log out.");
+      toast.error(err.message || t("profile.logOutFailed"));
     } finally {
       setIsLoggingOut(false);
     }
@@ -266,7 +277,7 @@ export default function Profile() {
   }
 
   const displayName =
-    profile?.displayName || user?.displayName || "MyWallet user";
+    profile?.displayName || user?.displayName || t("profile.defaultName");
   const email = profile?.email || user?.email || "—";
   const photoURL = profile?.photoURL || user?.photoURL || null;
   const initials = displayName
@@ -276,35 +287,47 @@ export default function Profile() {
     .map((part) => part[0]?.toUpperCase())
     .join("");
 
-  let statusDetail = "Core tracking is free forever.";
+  let statusDetail = t("profile.status.free");
   if (isTrialing) {
     if (subscription.cancelAtPeriodEnd) {
-      statusDetail = `Ends on ${formatDate(
-        subscription.trialEndsAtMs || subscription.currentPeriodEndMs
-      )}. Won't convert to paid.`;
+      statusDetail = t("profile.status.trialCancels", {
+        date: formatDate(
+          subscription.trialEndsAtMs || subscription.currentPeriodEndMs,
+          locale
+        ),
+      });
     } else {
       statusDetail =
         trialDaysLeft === 0
-          ? "Your trial ends today."
-          : `Trial ends ${formatDate(subscription.trialEndsAtMs)} (${trialDaysLeft} day${
-              trialDaysLeft === 1 ? "" : "s"
-            } left).`;
+          ? t("profile.status.trialEndsToday")
+          : t(
+              trialDaysLeft === 1
+                ? "profile.status.trialEndsOne"
+                : "profile.status.trialEndsMany",
+              {
+                date: formatDate(subscription.trialEndsAtMs, locale),
+                n: trialDaysLeft,
+              }
+            );
     }
   } else if (subscription.status === SUBSCRIPTION_STATUS.ACTIVE) {
+    const date = formatDate(subscription.currentPeriodEndMs, locale);
     statusDetail = subscription.cancelAtPeriodEnd
-      ? `Ends on ${formatDate(subscription.currentPeriodEndMs)}. You keep Pro until then.`
-      : `Renews on ${formatDate(subscription.currentPeriodEndMs)}.`;
+      ? t("profile.status.activeCancels", { date })
+      : t("profile.status.activeRenews", { date });
   } else if (isPastDue) {
-    statusDetail = "Update your payment method to restore Pro access.";
+    statusDetail = t("profile.status.pastDue");
   } else if (subscription.status === SUBSCRIPTION_STATUS.CANCELED) {
-    statusDetail =
-      "Your previous Pro plan ended. Subscribe anytime to unlock it again.";
+    statusDetail = t("profile.status.canceled");
   }
+
+  const priceLabel = t(PRO_PRICE_LABEL_KEY);
 
   const showManageBilling = isPro || isPastDue;
   const showSubscribe = !isPro && !canStartTrial;
   const showTrial = canStartTrial;
   const isDarkMode = getThemeFromProfile(profile) === "dark";
+  const languagePreference = getLanguageFromProfile(profile);
 
   const handleToggleTheme = async () => {
     if (!user?.uid || themeBusy) return;
@@ -316,9 +339,28 @@ export default function Profile() {
     } catch (err) {
       console.error(err);
       applyDocumentTheme(isDarkMode ? "dark" : "light");
-      toast.error(err.message || "Could not save theme preference.");
+      toast.error(err.message || t("profile.themeSaveFailed"));
     } finally {
       setThemeBusy(false);
+    }
+  };
+
+  const handleLanguageChange = async (event) => {
+    if (!user?.uid || languageBusy) return;
+    const next = event.target.value;
+    const nextLang = resolveLanguage(next);
+    setLanguageBusy(true);
+    setLanguagePreference(next);
+    try {
+      await updateUserLanguage(user.uid, next);
+      toast.success(translate(nextLang, "toast.languageSaved"));
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.message || translate(nextLang, "toast.languageSaveFailed")
+      );
+    } finally {
+      setLanguageBusy(false);
     }
   };
 
@@ -326,7 +368,7 @@ export default function Profile() {
     <div className={styles.pageWrapper}>
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1>Profile</h1>
+        <h1>{t("profile.title")}</h1>
       </header>
 
       <section className={styles.card}>
@@ -350,7 +392,7 @@ export default function Profile() {
             </div>
             {isPro ? (
               <span className={styles.proChip} aria-hidden="true">
-                Pro
+                {t("common.pro")}
               </span>
             ) : null}
           </div>
@@ -363,7 +405,7 @@ export default function Profile() {
             className={styles.logoutBtn}
             onClick={() => setShowLogoutConfirm(true)}
           >
-            Log out
+            {t("profile.logOut")}
           </button>
         </div>
       </section>
@@ -371,11 +413,9 @@ export default function Profile() {
       <section className={styles.card}>
         <div className={styles.themeRow}>
           <div>
-            <p className={styles.label}>Appearance</p>
-            <h2 className={styles.themeTitle}>Dark mode</h2>
-            <p className={styles.statusDetail}>
-              Saves to your account on this device and others.
-            </p>
+            <p className={styles.label}>{t("profile.appearance")}</p>
+            <h2 className={styles.themeTitle}>{t("profile.darkMode")}</h2>
+            <p className={styles.statusDetail}>{t("profile.darkModeHint")}</p>
           </div>
           <button
             type="button"
@@ -385,10 +425,37 @@ export default function Profile() {
             onClick={handleToggleTheme}
             disabled={themeBusy || !user?.uid}
             aria-pressed={isDarkMode}
-            aria-label="Toggle dark mode"
+            aria-label={t("profile.toggleDarkMode")}
           >
             <span className={styles.themeKnob} />
           </button>
+        </div>
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.languageBlock}>
+          <div>
+            <p className={styles.label}>{t("profile.language")}</p>
+            <h2 className={styles.themeTitle}>{t("profile.languageTitle")}</h2>
+            <p className={styles.statusDetail}>{t("profile.languageHint")}</p>
+          </div>
+          <select
+            className={styles.languageSelect}
+            value={languagePreference}
+            onChange={handleLanguageChange}
+            disabled={languageBusy || !user?.uid}
+            aria-label={t("profile.languageTitle")}
+          >
+            <option value={LANGUAGE.SYSTEM}>
+              {t("profile.languageSystem")}
+            </option>
+            <option value={LANGUAGE.EN}>
+              {t("profile.languageEnglish")}
+            </option>
+            <option value={LANGUAGE.PT}>
+              {t("profile.languagePortuguese")}
+            </option>
+          </select>
         </div>
       </section>
 
@@ -397,8 +464,8 @@ export default function Profile() {
       <section className={styles.card}>
         <div className={styles.planHeader}>
           <div>
-            <p className={styles.label}>Current plan</p>
-            <h2 className={styles.planName}>{planLabel}</h2>
+            <p className={styles.label}>{t("profile.currentPlan")}</p>
+            <h2 className={styles.planName}>{t(planLabelKey)}</h2>
             <p className={styles.statusDetail}>{statusDetail}</p>
           </div>
           <span
@@ -406,15 +473,17 @@ export default function Profile() {
               isPro ? styles.badgePro : styles.badgeFree
             }`}
           >
-            {isPro ? "Pro" : "Free"}
+            {isPro ? t("common.pro") : t("common.free")}
           </span>
         </div>
 
         <div className={styles.planActions}>
           {showTrial && (
             <div className={styles.subscribeHero}>
-              <p className={styles.subscribeEyebrow}>Try Pro free</p>
-              <p className={styles.subscribeLead}>{PRO_COPY.trialLead}</p>
+              <p className={styles.subscribeEyebrow}>
+                {t("profile.tryProFree")}
+              </p>
+              <p className={styles.subscribeLead}>{t(PRO_COPY_KEYS.trialLead)}</p>
               <button
                 type="button"
                 className={styles.primaryBtn}
@@ -422,19 +491,21 @@ export default function Profile() {
                 disabled={Boolean(busyAction)}
               >
                 {busyAction === "checkout"
-                  ? "Opening…"
-                  : `Start ${TRIAL_DAYS}-day free trial`}
+                  ? t("common.opening")
+                  : t("profile.startTrial", { days: TRIAL_DAYS })}
               </button>
               <p className={styles.subscribeFoot}>
-                Then {PRO_PRICE_LABEL}. Cancel anytime.
+                {t("profile.thenPrice", { price: priceLabel })}
               </p>
             </div>
           )}
 
           {showSubscribe && (
             <div className={styles.subscribeHero}>
-              <p className={styles.subscribeEyebrow}>Unlock MyWallet Pro</p>
-              <p className={styles.subscribeLead}>{PRO_COPY.subscribeLead}</p>
+              <p className={styles.subscribeEyebrow}>
+                {t("profile.unlockPro")}
+              </p>
+              <p className={styles.subscribeLead}>{t(PRO_COPY_KEYS.subscribeLead)}</p>
               <button
                 type="button"
                 className={styles.primaryBtn}
@@ -442,11 +513,11 @@ export default function Profile() {
                 disabled={Boolean(busyAction)}
               >
                 {busyAction === "checkout"
-                  ? "Opening…"
-                  : `Get Pro — ${PRO_PRICE_LABEL}`}
+                  ? t("common.opening")
+                  : t("profile.getPro", { price: priceLabel })}
               </button>
               <p className={styles.subscribeFoot}>
-                Secure checkout · Cancel anytime
+                {t("profile.secureCheckout")}
               </p>
             </div>
           )}
@@ -457,7 +528,7 @@ export default function Profile() {
               className={styles.secondaryBtn}
               onClick={() => setPaywallOpen(true)}
             >
-              See everything in Pro
+              {t("profile.seeEverythingInPro")}
             </button>
           )}
 
@@ -468,29 +539,31 @@ export default function Profile() {
               onClick={handleManageBilling}
               disabled={Boolean(busyAction)}
             >
-              {busyAction === "portal" ? "Opening…" : "Manage subscription"}
+              {busyAction === "portal"
+                ? t("common.opening")
+                : t("profile.manageSubscription")}
             </button>
           )}
         </div>
 
         {!showTrial && !showSubscribe && (
           <p className={styles.priceNote}>
-            Pro is {PRO_PRICE_LABEL}. Cancel anytime in the billing portal.
+            {t("profile.priceNote", { price: priceLabel })}
           </p>
         )}
       </section>
 
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>What&apos;s in Pro</h2>
+        <h2 className={styles.sectionTitle}>{t("profile.whatsInPro")}</h2>
         <ul className={styles.featureList}>
           {PRO_FEATURES.map((feature) => (
             <li key={feature.id}>
               <div>
-                <strong>{feature.title}</strong>
-                <span>{feature.description}</span>
+                <strong>{t(feature.titleKey)}</strong>
+                <span>{t(feature.descriptionKey, feature.vars)}</span>
               </div>
               <span className={styles.coming}>
-                {getProFeatureBadge(feature, { isPro })}
+                {t(getProFeatureBadgeKey(feature, { isPro }))}
               </span>
             </li>
           ))}
@@ -515,8 +588,8 @@ export default function Profile() {
         isOpen={showLogoutConfirm}
         onRequestClose={cancelLogout}
         onConfirm={confirmLogout}
-        title="Log out"
-        message="Are you sure you want to log out?"
+        title={t("profile.logOutTitle")}
+        message={t("profile.logOutMessage")}
         isEditModal
         isSubmitting={isLoggingOut}
       />

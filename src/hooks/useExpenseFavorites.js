@@ -1,3 +1,4 @@
+import { tNow } from "../i18n/translate";
 import { useCallback, useEffect, useState } from "react";
 import {
   createExpenseFavorite,
@@ -38,7 +39,7 @@ export function useExpenseFavorites(userId) {
 
   const addFavorite = useCallback(
     async (favorite) => {
-      if (!userId) throw new Error("Not signed in.");
+      if (!userId) throw new Error(tNow("toast.needSignIn"));
       const created = await createExpenseFavorite(userId, favorite);
       setFavorites((prev) => [created, ...prev]);
       return created;
@@ -48,7 +49,7 @@ export function useExpenseFavorites(userId) {
 
   const removeFavorite = useCallback(
     async (favoriteId) => {
-      if (!userId) throw new Error("Not signed in.");
+      if (!userId) throw new Error(tNow("toast.needSignIn"));
       await deleteExpenseFavorite(userId, favoriteId);
       setFavorites((prev) => prev.filter((item) => item.id !== favoriteId));
     },

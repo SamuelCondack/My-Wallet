@@ -1,6 +1,6 @@
-import React from "react";
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
+import { useT } from "../../i18n/useT";
 import styles from "./styles.module.scss";
 
 const ConfirmationModal = ({
@@ -14,6 +14,7 @@ const ConfirmationModal = ({
   isEditModal,
   isSubmitting
 }) => {
+  const t = useT();
   if (!isOpen) return null;
 
   const MessageContainer = isEditModal ? 'div' : 'p';
@@ -47,14 +48,14 @@ const ConfirmationModal = ({
             onClick={onConfirm}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Processing..." : "Yes"}
+            {isSubmitting ? t("common.processing") : t("common.yes")}
           </button>
           <button 
             className={styles.cancelButton} 
             onClick={onRequestClose}
             disabled={isSubmitting}
           >
-            No
+            {t("common.no")}
           </button>
         </div>
       </motion.div>

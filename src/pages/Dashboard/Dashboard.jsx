@@ -34,19 +34,21 @@ import CategoryBudgetsPanel, {
 } from "../../components/CategoryBudgetsPanel/CategoryBudgetsPanel";
 import { useCategoryBudgets } from "../../hooks/useCategoryBudgets";
 import { getProFeature } from "../../constants/subscription";
+import { useLanguage } from "../../i18n/useLanguage";
+import { formatMonthName } from "../../i18n/format";
 import {
   buildMonthExpensesCsv,
   downloadTextFile,
 } from "../../utils/exportExpensesCsv";
 
 const HORIZON_OPTIONS = [
-  { value: "yearEnd", label: "Until Dec" },
-  { value: "3", label: "3 months" },
-  { value: "6", label: "6 months" },
-  { value: "12", label: "12 months" },
+  { value: "yearEnd", labelKey: "dashboard.horizon.yearEnd" },
+  { value: "3", labelKey: "dashboard.horizon.m3" },
+  { value: "6", labelKey: "dashboard.horizon.m6" },
+  { value: "12", labelKey: "dashboard.horizon.m12" },
 ];
 
-function buildForecastMonths(startYear, startMonth, horizon) {
+function buildForecastMonths(startYear, startMonth, horizon, locale) {
   const start = Number(startMonth);
   const year = Number(startYear);
   const count =
@@ -59,7 +61,7 @@ function buildForecastMonths(startYear, startMonth, horizon) {
     const m = String(date.getMonth() + 1).padStart(2, "0");
     months.push({
       key: `${y}-${m}`,
-      label: date.toLocaleString("en-US", { month: "short" }),
+      label: date.toLocaleString(locale, { month: "short" }),
       showYear: y !== year,
       yearShort: String(y).slice(2),
     });
@@ -82,6 +84,7 @@ function parseMoneyInput(raw) {
 }
 
 export default function Dashboard() {
+  const { t, locale } = useLanguage();
   const navigate = useNavigate();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
@@ -213,14 +216,16 @@ export default function Dashboard() {
 
   const handleExportCsv = () => {
     if (!periodExportRows.length) return;
-    const csv = buildMonthExpensesCsv(periodExportRows, categoriesMap);
+    const csv = buildMonthExpensesCsv(periodExportRows, categoriesMap, t);
     downloadTextFile(`mywallet-expenses-${exportPeriodLabel}.csv`, csv);
   };
 
   const exportTitleLabel =
     selectedYear !== "All" && selectedMonth !== "All"
-      ? formatPeriodLabel(monthPeriod)
-      : exportPeriodLabel;
+      ? formatPeriodLabel(monthPeriod, locale)
+      : selectedYear !== "All"
+        ? exportPeriodLabel
+        : t("dashboard.allPeriods");
 
   const handleExportPdf = async () => {
     if (!periodExportRows.length) return;
@@ -234,6 +239,8 @@ export default function Dashboard() {
       periodLabel: exportTitleLabel,
       fileStem: `mywallet-expenses-${exportPeriodLabel}`,
       totalSpendings: spendings,
+      t,
+      locale,
     });
   };
 
@@ -272,7 +279,8 @@ export default function Dashboard() {
     const months = buildForecastMonths(
       selectedYear,
       selectedMonth,
-      forecastHorizon
+      forecastHorizon,
+      locale
     );
     if (months.length === 0) {
       return null;
@@ -315,6 +323,7 @@ export default function Dashboard() {
     forecastHorizon,
     baseMonthlySurplus,
     monthOverrides,
+    locale,
   ]);
 
   useEffect(() => {
@@ -414,7 +423,7 @@ export default function Dashboard() {
     <div className={styles.pageWrapper}>
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1>Dashboard</h1>
+        <h1>{t("dashboard.title")}</h1>
       </header>
 
       <TrialBanner />
@@ -422,7 +431,7 @@ export default function Dashboard() {
 
       <div className={styles.filterContainer}>
         <div className={styles.filter}>
-          <label htmlFor="dashboardYearFilter">Filter by Year: </label>
+          <label htmlFor="dashboardYearFilter">{t("dashboard.filterYear")} </label>
           <select
             id="dashboardYearFilter"
             value={selectedYear}
@@ -432,7 +441,7 @@ export default function Dashboard() {
             }}
             className={styles.selectFilters}
           >
-            <option value="All">All</option>
+            <option value="All">{t("common.all")}</option>
             {sortedUniqueYears
               .filter((year) => !isNaN(year))
               .map((year) => (
@@ -443,7 +452,7 @@ export default function Dashboard() {
           </select>
         </div>
         <div className={styles.filter}>
-          <label htmlFor="dashboardMonthFilter">Filter by Month: </label>
+          <label htmlFor="dashboardMonthFilter">{t("dashboard.filterMonth")} </label>
           <select
             id="dashboardMonthFilter"
             value={selectedMonth}
@@ -451,7 +460,7 @@ export default function Dashboard() {
             disabled={selectedYear === "All"}
             className={styles.selectFilters}
           >
-            <option value="All">All</option>
+            <option value="All">{t("common.all")}</option>
             {sortedUniqueMonths.map((month) => {
               const isCurrentMonth =
                 selectedYear === currentYear && month === currentMonth;
@@ -461,10 +470,7 @@ export default function Dashboard() {
                   value={month}
                   data-current={isCurrentMonth}
                 >
-                  {month} -{" "}
-                  {new Date(0, month - 1).toLocaleString("default", {
-                    month: "long",
-                  })}
+                  {month} - {formatMonthName(month, locale)}
                   {isCurrentMonth && " 📅"}
                 </option>
               );
@@ -475,24 +481,24 @@ export default function Dashboard() {
 
       {monthPeriod ? (
         <section className={styles.overviewCard}>
-          <h2>Month overview</h2>
+          <h2>{t("dashboard.monthOverview")}</h2>
           <p className={styles.overviewPeriod}>
-            {formatPeriodLabel(monthPeriod)}
+            {formatPeriodLabel(monthPeriod, locale)}
           </p>
 
           <div className={styles.overviewGrid}>
             <div className={styles.overviewItem}>
-              <span>Spendings</span>
+              <span>{t("dashboard.spendings")}</span>
               <strong>{formatCurrency(spendings)}</strong>
             </div>
             <div className={styles.overviewItem}>
-              <span>Money received</span>
+              <span>{t("dashboard.moneyReceived")}</span>
               <strong className={styles.received}>
                 {formatCurrency(moneyReceived)}
               </strong>
             </div>
             <div className={styles.overviewItem}>
-              <span>Left this month</span>
+              <span>{t("dashboard.leftThisMonth")}</span>
               <strong
                 className={
                   leftThisMonth >= 0 ? styles.positive : styles.negative
@@ -505,30 +511,29 @@ export default function Dashboard() {
           </div>
 
           <p className={styles.overviewHint}>
-            Spendings matches Expenses for the month. Money received uses
-            confirmation dates. Left = received − spendings.
+            {t("dashboard.overviewHint")}
           </p>
         </section>
       ) : (
         <div className={styles.totalCard}>
-          <span>Total spendings</span>
+          <span>{t("dashboard.totalSpendings")}</span>
           <strong>{formatCurrency(spendings)}</strong>
         </div>
       )}
 
       <section id="dashboard-budgets" className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2>Budgets</h2>
+          <h2>{t("dashboard.budgets")}</h2>
         </div>
         <ProGate
-          title={getProFeature("budgets").title}
-          description={getProFeature("budgets").description}
+          title={t(getProFeature("budgets").titleKey)}
+          description={t(getProFeature("budgets").descriptionKey)}
           preview={<BudgetTeaserPreview />}
         >
           <CategoryBudgetsPanel
             monthPeriod={monthPeriod}
             monthLabel={
-              monthPeriod ? formatPeriodLabel(monthPeriod) : ""
+              monthPeriod ? formatPeriodLabel(monthPeriod, locale) : ""
             }
             categoryTotals={categoryTotals}
             categories={expenseCategories}
@@ -541,10 +546,9 @@ export default function Dashboard() {
 
       {savingsForecast && (
         <section className={styles.forecastCard}>
-          <h2>Savings forecast</h2>
+          <h2>{t("dashboard.forecast.title")}</h2>
           <p className={styles.forecastLead}>
-            Set a monthly save amount, tap a bar to customize that month, and
-            choose how far to project.
+            {t("dashboard.forecast.lead")}
           </p>
 
           <div className={styles.forecastControls}>
@@ -554,7 +558,7 @@ export default function Dashboard() {
                   htmlFor="forecastHorizon"
                   className={styles.forecastInputLabel}
                 >
-                  Horizon
+                  {t("dashboard.forecast.horizon")}
                 </label>
                 <select
                   id="forecastHorizon"
@@ -564,7 +568,7 @@ export default function Dashboard() {
                 >
                   {HORIZON_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.labelKey)}
                     </option>
                   ))}
                 </select>
@@ -575,7 +579,7 @@ export default function Dashboard() {
                   htmlFor="forecastMonthlySave"
                   className={styles.forecastInputLabel}
                 >
-                  Default monthly save
+                  {t("dashboard.forecast.defaultMonthlySave")}
                 </label>
                 <div className={styles.forecastInputRow}>
                   <span className={styles.forecastCurrency}>$</span>
@@ -620,15 +624,15 @@ export default function Dashboard() {
                     className={styles.forecastResetBtn}
                     onClick={resetSimulation}
                     disabled={!usingSimulation}
-                    title="Reset to real leftover"
+                    title={t("dashboard.forecast.resetTitle")}
                   >
-                    Use real
+                    {t("dashboard.forecast.useReal")}
                   </button>
                 </div>
               </div>
             </div>
             <p className={styles.forecastHint}>
-              Tip: tap a month bar to set a custom amount for that month only.
+              {t("dashboard.forecast.tip")}
             </p>
           </div>
 
@@ -638,7 +642,7 @@ export default function Dashboard() {
                 ? styles.forecastChartCrowded
                 : ""
             }`}
-            aria-label="Savings forecast chart"
+            aria-label={t("dashboard.forecast.chartAria")}
           >
             {savingsForecast.points.map((point) => {
               const heightPct = Math.max(
@@ -673,7 +677,9 @@ export default function Dashboard() {
                         className={styles.forecastMonthInput}
                         style={{ width: editWidth }}
                         value={monthEditInput}
-                        aria-label={`Edit ${point.label} monthly save`}
+                        aria-label={t("dashboard.forecast.editMonthlySaveAria", {
+                          label: point.label,
+                        })}
                         onChange={(e) => setMonthEditInput(e.target.value)}
                         onBlur={commitMonthEdit}
                         onKeyDown={(e) => {
@@ -693,9 +699,11 @@ export default function Dashboard() {
                         className={`${styles.forecastValueBtn} ${
                           point.isCustom ? styles.forecastValueCustom : ""
                         }`}
-                        title={`Tap to edit ${point.label}: ${formatCurrency(
-                          point.amount
-                        )}/mo → ${formatCurrency(point.cumulative)} cumulative`}
+                        title={t("dashboard.forecast.tapToEdit", {
+                          label: point.label,
+                          amount: formatCurrency(point.amount),
+                          total: formatCurrency(point.cumulative),
+                        })}
                         onClick={() => startEditMonth(point)}
                       >
                         {point.isCustom ? (
@@ -721,7 +729,9 @@ export default function Dashboard() {
                         startEditMonth(point);
                       }
                     }}
-                    aria-label={`Edit ${point.label} save amount`}
+                    aria-label={t("dashboard.forecast.editSaveAmountAria", {
+                      label: point.label,
+                    })}
                   >
                     <div className={styles.forecastBarTrack}>
                       <div
@@ -754,8 +764,10 @@ export default function Dashboard() {
 
           <p className={styles.forecastTotal}>
             {savingsForecast.isYearEnd
-              ? "Projected by Dec:"
-              : `Projected in ${savingsForecast.monthsCount} mo:`}{" "}
+              ? t("dashboard.forecast.projectedByDec")
+              : t("dashboard.forecast.projectedInMonths", {
+                  n: savingsForecast.monthsCount,
+                })}{" "}
             <strong
               className={
                 savingsForecast.yearEndTotal >= 0
@@ -772,9 +784,9 @@ export default function Dashboard() {
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2>By category</h2>
+          <h2>{t("dashboard.byCategory")}</h2>
           <Link to="/home/categories" className={styles.linkBtn}>
-            Manage categories
+            {t("dashboard.manageCategories")}
           </Link>
         </div>
         <CategoryPieChart
@@ -786,28 +798,29 @@ export default function Dashboard() {
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2>Pro tools</h2>
+          <h2>{t("dashboard.proTools")}</h2>
         </div>
         <ProGate
-          title={getProFeature("export").title}
-          description={getProFeature("export").description}
+          title={t(getProFeature("export").titleKey)}
+          description={t(getProFeature("export").descriptionKey)}
           preview={
             <div className={styles.exportTeaser} aria-hidden="true">
               <div className={styles.exportTeaserRow}>
                 <span>CSV</span>
-                <em>spreadsheet-ready</em>
+                <em>{t("dashboard.exportTeaser.csv")}</em>
               </div>
               <div className={styles.exportTeaserRow}>
                 <span>PDF</span>
-                <em>shareable month report</em>
+                <em>{t("dashboard.exportTeaser.pdf")}</em>
               </div>
             </div>
           }
         >
           <div className={styles.proPreview}>
             <p className={styles.proPreviewLead}>
-              Export expenses for <strong>{exportTitleLabel}</strong> — same
-              rows you see with the filters above.
+              {t("dashboard.exportLeadBefore")}{" "}
+              <strong>{exportTitleLabel}</strong>{" "}
+              {t("dashboard.exportLeadAfter")}
             </p>
             <div className={styles.exportActions}>
               <button
@@ -817,8 +830,10 @@ export default function Dashboard() {
                 disabled={periodExportRows.length === 0}
               >
                 {periodExportRows.length === 0
-                  ? "No expenses to export"
-                  : `Export CSV (${periodExportRows.length})`}
+                  ? t("dashboard.noExpensesToExport")
+                  : t("dashboard.exportCsv", {
+                      count: periodExportRows.length,
+                    })}
               </button>
               <button
                 type="button"
@@ -826,7 +841,7 @@ export default function Dashboard() {
                 onClick={handleExportPdf}
                 disabled={periodExportRows.length === 0}
               >
-                Export PDF
+                {t("dashboard.exportPdf")}
               </button>
             </div>
           </div>

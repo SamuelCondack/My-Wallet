@@ -50,9 +50,13 @@ import { countsInTotals } from "../../utils/totalsVisibility";
 import { useExcludeFromTotalsToggle } from "../../hooks/useExcludeFromTotalsToggle";
 import ExcludeSplashLayer from "../../components/ExcludeSplashLayer/ExcludeSplashLayer";
 import excludeStyles from "../../styles/excludeFromTotals.module.scss";
+import { useLanguage } from "../../i18n/useLanguage";
+import { formatMonthName } from "../../i18n/format";
+import { PAYMENT_METHOD_LABEL_KEYS } from "../../constants/quickAdd";
 
 export default function Expenses() {
   const navigate = useNavigate();
+  const { t, locale, language } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const { splashKey, splashMode, runToggle, isInteractiveTarget } =
     useExcludeFromTotalsToggle();
@@ -261,14 +265,14 @@ export default function Expenses() {
         setIncomes(data);
       } catch (error) {
         console.error("Error loading income:", error);
-        toast.error("Failed to load income summary.");
+        toast.error(t("toast.incomeSummaryFailed"));
       } finally {
         setIsIncomeLoading(false);
       }
     };
 
     loadIncomeFromFirestore();
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     if (userId && !isLoading) {
@@ -406,7 +410,7 @@ export default function Expenses() {
         }
         return next;
       });
-      toast.success("Expense deleted!");
+      toast.success(t("toast.expenseDeleted"));
     } catch (error) {
       console.log(error);
     }
@@ -430,10 +434,17 @@ export default function Expenses() {
   function convertDateFormat(dateString) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const [year, month, day] = dateString.split("-");
-      return `${month}/${day}/${year}`;
+      return language === "pt"
+        ? `${day}/${month}/${year}`
+        : `${month}/${day}/${year}`;
     } else {
       return dateString;
     }
+  }
+
+  function getMethodLabel(method) {
+    const key = PAYMENT_METHOD_LABEL_KEYS[method];
+    return key ? t(key) : method;
   }
 
   function formatValue(value) {
@@ -471,10 +482,10 @@ export default function Expenses() {
       setShowPauseModal(false);
       setSelectedExpense(null);
       setExpenseToDeleteName("");
-      toast.success("Despesa pausada com sucesso!");
+      toast.success(t("toast.expensePaused"));
     } catch (error) {
-      console.error("Erro ao pausar:", error);
-      toast.error("Falha ao pausar despesa");
+      console.error("Error pausing expense:", error);
+      toast.error(t("toast.expensePauseFailed"));
     }
   };
 
@@ -505,10 +516,10 @@ export default function Expenses() {
       setShowResumeModal(false);
       setSelectedExpense(null);
       setExpenseToDeleteName("");
-      toast.success("Despesa despausada com sucesso!");
+      toast.success(t("toast.expenseResumed"));
     } catch (error) {
-      console.error("Erro ao despausar:", error);
-      toast.error("Falha ao despausar despesa");
+      console.error("Error resuming expense:", error);
+      toast.error(t("toast.expenseResumeFailed"));
     }
   };
 
@@ -793,7 +804,7 @@ export default function Expenses() {
             type="button"
             className={styles.iconActionBtn}
             onClick={() => handleResumeExpense(expense)}
-            aria-label="Resume expense"
+            aria-label={t("expenses.resumeAria")}
           >
             <FaPlay className={styles.playPauseIcon} />
           </button>
@@ -807,7 +818,7 @@ export default function Expenses() {
           onClick={() => {
             setPeriodBoth(pauseYear, pauseMonth);
           }}
-          aria-label="Go to pause month"
+          aria-label={t("expenses.goToPauseMonth")}
         >
           <FaRegCalendar className={styles.calendarIcon} />
         </button>
@@ -819,7 +830,7 @@ export default function Expenses() {
         type="button"
         className={styles.iconActionBtn}
         onClick={() => handlePauseExpense(expense)}
-        aria-label="Pause expense"
+        aria-label={t("expenses.pauseAria")}
       >
         <FaPause className={styles.playPauseIcon} />
       </button>
@@ -831,7 +842,11 @@ export default function Expenses() {
           setPeriodBoth(currentYear, currentMonth);
         } : undefined}
         disabled={!shouldEnableCalendar}
-        aria-label={!shouldEnableCalendar ? "This expense is in the future" : "Go to current month"}
+        aria-label={
+          !shouldEnableCalendar
+            ? t("expenses.futureExpense")
+            : t("expenses.goToCurrentMonth")
+        }
       >
         <FaRegCalendar
           className={`${styles.calendarIcon} ${!shouldEnableCalendar ? styles.disabledCalendar : ''}`}
@@ -863,7 +878,7 @@ export default function Expenses() {
 
   const handleExpenseFormSave = async (payload) => {
     if (!userId) {
-      toast.error("You need to be signed in.");
+      toast.error(t("toast.needSignIn"));
       return;
     }
 
@@ -892,7 +907,7 @@ export default function Expenses() {
       });
 
       closeExpenseModal();
-      toast.success("Expense registered!");
+      toast.success(t("toast.expenseRegistered"));
       return;
     }
 
@@ -986,7 +1001,7 @@ export default function Expenses() {
     }
 
     closeExpenseModal();
-    toast.success("Despesa atualizada com sucesso!");
+    toast.success(t("toast.expenseUpdated"));
   };
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
@@ -1021,6 +1036,7 @@ export default function Expenses() {
 
     const name = expense.name?.toLowerCase() ?? "";
     const method = expense.method?.toLowerCase() ?? "";
+    const methodLabel = getMethodLabel(expense.method)?.toLowerCase() ?? "";
     const category =
       categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.name?.toLowerCase() ??
       "";
@@ -1028,6 +1044,7 @@ export default function Expenses() {
     const matchesText =
       name.includes(normalizedSearchQuery) ||
       method.includes(normalizedSearchQuery) ||
+      methodLabel.includes(normalizedSearchQuery) ||
       category.includes(normalizedSearchQuery);
 
     // OR: text fields and (when query looks numeric) value prefix/exact match
@@ -1077,7 +1094,7 @@ export default function Expenses() {
       await navigator.clipboard.writeText(plain);
     } catch (error) {
       console.error(error);
-      toast.error("Couldn't copy value.");
+      toast.error(t("toast.copyFailed"));
       return;
     }
 
@@ -1117,7 +1134,7 @@ export default function Expenses() {
         type="button"
         className={`${styles.metricCopyRow} ${className || ""}`}
         onClick={() => copyMetricValue(metricKey, numericValue)}
-        aria-label={`Copy ${label} value`}
+        aria-label={t("metrics.copyValue", { label })}
       >
         {label}:{" "}
         <b
@@ -1146,23 +1163,40 @@ export default function Expenses() {
       return (
         <>
           <p className={styles.summaryLine}>
-            Earned:{" "}
-            <span className={styles.netEarningsShimmer} role="status" aria-label="Loading" />
+            {t("metrics.earned")}:{" "}
+            <span
+              className={styles.netEarningsShimmer}
+              role="status"
+              aria-label={t("common.loading")}
+            />
           </p>
           <p className={styles.summaryLine}>
-            Pending Income:{" "}
-            <span className={styles.netEarningsShimmer} role="status" aria-label="Loading" />
+            {t("metrics.pendingIncome")}:{" "}
+            <span
+              className={styles.netEarningsShimmer}
+              role="status"
+              aria-label={t("common.loading")}
+            />
           </p>
           <p className={styles.summaryLine}>
-            Received:{" "}
-            <span className={styles.netEarningsShimmer} role="status" aria-label="Loading" />
+            {t("metrics.received")}:{" "}
+            <span
+              className={styles.netEarningsShimmer}
+              role="status"
+              aria-label={t("common.loading")}
+            />
           </p>
           <p className={styles.totalSpendings}>
-            Your Spendings: <b>-${Number(totalSpendings || 0).toFixed(2)}</b>
+            {t("metrics.yourSpendings")}:{" "}
+            <b>-${Number(totalSpendings || 0).toFixed(2)}</b>
           </p>
           <p className={styles.netEarnings}>
-            Net Earnings:{" "}
-            <span className={styles.netEarningsShimmer} role="status" aria-label="Loading" />
+            {t("metrics.netEarnings")}:{" "}
+            <span
+              className={styles.netEarningsShimmer}
+              role="status"
+              aria-label={t("common.loading")}
+            />
           </p>
         </>
       );
@@ -1184,7 +1218,7 @@ export default function Expenses() {
         <div className={styles.earnedRow}>
           {renderCopyableMetric({
             metricKey: earnedMetricKey,
-            label: "Earned",
+            label: t("metrics.earned"),
             numericValue: earned,
             displayValue: `$${earned.toFixed(2)}`,
             className: styles.summaryEarned,
@@ -1218,15 +1252,15 @@ export default function Expenses() {
               event.stopPropagation();
               goToIncome(monthKey);
             }}
-            aria-label="Open Income page"
-            title="Open Income"
+            aria-label={t("metrics.openIncomeAria")}
+            title={t("metrics.openIncome")}
           >
             <FaPencilAlt className={styles.pencilIcon} aria-hidden="true" />
           </button>
         </div>
         {renderCopyableMetric({
           metricKey: `${monthKey}-pending`,
-          label: "Pending Income",
+          label: t("metrics.pendingIncome"),
           numericValue: pending,
           displayValue: `$${pending.toFixed(2)}`,
           className:
@@ -1235,7 +1269,7 @@ export default function Expenses() {
         })}
         {renderCopyableMetric({
           metricKey: `${monthKey}-received`,
-          label: "Received",
+          label: t("metrics.received"),
           numericValue: received,
           displayValue: `$${received.toFixed(2)}`,
           className: styles.summaryReceived,
@@ -1243,7 +1277,7 @@ export default function Expenses() {
         })}
         {renderCopyableMetric({
           metricKey: `${monthKey}-spendings`,
-          label: "Your Spendings",
+          label: t("metrics.yourSpendings"),
           numericValue: spendingsValue,
           displayValue: `-$${spendingsValue.toFixed(2)}`,
           className: styles.totalSpendings,
@@ -1251,7 +1285,7 @@ export default function Expenses() {
         })}
         {renderCopyableMetric({
           metricKey: `${monthKey}-net`,
-          label: "Net Earnings",
+          label: t("metrics.netEarnings"),
           numericValue: netValue,
           displayValue: `$${netValue.toFixed(2)}`,
           className: `${styles.netEarnings} ${
@@ -1300,7 +1334,7 @@ export default function Expenses() {
         setCached("expenses", userId, next);
         return next;
       });
-      toast.error("Couldn't update expense.");
+      toast.error(t("toast.expenseExcludeFailed"));
     }
   };
 
@@ -1326,7 +1360,7 @@ export default function Expenses() {
       await setExpensesExcludedFromTotals(userId, ids, false);
     } catch (error) {
       console.error(error);
-      toast.error("Couldn't activate expenses.");
+      toast.error(t("toast.expenseActivateFailed"));
     }
   };
 
@@ -1357,10 +1391,10 @@ export default function Expenses() {
     <>
       <div className={styles.expensesSectionWrapper}>
         <div className={styles.expensesSection}>
-          <h2>Expenses</h2>
+          <h2>{t("expenses.title")}</h2>
           <div className={styles.filterContainer}>
             <div className={styles.filter}>
-              <label htmlFor="yearFilter">Filter by Year: </label>
+              <label htmlFor="yearFilter">{t("expenses.filterYear")} </label>
               <select
                 id="yearFilter"
                 value={selectedYear}
@@ -1371,7 +1405,7 @@ export default function Expenses() {
                 }}
                 className={styles.selectFilters}
               >
-                <option value="All">All</option>
+                <option value="All">{t("common.all")}</option>
                 {sortedUniqueYears
                   .filter((year) => !isNaN(year)) // Filtra valores NaN
                   .map((year) => (
@@ -1382,7 +1416,7 @@ export default function Expenses() {
               </select>
             </div>
             <div className={styles.filter}>
-              <label htmlFor="monthFilter">Filter by Month: </label>
+              <label htmlFor="monthFilter">{t("expenses.filterMonth")} </label>
               <select
                 id="monthFilter"
                 value={selectedMonth}
@@ -1393,7 +1427,7 @@ export default function Expenses() {
                 disabled={selectedYear === "All"}
                 className={styles.selectFilters}
               >
-                <option value="All">All</option>
+                <option value="All">{t("common.all")}</option>
                 {sortedUniqueMonths.map((month) => {
                   const isCurrentMonth = selectedYear === currentYear && month === currentMonth;
                   return (
@@ -1402,9 +1436,7 @@ export default function Expenses() {
                       value={month}
                       data-current={isCurrentMonth}
                     >
-                      {month} - {new Date(0, month - 1).toLocaleString("default", {
-                        month: "long",
-                      })}
+                      {month} - {formatMonthName(month, locale)}
                       {isCurrentMonth && " 📅"}
                     </option>
                   );
@@ -1418,7 +1450,7 @@ export default function Expenses() {
                   : ""
               }`}
             >
-              <label htmlFor="categoryFilter">Filter by Category:</label>
+              <label htmlFor="categoryFilter">{t("expenses.filterCategory")}</label>
               <div className={styles.categorySelectWrap}>
                 <select
                   id="categoryFilter"
@@ -1426,7 +1458,7 @@ export default function Expenses() {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className={`${styles.selectFilters} ${styles.categorySelect}`}
                 >
-                  <option value="All">All</option>
+                  <option value="All">{t("common.all")}</option>
                   {categoriesInFilter.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.icon} {category.name}
@@ -1445,7 +1477,7 @@ export default function Expenses() {
                     >
                       <span
                         className={styles.categoryFilterHint}
-                        title="Temporary total for the selected category filter"
+                        title={t("expenses.categoryHintTitle")}
                       >
                         −${categoryHintValueRef.current.toFixed(2)}
                       </span>
@@ -1467,11 +1499,11 @@ export default function Expenses() {
                     <div className={styles.searchContainer}>
                       <input
                         type="search"
-                        placeholder="Search expenses..."
+                        placeholder={t("expenses.searchPlaceholder")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className={styles.searchInput}
-                        aria-label="Search expenses"
+                        aria-label={t("expenses.searchAria")}
                         autoComplete="off"
                         enterKeyHint="search"
                       />
@@ -1480,7 +1512,7 @@ export default function Expenses() {
                           type="button"
                           className={styles.searchClearButton}
                           onClick={() => setSearchQuery("")}
-                          aria-label="Clear search"
+                          aria-label={t("expenses.clearSearch")}
                         >
                           ×
                         </button>
@@ -1489,10 +1521,21 @@ export default function Expenses() {
                     {hasActiveFilters && !hasVisibleResults && (
                       <p className={styles.noSearchResults}>
                         {normalizedSearchQuery && effectiveSelectedCategory !== "All"
-                          ? `No expenses found for "${searchQuery.trim()}" in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`
+                          ? t("expenses.emptySearchCategory", {
+                              query: searchQuery.trim(),
+                              category:
+                                categoriesMap[effectiveSelectedCategory]?.name ||
+                                t("expenses.thisCategory"),
+                            })
                           : normalizedSearchQuery
-                          ? `No expenses found for "${searchQuery.trim()}".`
-                          : `No expenses found in ${categoriesMap[effectiveSelectedCategory]?.name || "this category"}.`}
+                          ? t("expenses.emptySearch", {
+                              query: searchQuery.trim(),
+                            })
+                          : t("expenses.emptyCategory", {
+                              category:
+                                categoriesMap[effectiveSelectedCategory]?.name ||
+                                t("expenses.thisCategory"),
+                            })}
                       </p>
                     )}
                   </div>
@@ -1505,10 +1548,7 @@ export default function Expenses() {
               const monthTitle = (
                 <div className={styles.monthHeader}>
                   <h3 className={styles.month}>
-                    {new Date(year, month - 1, 1).toLocaleString("default", {
-                      month: "long",
-                    })}{" "}
-                    {year}
+                    {formatMonthName(month, locale)} {year}
                   </h3>
                   {monthHasExcluded && (
                     <button
@@ -1516,7 +1556,7 @@ export default function Expenses() {
                       className={styles.activateAllBtn}
                       onClick={() => activateAllExpenses(expenses)}
                     >
-                      Activate all
+                      {t("expenses.activateAll")}
                     </button>
                   )}
                 </div>
@@ -1604,9 +1644,12 @@ export default function Expenses() {
                               role="button"
                               tabIndex={0}
                               aria-pressed={isExcluded}
-                              aria-label={`${
-                                isExcluded ? "Include" : "Exclude"
-                              } ${expense.name} from totals`}
+                              aria-label={t(
+                                isExcluded
+                                  ? "expenses.includeAria"
+                                  : "expenses.excludeAria",
+                                { name: expense.name }
+                              )}
                               onKeyDown={(event) => {
                                 if (event.key !== "Enter" && event.key !== " ") {
                                   return;
@@ -1628,14 +1671,15 @@ export default function Expenses() {
                             <button
                               className={styles.expenseEditButton}
                               onClick={() => handleEditClick(expense)}
-                              title="Edit expense"
+                              title={t("expenses.editTitle")}
+                              type="button"
                             >
                               <FaPencilAlt className={styles.expensePencilIcon} />
                             </button>
                             <p className={styles.expenseName}>{expense.name}</p>
                             <p className={styles.categoryBadge}>
                               {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.icon}{" "}
-                              {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.name || "Other"}
+                              {categoriesMap[expense.categoryId || DEFAULT_CATEGORY_ID]?.name || t("common.other")}
                             </p>
                             <p className={styles.expenseValue}>
                               {expense.installments > 1 ? (
@@ -1645,7 +1689,9 @@ export default function Expenses() {
                                   {expense.installments}
                                   <br />
                                   <span className={styles.expenseTotal}>
-                                    Total: ${formatValue(expense.totalValue)}
+                                    {t("expenses.totalLabel", {
+                                      amount: `$${formatValue(expense.totalValue)}`,
+                                    })}
                                   </span>
                                 </>
                               ) : (
@@ -1653,7 +1699,7 @@ export default function Expenses() {
                               )}
                             </p>
                             <p className={styles.expenseMethod}>
-                              {expense.method}
+                              {getMethodLabel(expense.method)}
                             </p>
                             <p>{convertDateFormat(expense.inclusionDate)}</p>
                             <div
@@ -1686,7 +1732,7 @@ export default function Expenses() {
                                 <img
                                   className={styles.binImg}
                                   src={bin}
-                                  alt="delete button"
+                                  alt={t("expenses.deleteIconAlt")}
                                 />
                               </button>
                             </div>
@@ -1701,8 +1747,8 @@ export default function Expenses() {
                         onRequestClose={handleCancelDelete}
                         onConfirm={handleConfirmDelete}
                         expenseName={expenseToDeleteName}
-                        title="Delete Expense"
-                        message="Are you sure you want to delete this expense?"
+                        title={t("expenses.deleteTitle")}
+                        message={t("expenses.deleteMessage")}
                         identifier={expenseToDeleteName}
                       />
                     </AnimatePresence>
@@ -1722,7 +1768,7 @@ export default function Expenses() {
               exit={{ opacity: 0, y: 18, scale: 0.9 }}
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
               whileTap={{ scale: 0.9 }}
-              aria-label="Scroll to top"
+              aria-label={t("common.scrollToTop")}
             >
               ↑
             </motion.button>
@@ -1733,13 +1779,13 @@ export default function Expenses() {
             type="button"
             className={styles.floatingAddButton}
             onClick={openCreateExpense}
-            aria-label="Add expense"
-            title="Add expense"
+            aria-label={t("expenses.add")}
+            title={t("expenses.add")}
           >
             <span className={styles.fabIcon} aria-hidden="true">
               +
             </span>
-            <span className={styles.fabLabel}>Add expense</span>
+            <span className={styles.fabLabel}>{t("expenses.add")}</span>
           </button>
         )}
         {showPauseModal && (
@@ -1747,8 +1793,8 @@ export default function Expenses() {
             isOpen={showPauseModal}
             onRequestClose={() => setShowPauseModal(false)}
             onConfirm={handleConfirmPause}
-            title="Pause Expense"
-            message="Are you sure you want to pause this expense?"
+            title={t("expenses.pauseTitle")}
+            message={t("expenses.pauseMessage")}
             identifier={expenseToDeleteName}
             expenseName={expenseToDeleteName}
           />
@@ -1758,8 +1804,8 @@ export default function Expenses() {
             isOpen={showResumeModal}
             onRequestClose={() => setShowResumeModal(false)}
             onConfirm={handleConfirmResume}
-            title="Resume Expense"
-            message="Are you sure you want to resume this expense?"
+            title={t("expenses.resumeTitle")}
+            message={t("expenses.resumeMessage")}
             identifier={expenseToDeleteName}
             expenseName={expenseToDeleteName}
           />
@@ -1776,8 +1822,8 @@ export default function Expenses() {
               toast.error(
                 error.message ||
                   (expenseModalMode === "create"
-                    ? "Failed to register expense"
-                    : "Falha ao atualizar despesa")
+                    ? t("toast.expenseRegisterFailed")
+                    : t("toast.expenseUpdateFailed"))
               );
             }
           }}

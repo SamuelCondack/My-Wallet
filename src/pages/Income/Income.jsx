@@ -57,10 +57,13 @@ import { getProFeature } from "../../constants/subscription";
 import { useExcludeFromTotalsToggle } from "../../hooks/useExcludeFromTotalsToggle";
 import ExcludeSplashLayer from "../../components/ExcludeSplashLayer/ExcludeSplashLayer";
 import excludeStyles from "../../styles/excludeFromTotals.module.scss";
+import { useLanguage } from "../../i18n/useLanguage";
+import { formatMonthName } from "../../i18n/format";
 import styles from "./Income.module.scss";
 
 export default function Income() {
   const navigate = useNavigate();
+  const { t, locale, language } = useLanguage();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear().toString();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
@@ -214,7 +217,7 @@ export default function Income() {
       } catch (error) {
         console.error(error);
         if (!cancelled) {
-          toast.error("Failed to load income.");
+          toast.error(t("toast.incomeLoadFailed"));
         }
       } finally {
         if (!cancelled) {
@@ -227,7 +230,7 @@ export default function Income() {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, t]);
 
   useEffect(() => {
     if (userId && !isLoading) {
@@ -464,7 +467,7 @@ export default function Income() {
         );
         return {
           categoryId,
-          name: category?.name || "Other",
+          name: category?.name || t("common.other"),
           icon: category?.icon || "💰",
           count: items.length,
           total,
@@ -472,13 +475,13 @@ export default function Income() {
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [periodPendingExportList, categoriesMap]);
+  }, [periodPendingExportList, categoriesMap, t]);
 
   const exportPeriodLabel = useMemo(() => {
-    if (periodKey) return formatPeriodLabel(periodKey);
+    if (periodKey) return formatPeriodLabel(periodKey, locale);
     if (selectedYear !== "All") return String(selectedYear);
-    return "All periods";
-  }, [periodKey, selectedYear]);
+    return t("income.allPeriods");
+  }, [periodKey, selectedYear, locale, t]);
 
   const exportFileStem = useMemo(() => {
     const stem =
@@ -498,11 +501,11 @@ export default function Income() {
   const runPendingPdfExport = async ({ list }) => {
     if (isExportingPdf) return;
     if (!list.length) {
-      toast.info("No pending income to export.");
+      toast.info(t("toast.noPendingExport"));
       return;
     }
     setIsExportingPdf(true);
-    const toastId = toast.loading("Generating PDF…");
+    const toastId = toast.loading(t("toast.pdfGenerating"));
     try {
       const { downloadPendingIncomesPdf } = await import(
         "../../utils/exportPendingIncomesPdf"
@@ -511,9 +514,11 @@ export default function Income() {
         incomes: list,
         periodLabel: exportPeriodLabel,
         fileStem: exportFileStem,
+        t,
+        locale,
       });
       toast.update(toastId, {
-        render: "PDF ready",
+        render: t("toast.pdfReady"),
         type: "success",
         isLoading: false,
         autoClose: 2000,
@@ -525,7 +530,7 @@ export default function Income() {
     } catch (error) {
       console.error(error);
       toast.update(toastId, {
-        render: "Could not export PDF.",
+        render: t("toast.pdfFailed"),
         type: "error",
         isLoading: false,
         autoClose: 3000,
@@ -542,7 +547,7 @@ export default function Income() {
     }
     // Allow opening when only excluded pendings remain (manual select can still export them).
     if (periodPendingList.length === 0) {
-      toast.info("No pending income to export.");
+      toast.info(t("toast.noPendingExport"));
       return;
     }
     setExportSheetView("menu");
@@ -574,7 +579,7 @@ export default function Income() {
         setCached("income", userId, next);
         return next;
       });
-      toast.error("Couldn't update income.");
+      toast.error(t("toast.incomeExcludeFailed"));
     }
   };
 
@@ -596,7 +601,7 @@ export default function Income() {
       await setIncomesExcludedFromTotals(userId, ids, false);
     } catch (error) {
       console.error(error);
-      toast.error("Couldn't activate incomes.");
+      toast.error(t("toast.incomeActivateFailed"));
     }
   };
 
@@ -661,7 +666,7 @@ export default function Income() {
       await navigator.clipboard.writeText(plain);
     } catch (error) {
       console.error(error);
-      toast.error("Couldn't copy value.");
+      toast.error(t("toast.copyFailed"));
       return;
     }
 
@@ -709,7 +714,7 @@ export default function Income() {
         type="button"
         className={`${styles.metricCopyRow} ${className || ""}`}
         onClick={() => copyMetricValue(metricKey, numericValue)}
-        aria-label={`Copy ${label} value`}
+        aria-label={t("metrics.copyValue", { label })}
       >
         {label}:{" "}
         <b
@@ -765,7 +770,7 @@ export default function Income() {
 
   const handleSave = async (payload) => {
     if (!userId) {
-      toast.error("You need to be signed in.");
+      toast.error(t("toast.needSignIn"));
       return;
     }
 
@@ -784,7 +789,7 @@ export default function Income() {
               : item
           )
         );
-        toast.success("Income confirmed!");
+        toast.success(t("toast.incomeConfirmed"));
       } else if (modalMode === "edit" && activeIncome?.id) {
         const wasMonthly = Boolean(activeIncome.isMonthly);
         const nowMonthly = Boolean(payload.isMonthly);
@@ -840,24 +845,24 @@ export default function Income() {
         }
 
         syncIncomes(nextIncomes);
-        toast.success("Income updated!");
+        toast.success(t("toast.incomeUpdated"));
       } else {
         const created = await createIncome(userId, payload);
         const createdList = Array.isArray(created) ? created : [created];
         syncIncomes([...createdList, ...incomes]);
         toast.success(
           payload.isMonthly
-            ? "Monthly income added!"
+            ? t("toast.incomeMonthlyAdded")
             : createdList.length > 1
-              ? `Added ${createdList.length} installments!`
-              : "Income added!"
+              ? t("toast.incomeInstallmentsAdded", { count: createdList.length })
+              : t("toast.incomeAdded")
         );
       }
       setModalOpen(false);
       setActiveIncome(null);
     } catch (error) {
       console.error(error);
-      toast.error(error.message || "Failed to save income.");
+      toast.error(error.message || t("toast.incomeSaveFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -877,16 +882,16 @@ export default function Income() {
             (item) => item.monthlyGroupId !== deleted.monthlyGroupId
           )
         );
-        toast.success("Monthly income deleted.");
+        toast.success(t("toast.incomeMonthlyDeleted"));
       } else {
         syncIncomes(incomes.filter((item) => item.id !== incomeToDelete.id));
-        toast.success("Income deleted.");
+        toast.success(t("toast.incomeDeleted"));
       }
       setShowDeleteModal(false);
       setIncomeToDelete(null);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete income.");
+      toast.error(t("toast.incomeDeleteFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -899,12 +904,12 @@ export default function Income() {
       await pauseMonthlyIncome(userId, monthlyActionIncome);
       const next = await fetchIncomes(userId);
       syncIncomes(next);
-      toast.success("Monthly income paused.");
+      toast.success(t("toast.incomeMonthlyPaused"));
       setShowPauseModal(false);
       setMonthlyActionIncome(null);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to pause income.");
+      toast.error(t("toast.incomePauseFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -916,12 +921,12 @@ export default function Income() {
     try {
       const next = await resumeMonthlyIncome(userId, monthlyActionIncome);
       syncIncomes(next);
-      toast.success("Monthly income resumed.");
+      toast.success(t("toast.incomeMonthlyResumed"));
       setShowResumeModal(false);
       setMonthlyActionIncome(null);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to resume income.");
+      toast.error(t("toast.incomeResumeFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -997,8 +1002,12 @@ export default function Income() {
           aria-pressed={isExcluded}
           aria-label={
             inSelectMode
-              ? `${isSelected ? "Deselect" : "Select"} ${income.description}`
-              : `${isExcluded ? "Include" : "Exclude"} ${income.description} from totals`
+              ? t(isSelected ? "income.deselectAria" : "income.selectAria", {
+                  name: income.description,
+                })
+              : t(isExcluded ? "income.includeAria" : "income.excludeAria", {
+                  name: income.description,
+                })
           }
           onKeyDown={(event) => {
             if (event.key !== "Enter" && event.key !== " ") return;
@@ -1034,8 +1043,8 @@ export default function Income() {
               type="button"
               className={styles.expenseEditButton}
               onClick={() => openEdit(income)}
-              title="Edit income"
-              aria-label="Edit income"
+              title={t("income.editTitle")}
+              aria-label={t("income.editTitle")}
             >
               <FaPencilAlt className={styles.expensePencilIcon} />
             </button>
@@ -1043,7 +1052,9 @@ export default function Income() {
 
           <p className={styles.incomeName}>{income.description}</p>
           <p className={styles.categoryBadge}>
-            {category ? `${category.icon} ${category.name}` : "Other"}
+            {category
+              ? `${category.icon} ${category.name}`
+              : t("common.other")}
           </p>
           <p className={styles.incomeValue}>
             {Number(income.installments) > 1 ? (
@@ -1052,7 +1063,9 @@ export default function Income() {
                 {income.installmentNumber}/{income.installments}
                 <br />
                 <span className={styles.incomeTotal}>
-                  Total: ${Number(income.totalAmount || income.amount).toFixed(2)}
+                  {t("income.totalLabel", {
+                    amount: `$${Number(income.totalAmount || income.amount).toFixed(2)}`,
+                  })}
                 </span>
               </>
             ) : (
@@ -1060,15 +1073,21 @@ export default function Income() {
             )}
           </p>
           <p className={styles.expenseMethod}>
-            {isPending ? "Pending" : "Confirmed"}
+            {isPending ? t("income.pending") : t("income.confirmed")}
           </p>
           <p className={styles.incomeMeta}>
             {isPending
-              ? `Expected ${formatDisplayDate(income.expectedDate)}`
-              : `Received ${formatDisplayDate(income.receivedDate)}`}
+              ? t("income.expected", {
+                  date: formatDisplayDate(income.expectedDate, language),
+                })
+              : t("income.receivedOn", {
+                  date: formatDisplayDate(income.receivedDate, language),
+                })}
           </p>
           <p className={styles.incomePeriod}>
-            Income Period: {formatPeriodLabel(income.incomePeriod)}
+            {t("income.periodLabel", {
+              period: formatPeriodLabel(income.incomePeriod, locale),
+            })}
           </p>
 
           {!inSelectMode && (
@@ -1086,7 +1105,7 @@ export default function Income() {
                     className={styles.confirmButton}
                     onClick={() => openConfirm(income)}
                   >
-                    Confirm
+                    {t("common.confirm")}
                   </button>
                 ) : null}
                 {income.isMonthly && (
@@ -1103,8 +1122,8 @@ export default function Income() {
                     }}
                     aria-label={
                       income.isPaused
-                        ? "Resume monthly income"
-                        : "Pause monthly income"
+                        ? t("income.resumeMonthlyAria")
+                        : t("income.pauseMonthlyAria")
                     }
                   >
                     {income.isPaused ? (
@@ -1122,12 +1141,12 @@ export default function Income() {
                   setIncomeToDelete(income);
                   setShowDeleteModal(true);
                 }}
-                aria-label="Delete income"
+                aria-label={t("income.deleteAria")}
               >
                 <img
                   className={styles.binImg}
                   src={bin}
-                  alt="delete button"
+                  alt={t("income.deleteIconAlt")}
                 />
               </button>
             </div>
@@ -1140,11 +1159,11 @@ export default function Income() {
   return (
     <div className={styles.pageWrapper}>
       <div className={styles.page}>
-        <h2>Income</h2>
+        <h2>{t("income.title")}</h2>
 
         <div className={styles.filterContainer}>
           <div className={styles.filter}>
-            <label htmlFor="incomeYearFilter">Filter by Year: </label>
+            <label htmlFor="incomeYearFilter">{t("income.filterYear")} </label>
             <select
               id="incomeYearFilter"
               value={selectedYear}
@@ -1155,7 +1174,7 @@ export default function Income() {
                 setSelectedCategory("All");
               }}
             >
-              <option value="All">All</option>
+              <option value="All">{t("common.all")}</option>
               {years.map((year) => (
                 <option key={year} value={year}>
                   {year}
@@ -1165,7 +1184,7 @@ export default function Income() {
           </div>
 
           <div className={styles.filter}>
-            <label htmlFor="incomeMonthFilter">Filter by Month: </label>
+            <label htmlFor="incomeMonthFilter">{t("income.filterMonth")} </label>
             <select
               id="incomeMonthFilter"
               value={selectedMonth}
@@ -1176,7 +1195,7 @@ export default function Income() {
                 setSelectedCategory("All");
               }}
             >
-              <option value="All">All</option>
+              <option value="All">{t("common.all")}</option>
               {months.map((month) => {
                 const isCurrentMonth =
                   selectedYear === currentYear && month === currentMonth;
@@ -1186,10 +1205,7 @@ export default function Income() {
                     value={month}
                     data-current={isCurrentMonth}
                   >
-                    {month} -{" "}
-                    {new Date(0, Number(month) - 1).toLocaleString("default", {
-                      month: "long",
-                    })}
+                    {month} - {formatMonthName(month, locale)}
                     {isCurrentMonth && " 📅"}
                   </option>
                 );
@@ -1204,7 +1220,7 @@ export default function Income() {
                 : ""
             }`}
           >
-            <label htmlFor="incomeCategoryFilter">Filter by Category: </label>
+            <label htmlFor="incomeCategoryFilter">{t("income.filterCategory")} </label>
             <div className={styles.categorySelectWrap}>
               <select
                 id="incomeCategoryFilter"
@@ -1212,7 +1228,7 @@ export default function Income() {
                 className={`${styles.selectFilters} ${styles.categorySelect}`}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
-                <option value="All">All</option>
+                <option value="All">{t("common.all")}</option>
                 {incomeCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.icon} {category.name}
@@ -1231,7 +1247,7 @@ export default function Income() {
                   >
                     <span
                       className={styles.categoryFilterHint}
-                      title="Temporary total for the selected category filter"
+                      title={t("income.categoryHintTitle")}
                     >
                       ${categoryHintValueRef.current.toFixed(2)}
                     </span>
@@ -1242,16 +1258,20 @@ export default function Income() {
           </div>
 
           <div className={styles.filter}>
-            <label htmlFor="incomeStatusFilter">Filter by Status: </label>
+            <label htmlFor="incomeStatusFilter">{t("income.filterStatus")} </label>
             <select
               id="incomeStatusFilter"
               value={selectedStatus}
               className={styles.selectFilters}
               onChange={(e) => setSelectedStatus(e.target.value)}
             >
-              <option value="All">All</option>
-              <option value={INCOME_STATUS.CONFIRMED}>Confirmed</option>
-              <option value={INCOME_STATUS.PENDING}>Pending</option>
+              <option value="All">{t("common.all")}</option>
+              <option value={INCOME_STATUS.CONFIRMED}>
+                {t("income.confirmed")}
+              </option>
+              <option value={INCOME_STATUS.PENDING}>
+                {t("income.pending")}
+              </option>
             </select>
           </div>
         </div>
@@ -1259,14 +1279,14 @@ export default function Income() {
         <div className={styles.summary}>
           <h3>
             {periodKey
-              ? formatPeriodLabel(periodKey)
+              ? formatPeriodLabel(periodKey, locale)
               : selectedYear !== "All"
               ? selectedYear
-              : "All periods"}
+              : t("income.allPeriods")}
           </h3>
           {renderCopyableMetric({
             metricKey: `${periodKey || "all"}-earned`,
-            label: "Earned",
+            label: t("metrics.earned"),
             numericValue: summary.earned,
             displayValue: `$${summary.earned.toFixed(2)}`,
             className: styles.summaryEarned,
@@ -1274,7 +1294,7 @@ export default function Income() {
           })}
           {renderCopyableMetric({
             metricKey: `${periodKey || "all"}-pending`,
-            label: "Pending Income",
+            label: t("metrics.pendingIncome"),
             numericValue: summary.pending,
             displayValue: `$${summary.pending.toFixed(2)}`,
             className:
@@ -1285,7 +1305,7 @@ export default function Income() {
           })}
           {renderCopyableMetric({
             metricKey: `${periodKey || "all"}-received`,
-            label: "Received",
+            label: t("metrics.received"),
             numericValue: summary.received,
             displayValue: `$${summary.received.toFixed(2)}`,
             className: styles.summaryReceived,
@@ -1301,7 +1321,7 @@ export default function Income() {
               <div className={styles.spendingsRow}>
                 {renderCopyableMetric({
                   metricKey: spendingsMetricKey,
-                  label: "Your Spendings",
+                  label: t("metrics.yourSpendings"),
                   numericValue: spendingsTotal,
                   displayValue: `-$${spendingsTotal.toFixed(2)}`,
                   className: styles.totalSpendings,
@@ -1335,8 +1355,8 @@ export default function Income() {
                     event.stopPropagation();
                     goToExpenses();
                   }}
-                  aria-label="Open Expenses page"
-                  title="Open Expenses"
+                  aria-label={t("metrics.openExpensesAria")}
+                  title={t("metrics.openExpenses")}
                 >
                   <FaPencilAlt
                     className={styles.pencilIcon}
@@ -1348,7 +1368,7 @@ export default function Income() {
           })()}
           {renderCopyableMetric({
             metricKey: `${periodKey || "all"}-net`,
-            label: "Net Earnings",
+            label: t("metrics.netEarnings"),
             numericValue: netEarnings,
             displayValue: `$${netEarnings.toFixed(2)}`,
             className: `${styles.netEarnings} ${
@@ -1361,8 +1381,8 @@ export default function Income() {
 
         {filtered.length === 0 ? (
           <div className={styles.emptyState}>
-            <p>No income for this period.</p>
-            <p>Tap + to add a new income.</p>
+            <p>{t("income.emptyPeriod")}</p>
+            <p>{t("income.tapToAdd")}</p>
           </div>
         ) : (
           <>
@@ -1371,7 +1391,7 @@ export default function Income() {
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <div className={styles.sectionTitleRow}>
-                    <h3>Pending</h3>
+                    <h3>{t("income.pending")}</h3>
                     {pendingList.some((item) => item.excludedFromTotals) &&
                       !selectMode && (
                         <button
@@ -1379,7 +1399,7 @@ export default function Income() {
                           className={styles.activateAllBtn}
                           onClick={() => activateAllIncomes(pendingList)}
                         >
-                          Activate all
+                          {t("income.activateAll")}
                         </button>
                       )}
                   </div>
@@ -1389,7 +1409,9 @@ export default function Income() {
                       className={styles.exportPdfBtn}
                       onClick={openExportSheet}
                     >
-                      {isPro ? "Export PDF" : "Export PDF · Pro"}
+                      {isPro
+                        ? t("income.exportPdf")
+                        : t("income.exportPdfPro")}
                     </button>
                   )}
                   {selectMode && (
@@ -1398,18 +1420,18 @@ export default function Income() {
                       className={styles.exportPdfBtn}
                       onClick={exitSelectMode}
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                   )}
                 </div>
                 {selectMode && (
                   <p className={styles.selectHint}>
-                    Tap cards to select, then export.
+                    {t("income.selectHint")}
                   </p>
                 )}
                 {pendingList.length === 0 ? (
                   <p className={styles.emptySection}>
-                    No pending income for this period.
+                    {t("income.emptyPending")}
                   </p>
                 ) : (
                   <div className={styles.cards}>
@@ -1426,20 +1448,22 @@ export default function Income() {
               !selectMode && (
               <section className={styles.section}>
                 <div className={styles.confirmedTitleRow}>
-                  <h3 className={styles.confirmedTitle}>Confirmed</h3>
+                  <h3 className={styles.confirmedTitle}>
+                    {t("income.confirmed")}
+                  </h3>
                   {confirmedList.some((item) => item.excludedFromTotals) && (
                     <button
                       type="button"
                       className={styles.activateAllBtn}
                       onClick={() => activateAllIncomes(confirmedList)}
                     >
-                      Activate all
+                      {t("income.activateAll")}
                     </button>
                   )}
                 </div>
                 {confirmedList.length === 0 ? (
                   <p className={styles.emptySection}>
-                    No confirmed income for this period.
+                    {t("income.emptyConfirmed")}
                   </p>
                 ) : (
                   <div className={styles.cards}>
@@ -1465,7 +1489,7 @@ export default function Income() {
             exit={{ opacity: 0, y: 18, scale: 0.9 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             whileTap={{ scale: 0.9 }}
-            aria-label="Scroll to top"
+            aria-label={t("common.scrollToTop")}
           >
             ↑
           </motion.button>
@@ -1477,13 +1501,13 @@ export default function Income() {
           type="button"
           className={styles.floatingAddButton}
           onClick={openCreate}
-          aria-label="Add income"
-          title="Add income"
+          aria-label={t("income.add")}
+          title={t("income.add")}
         >
           <span className={styles.fabIcon} aria-hidden="true">
             +
           </span>
-          <span className={styles.fabLabel}>Add income</span>
+          <span className={styles.fabLabel}>{t("income.add")}</span>
         </button>
       )}
 
@@ -1495,7 +1519,7 @@ export default function Income() {
             onClick={exitSelectMode}
             disabled={isExportingPdf}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -1508,8 +1532,10 @@ export default function Income() {
             }
           >
             {isExportingPdf
-              ? "Generating…"
-              : `Export ${selectedPendingList.length || ""}`}
+              ? t("income.generating")
+              : selectedPendingList.length
+                ? t("income.exportCount", { count: selectedPendingList.length })
+                : t("income.export")}
           </button>
         </div>
       )}
@@ -1526,10 +1552,10 @@ export default function Income() {
         <header className={sheetStyles.header}>
           <h2 id="income-export-title">
             {isExportingPdf
-              ? "Generating PDF…"
+              ? t("income.exportSheet.generatingTitle")
               : exportSheetView === "category"
-                ? "Export by category"
-                : "Export pending PDF"}
+                ? t("income.exportSheet.categoryTitle")
+                : t("income.exportSheet.title")}
           </h2>
           <div className={sheetStyles.headerActions}>
             <button
@@ -1540,7 +1566,7 @@ export default function Income() {
                 setExportSheetOpen(false);
                 setExportSheetView("menu");
               }}
-              aria-label="Close"
+              aria-label={t("common.close")}
               disabled={isExportingPdf}
             >
               ×
@@ -1551,7 +1577,8 @@ export default function Income() {
         {exportSheetView === "menu" ? (
           <div className={styles.exportMenu}>
             <p className={styles.exportMenuLead}>
-              Period: <strong>{exportPeriodLabel}</strong>
+              {t("income.exportSheet.period")}{" "}
+              <strong>{exportPeriodLabel}</strong>
             </p>
             <button
               type="button"
@@ -1563,10 +1590,14 @@ export default function Income() {
                 })
               }
             >
-              <strong>All pending</strong>
+              <strong>{t("income.exportSheet.allPending")}</strong>
               <span>
-                {periodPendingExportList.length} item
-                {periodPendingExportList.length === 1 ? "" : "s"}
+                {periodPendingExportList.length}{" "}
+                {t(
+                  periodPendingExportList.length === 1
+                    ? "common.item"
+                    : "common.items"
+                )}
               </span>
             </button>
             <button
@@ -1575,8 +1606,8 @@ export default function Income() {
               onClick={() => setExportSheetView("category")}
               disabled={pendingByCategory.length === 0 || isExportingPdf}
             >
-              <strong>By category</strong>
-              <span>One PDF per category</span>
+              <strong>{t("income.exportSheet.byCategory")}</strong>
+              <span>{t("income.exportSheet.byCategoryHint")}</span>
             </button>
             <button
               type="button"
@@ -1584,8 +1615,8 @@ export default function Income() {
               onClick={startSelectMode}
               disabled={isExportingPdf}
             >
-              <strong>Select incomes</strong>
-              <span>Pick individual items</span>
+              <strong>{t("income.exportSheet.selectIncomes")}</strong>
+              <span>{t("income.exportSheet.selectIncomesHint")}</span>
             </button>
           </div>
         ) : (
@@ -1596,7 +1627,7 @@ export default function Income() {
               onClick={() => setExportSheetView("menu")}
               disabled={isExportingPdf}
             >
-              ← Back
+              ← {t("common.back")}
             </button>
             {pendingByCategory.map((group) => (
               <button
@@ -1658,11 +1689,11 @@ export default function Income() {
           }
         }}
         onConfirm={handleDelete}
-        title="Delete Income"
+        title={t("income.deleteTitle")}
         message={
           incomeToDelete?.isMonthly
-            ? "This deletes the whole monthly series. Are you sure you want to delete"
-            : "Are you sure you want to delete"
+            ? t("income.deleteMonthlyMessage")
+            : t("income.deleteMessage")
         }
         expenseName={incomeToDelete?.description}
         isSubmitting={isSubmitting}
@@ -1677,8 +1708,8 @@ export default function Income() {
           }
         }}
         onConfirm={handleConfirmPauseMonthly}
-        title="Pause monthly income"
-        message="Stop generating this income after this month for"
+        title={t("income.pauseTitle")}
+        message={t("income.pauseMessage")}
         expenseName={monthlyActionIncome?.description}
         isSubmitting={isSubmitting}
       />
@@ -1692,8 +1723,8 @@ export default function Income() {
           }
         }}
         onConfirm={handleConfirmResumeMonthly}
-        title="Resume monthly income"
-        message="Continue this monthly income for"
+        title={t("income.resumeTitle")}
+        message={t("income.resumeMessage")}
         expenseName={monthlyActionIncome?.description}
         isSubmitting={isSubmitting}
       />
@@ -1701,11 +1732,8 @@ export default function Income() {
       <PaywallModal
         isOpen={paywallOpen}
         onClose={() => setPaywallOpen(false)}
-        title={getProFeature("export")?.title || "CSV & PDF export"}
-        message={
-          getProFeature("export")?.description ||
-          "Export pending income as a PDF to share what you're owed."
-        }
+        title={t(getProFeature("export").titleKey)}
+        message={t(getProFeature("export").descriptionKey)}
         canStartTrial={canStartTrial}
       />
     </div>
