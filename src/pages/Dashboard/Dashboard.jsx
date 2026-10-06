@@ -21,6 +21,7 @@ import {
 } from "../../utils/expenseCalculations";
 import { formatCompactCurrency, formatCurrency } from "../../utils/finance";
 import { getCached, setCached } from "../../utils/dataCache";
+import { clearRouteScroll } from "../../hooks/useRouteScrollMemory";
 import { loadIncomesWithMigration } from "../../services/incomeService";
 import {
   formatPeriodLabel,
@@ -402,7 +403,7 @@ export default function Dashboard() {
   };
 
   const goToCategoryExpenses = (categoryId) => {
-    window.scrollTo(0, 0);
+    clearRouteScroll("/home/expenses");
     if (!monthPeriod) {
       navigate("/home/expenses");
       return;

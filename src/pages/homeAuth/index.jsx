@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaUser } from "react-icons/fa";
 import menu from "../../assets/menu.svg";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { useRouteScrollMemory } from "../../hooks/useRouteScrollMemory";
 import PullToRefresh from "../../components/PullToRefresh/PullToRefresh";
 import { useT } from "../../i18n/useT";
 
@@ -28,6 +29,7 @@ function HomeAuth() {
   const restoringHistoryRef = useRef(false);
 
   useBodyScrollLock(isMobile && menuOpen);
+  useRouteScrollMemory();
 
   const closeMenu = () => setMenuOpen(false);
   const openMenu = () => setMenuOpen(true);
