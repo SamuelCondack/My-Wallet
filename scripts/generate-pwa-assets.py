@@ -30,16 +30,23 @@ SPLASH_SIZES = {
 def create_icon_with_padding(
     size: int,
     output: Path,
-    background: tuple[int, int, int] = WHITE,
+    background: tuple[int, int, int] | tuple[int, int, int, int] = WHITE,
     icon_scale: float = ICON_SCALE,
 ) -> None:
-    """Render icon on opaque background with padding (avoids black on iOS)."""
-    canvas = Image.new("RGB", (size, size), background)
+    """Render icon with padding. Pass RGBA background for transparency."""
+    if len(background) == 4:
+        canvas = Image.new("RGBA", (size, size), background)
+    else:
+        canvas = Image.new("RGB", (size, size), background)
     icon = Image.open(SOURCE).convert("RGBA")
     icon_size = int(size * icon_scale)
     icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
     offset = (size - icon_size) // 2
+    if canvas.mode != "RGBA":
+        canvas = canvas.convert("RGBA")
     canvas.paste(icon, (offset, offset), icon)
+    if len(background) == 3:
+        canvas = canvas.convert("RGB")
     canvas.save(output, "PNG", optimize=True)
 
 
@@ -50,6 +57,20 @@ def create_maskable_icon(size: int, output: Path) -> None:
     icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
     offset = (size - icon_size) // 2
     canvas.paste(icon, (offset, offset), icon)
+    canvas.save(output, "PNG", optimize=True)
+
+
+def create_transparent_favicon(size: int, output: Path, inset: int = 8) -> None:
+    """Browser favicon: trim source padding, fill canvas, keep transparency."""
+    icon = Image.open(SOURCE).convert("RGBA")
+    bbox = icon.getbbox()
+    if bbox:
+        icon = icon.crop(bbox)
+    target = size - inset * 2
+    icon.thumbnail((target, target), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    offset = ((size - icon.width) // 2, (size - icon.height) // 2)
+    canvas.paste(icon, offset, icon)
     canvas.save(output, "PNG", optimize=True)
 
 
@@ -74,9 +95,11 @@ def main() -> None:
     STATIC.mkdir(parents=True, exist_ok=True)
     SPLASH.mkdir(parents=True, exist_ok=True)
 
+    # iOS / PWA icons stay opaque (white) — required for home-screen icons.
     create_icon_with_padding(180, STATIC / "apple-touch-icon-180.png")
     create_icon_with_padding(512, STATIC / "apple-touch-icon.png")
-    create_icon_with_padding(512, STATIC / "favicon.png")
+    # Browser tab favicon: wallet only, transparent, max canvas fill.
+    create_transparent_favicon(512, STATIC / "favicon.png")
     create_maskable_icon(512, STATIC / "maskable-icon-512.png")
 
     for name, (width, height) in SPLASH_SIZES.items():

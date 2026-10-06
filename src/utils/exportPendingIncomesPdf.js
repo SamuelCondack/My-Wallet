@@ -1,5 +1,4 @@
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 
 function money(value) {
   return Number(value || 0).toLocaleString("en-US", {
@@ -27,7 +26,7 @@ function displayName(item) {
 
 async function loadLogoDataUrl() {
   try {
-    const response = await fetch("/apple-touch-icon-180.png");
+    const response = await fetch("/favicon.png");
     if (!response.ok) return null;
     const blob = await response.blob();
     return await new Promise((resolve) => {
@@ -41,9 +40,23 @@ async function loadLogoDataUrl() {
   }
 }
 
+function drawHairline(doc, x1, y, x2, color = [226, 232, 240]) {
+  doc.setDrawColor(...color);
+  doc.setLineWidth(0.8);
+  doc.line(x1, y, x2, y);
+}
+
+function ensureSpace(doc, cursorY, needed, pageWidth, pageHeight, marginX, marginBottom) {
+  if (cursorY + needed <= pageHeight - marginBottom) {
+    return cursorY;
+  }
+  doc.addPage([pageWidth, pageHeight]);
+  return 40;
+}
+
 /**
- * Build and download a client-facing PDF of amounts due
- * (name, expected date, amount + total).
+ * Mobile-first payment-due PDF (narrow page, large type, stacked rows).
+ * Designed to be readable in WhatsApp on a phone without pinch-zoom.
  */
 export async function downloadPendingIncomesPdf({
   incomes = [],
@@ -56,109 +69,176 @@ export async function downloadPendingIncomesPdf({
   const total = rows.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   const logoDataUrl = await loadLogoDataUrl();
 
-  const doc = new jsPDF({ unit: "pt", format: "letter" });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const marginX = 40;
-  let cursorY = 48;
-  let textX = marginX;
+  // Narrow portrait ≈ phone content width so WhatsApp fit-to-width keeps type large.
+  const pageWidth = 420;
+  const pageHeight = 747;
+  const marginX = 28;
+  const marginBottom = 48;
+  const contentRight = pageWidth - marginX;
+  const contentWidth = contentRight - marginX;
 
+  const doc = new jsPDF({
+    unit: "pt",
+    format: [pageWidth, pageHeight],
+    compress: true,
+  });
+
+  let cursorY = 36;
+
+  // Header
+  let textX = marginX;
   if (logoDataUrl) {
-    const logoSize = 28;
-    doc.addImage(logoDataUrl, "PNG", marginX, cursorY - 20, logoSize, logoSize);
-    textX = marginX + logoSize + 10;
+    const logoSize = 32;
+    doc.addImage(logoDataUrl, "PNG", marginX, cursorY, logoSize, logoSize);
+    textX = marginX + logoSize + 12;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(11, 18, 32);
+    doc.text("MyWallet", textX, cursorY + 14);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(113, 113, 122);
+    doc.text("Payment due", textX, cursorY + 30);
+    cursorY += logoSize + 22;
+  } else {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(11, 18, 32);
+    doc.text("MyWallet", marginX, cursorY + 14);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(113, 113, 122);
+    doc.text("Payment due", marginX, cursorY + 30);
+    cursorY += 48;
   }
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.setTextColor(11, 18, 32);
-  doc.text("MyWallet", textX, cursorY);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(113, 113, 122);
-  doc.text("Payment due", textX, cursorY + 18);
-
-  cursorY += 48;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(15);
   doc.setTextColor(11, 18, 32);
   doc.text(String(periodLabel), marginX, cursorY);
+  cursorY += 10;
 
-  cursorY += 22;
+  // Hero total card
+  cursorY += 14;
+  const heroH = 88;
+  doc.setFillColor(62, 146, 235);
+  doc.roundedRect(marginX, cursorY, contentWidth, heroH, 14, 14, "F");
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Total due: ${money(total)}`, marginX, cursorY);
-  doc.text(`Items: ${rows.length}`, marginX + 220, cursorY);
+  doc.setTextColor(255, 255, 255);
+  doc.text("TOTAL DUE", marginX + 18, cursorY + 28);
 
-  cursorY += 18;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(28);
+  doc.text(money(total), marginX + 18, cursorY + 58);
 
-  const bodyRows = rows.map((item) => [
-    displayName(item),
-    shortDate(item.expectedDate),
-    money(item.amount),
-  ]);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text(
+    `${rows.length} item${rows.length === 1 ? "" : "s"}`,
+    contentRight - 18,
+    cursorY + 28,
+    { align: "right" }
+  );
 
-  autoTable(doc, {
-    startY: cursorY,
-    head: [["Name", "Expected date", "Amount"]],
-    body:
-      bodyRows.length > 0
-        ? bodyRows
-        : [["No amounts due in this period", "", ""]],
-    foot: [
-      [
-        { content: "Total due", styles: { fontStyle: "bold" } },
-        "",
-        {
-          content: money(total),
-          styles: { halign: "right", fontStyle: "bold" },
-        },
-      ],
-    ],
-    showFoot: "lastPage",
-    margin: { left: marginX, right: marginX },
-    styles: {
-      font: "helvetica",
-      fontSize: 10,
-      cellPadding: 6,
-      textColor: [15, 23, 42],
-      overflow: "linebreak",
-    },
-    headStyles: {
-      fillColor: [62, 146, 235],
-      textColor: 255,
-      fontStyle: "bold",
-    },
-    footStyles: {
-      fillColor: [15, 23, 42],
-      textColor: 255,
-      fontStyle: "bold",
-    },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    columnStyles: {
-      0: { cellWidth: 280 },
-      1: { cellWidth: 110 },
-      2: { halign: "right", cellWidth: 90 },
-    },
-  });
+  cursorY += heroH + 26;
 
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(100, 116, 139);
+  doc.text("DETAILS", marginX, cursorY);
+  cursorY += 12;
+  drawHairline(doc, marginX, cursorY, contentRight);
+  cursorY += 8;
+
+  if (rows.length === 0) {
+    cursorY = ensureSpace(
+      doc,
+      cursorY,
+      40,
+      pageWidth,
+      pageHeight,
+      marginX,
+      marginBottom
+    );
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(13);
+    doc.setTextColor(100, 116, 139);
+    doc.text("No amounts due in this period.", marginX, cursorY + 18);
+    cursorY += 40;
+  } else {
+    rows.forEach((item) => {
+      const name = displayName(item);
+      const amount = money(item.amount);
+      const dateLabel = `Expected ${shortDate(item.expectedDate)}`;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      const nameLines = doc.splitTextToSize(name, contentWidth * 0.62);
+      const blockH = Math.max(44, 16 + nameLines.length * 16 + 18);
+
+      cursorY = ensureSpace(
+        doc,
+        cursorY,
+        blockH + 8,
+        pageWidth,
+        pageHeight,
+        marginX,
+        marginBottom
+      );
+
+      const nameY = cursorY + 16;
+      doc.setTextColor(15, 23, 42);
+      doc.text(nameLines, marginX, nameY);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(11, 18, 32);
+      doc.text(amount, contentRight, nameY, { align: "right" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(100, 116, 139);
+      doc.text(dateLabel, marginX, nameY + nameLines.length * 16 + 2);
+
+      cursorY += blockH;
+      drawHairline(doc, marginX, cursorY, contentRight);
+      cursorY += 4;
+    });
+  }
+
+  // Closing total
+  cursorY = ensureSpace(
+    doc,
+    cursorY,
+    56,
+    pageWidth,
+    pageHeight,
+    marginX,
+    marginBottom
+  );
+  cursorY += 14;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(15, 23, 42);
+  doc.text("Total due", marginX, cursorY);
+  doc.setFontSize(16);
+  doc.text(money(total), contentRight, cursorY, { align: "right" });
+
+  // Footers on every page
   const pageCount = doc.getNumberOfPages();
   for (let page = 1; page <= pageCount; page += 1) {
     doc.setPage(page);
-    doc.setFontSize(8);
+    const h = doc.internal.pageSize.getHeight();
+    const w = doc.internal.pageSize.getWidth();
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
     doc.setTextColor(148, 163, 184);
-    doc.text(
-      `Generated ${new Date().toLocaleString()} · MyWallet`,
-      marginX,
-      doc.internal.pageSize.getHeight() - 24
-    );
-    doc.text(
-      `Page ${page} of ${pageCount}`,
-      pageWidth - marginX,
-      doc.internal.pageSize.getHeight() - 24,
-      { align: "right" }
-    );
+    doc.text(`Generated ${new Date().toLocaleString()} · MyWallet`, marginX, h - 22);
+    if (pageCount > 1) {
+      doc.text(`${page}/${pageCount}`, w - marginX, h - 22, { align: "right" });
+    }
   }
 
   const safeStem = String(fileStem || "mywallet-payment-due").replace(
