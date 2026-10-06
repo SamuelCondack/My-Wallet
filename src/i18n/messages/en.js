@@ -104,8 +104,12 @@ const en = {
   "metrics.openIncome": "Open Income",
   "metrics.openIncomeAria": "Open Income page",
   "metrics.pendingIncome": "Pending Income",
+  "metrics.pendingShort": "Pending",
   "metrics.received": "Received",
+  "metrics.spendingsShort": "Spendings",
+  "metrics.netShort": "Net",
   "metrics.yourSpendings": "Your Spendings",
+  "metrics.dockAria": "Pinned summary and filters",
 
   "expenses.activateAll": "Activate all",
   "expenses.add": "Add expense",

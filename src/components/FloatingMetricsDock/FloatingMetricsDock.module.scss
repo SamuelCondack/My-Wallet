@@ -1,0 +1,161 @@
+@import "../../Global/variables.scss";
+
+.dock {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 54px);
+  left: 10px;
+  right: 10px;
+  z-index: 45;
+  padding: 10px 12px 11px;
+  border-radius: 20px;
+  box-sizing: border-box;
+  pointer-events: auto;
+  /* Soft veil — almost no hard edge against the page surface */
+  background: rgba(247, 250, 252, 0.42);
+  background: color-mix(in srgb, var(--mw-surface) 42%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid color-mix(in srgb, var(--mw-glass-border) 55%, transparent);
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  will-change: opacity, transform;
+}
+
+:global(html[data-theme="dark"]) .dock {
+  background: color-mix(in srgb, var(--mw-surface) 48%, transparent);
+  border-color: color-mix(in srgb, var(--mw-line) 70%, transparent);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-bottom: 8px;
+}
+
+.metric {
+  flex: 1 1 28%;
+  min-width: 28%;
+  max-width: 34%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.metricSpend,
+.metricNet {
+  flex: 1 1 40%;
+  min-width: 40%;
+  max-width: 50%;
+}
+
+.metricLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--mw-muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metricValue {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mw-ink);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricNet .metricValue {
+  color: $defaultBlue;
+}
+
+.metricNegative .metricValue {
+  color: #ef4444;
+}
+
+.metricSpend .metricValue {
+  color: var(--mw-ink-soft);
+}
+
+.filters {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+.pill {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mw-line) 80%, transparent);
+  padding: 6px 10px;
+  color: $defaultBlue;
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: center;
+  text-align-last: center;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.2;
+  background: color-mix(in srgb, var(--mw-card) 72%, transparent);
+  box-shadow: inset 0 1px 0 var(--mw-inset-highlight);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.18s $easeOut, background-color 0.18s $easeOut;
+
+  &:hover:not(:disabled) {
+    border-color: $defaultBlue;
+  }
+
+  &:focus-visible {
+    border-color: $defaultBlue;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--mw-muted);
+    opacity: 0.72;
+  }
+
+  option {
+    color: $defaultBlue;
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 769px) {
+  .dock {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock {
+    will-change: auto;
+  }
+}

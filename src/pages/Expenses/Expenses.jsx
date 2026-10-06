@@ -49,6 +49,9 @@ import {
 import { countsInTotals } from "../../utils/totalsVisibility";
 import { useExcludeFromTotalsToggle } from "../../hooks/useExcludeFromTotalsToggle";
 import ExcludeSplashLayer from "../../components/ExcludeSplashLayer/ExcludeSplashLayer";
+import FloatingMetricsDock, {
+  floatingMetricsDockStyles as dockStyles,
+} from "../../components/FloatingMetricsDock/FloatingMetricsDock";
 import excludeStyles from "../../styles/excludeFromTotals.module.scss";
 import { useLanguage } from "../../i18n/useLanguage";
 import { formatMonthName } from "../../i18n/format";
@@ -129,6 +132,7 @@ export default function Expenses() {
   const activeTouchIdRef = useRef(null);
   const pressReleaseTimerRef = useRef(0);
   const categoryHintValueRef = useRef(0);
+  const summaryAnchorRef = useRef(null);
   const [copiedMetric, setCopiedMetric] = useState(null);
   const copyTimeoutsRef = useRef([]);
   const earnedCopyPhaseRef = useRef("copy");
@@ -453,6 +457,13 @@ export default function Expenses() {
       maximumFractionDigits: 2,
     });
   }
+
+  const renderDockMetric = (label, displayValue, className = "") => (
+    <div className={`${dockStyles.metric} ${className}`.trim()}>
+      <span className={dockStyles.metricLabel}>{label}</span>
+      <span className={dockStyles.metricValue}>{displayValue}</span>
+    </div>
+  );
 
   const handlePauseExpense = (expense) => {
     setSelectedExpense(expense);
@@ -1390,6 +1401,112 @@ export default function Expenses() {
     ease: [0.32, 0.72, 0, 1],
   };
 
+  const [primaryMonthKey, primaryMonthExpenses = []] = filteredMonths[0] || [];
+  const dockSpendings = Number(getMonthSpendingsTotal(primaryMonthExpenses));
+  const dockEarned = primaryMonthKey
+    ? getEarnedIncome(incomes, primaryMonthKey)
+    : 0;
+  const dockPending = primaryMonthKey
+    ? getPendingIncome(incomes, primaryMonthKey)
+    : 0;
+  const dockReceived = primaryMonthKey
+    ? getReceivedIncomeForFinancialPeriod(incomes, primaryMonthKey)
+    : 0;
+  const dockNet = primaryMonthKey
+    ? getNetEarnings(incomes, primaryMonthKey, dockSpendings)
+    : 0;
+
+  const dockFilters = (
+    <>
+      <select
+        id="expensesDockYearFilter"
+        aria-label={t("expenses.filterYear")}
+        value={selectedYear}
+        onChange={(e) => {
+          setSelectedYear(e.target.value);
+          setSelectedMonth("All");
+          setSelectedCategory("All");
+        }}
+        className={dockStyles.pill}
+      >
+        <option value="All">{t("common.all")}</option>
+        {sortedUniqueYears
+          .filter((year) => !isNaN(year))
+          .map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+      </select>
+      <select
+        id="expensesDockMonthFilter"
+        aria-label={t("expenses.filterMonth")}
+        value={selectedMonth}
+        onChange={(e) => {
+          setSelectedMonth(e.target.value);
+          setSelectedCategory("All");
+        }}
+        disabled={selectedYear === "All"}
+        className={dockStyles.pill}
+      >
+        <option value="All">{t("common.all")}</option>
+        {sortedUniqueMonths.map((month) => {
+          const isCurrentMonth =
+            selectedYear === currentYear && month === currentMonth;
+          return (
+            <option key={month} value={month} data-current={isCurrentMonth}>
+              {month}
+              {isCurrentMonth ? " ·" : ""}
+            </option>
+          );
+        })}
+      </select>
+      <select
+        id="expensesDockCategoryFilter"
+        aria-label={t("expenses.filterCategory")}
+        value={effectiveSelectedCategory}
+        onChange={(e) => setSelectedCategory(e.target.value)}
+        className={dockStyles.pill}
+      >
+        <option value="All">{t("common.all")}</option>
+        {categoriesInFilter.map((category) => (
+          <option key={category.id} value={category.id}>
+            {category.icon} {category.name}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+
+  const dockMetrics = primaryMonthKey ? (
+    <>
+      {renderDockMetric(
+        t("metrics.earned"),
+        isIncomeLoading ? "…" : `$${formatValue(dockEarned)}`
+      )}
+      {renderDockMetric(
+        t("metrics.pendingShort"),
+        isIncomeLoading ? "…" : `$${formatValue(dockPending)}`
+      )}
+      {renderDockMetric(
+        t("metrics.received"),
+        isIncomeLoading ? "…" : `$${formatValue(dockReceived)}`
+      )}
+      {renderDockMetric(
+        t("metrics.spendingsShort"),
+        `-$${formatValue(dockSpendings)}`,
+        dockStyles.metricSpend
+      )}
+      {renderDockMetric(
+        t("metrics.netShort"),
+        isIncomeLoading ? "…" : `$${formatValue(dockNet)}`,
+        `${dockStyles.metricNet} ${
+          !isIncomeLoading && dockNet < 0 ? dockStyles.metricNegative : ""
+        }`
+      )}
+    </>
+  ) : null;
+
   return (
     <>
       <div className={styles.expensesSectionWrapper}>
@@ -1572,6 +1689,9 @@ export default function Expenses() {
                     <div className={styles.monthSummary}>
                       {renderSpendingsSummary(monthKey, expenses)}
                     </div>
+                    {monthIndex === 0 ? (
+                      <div ref={summaryAnchorRef} aria-hidden="true" />
+                    ) : null}
                     {searchBar}
                   </div>
                 );
@@ -1584,6 +1704,9 @@ export default function Expenses() {
                   <div className={styles.monthSummary}>
                     {renderSpendingsSummary(monthKey, expenses)}
                   </div>
+                  {monthIndex === 0 ? (
+                    <div ref={summaryAnchorRef} aria-hidden="true" />
+                  ) : null}
                   {searchBar}
 
                   {visibleExpenses.length > 0 && (
@@ -1842,6 +1965,13 @@ export default function Expenses() {
           editingExpense={editingExpense}
         />
       </div>
+      <FloatingMetricsDock
+        anchorRef={summaryAnchorRef}
+        observeKey={primaryMonthKey || "empty"}
+        ariaLabel={t("metrics.dockAria")}
+        metrics={dockMetrics}
+        filters={dockFilters}
+      />
     </>
   );
 }

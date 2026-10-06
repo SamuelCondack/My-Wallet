@@ -56,6 +56,9 @@ import { DEFAULT_INCOME_CATEGORY_ID } from "../../constants/defaultCategories";
 import { getProFeature } from "../../constants/subscription";
 import { useExcludeFromTotalsToggle } from "../../hooks/useExcludeFromTotalsToggle";
 import ExcludeSplashLayer from "../../components/ExcludeSplashLayer/ExcludeSplashLayer";
+import FloatingMetricsDock, {
+  floatingMetricsDockStyles as dockStyles,
+} from "../../components/FloatingMetricsDock/FloatingMetricsDock";
 import excludeStyles from "../../styles/excludeFromTotals.module.scss";
 import { useLanguage } from "../../i18n/useLanguage";
 import { formatMonthName } from "../../i18n/format";
@@ -70,6 +73,7 @@ export default function Income() {
   const { splashKey, splashMode, runToggle, isInteractiveTarget } =
     useExcludeFromTotalsToggle();
   const categoryHintValueRef = useRef(0);
+  const summaryAnchorRef = useRef(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [userId, setUserId] = useState(null);
@@ -1378,6 +1382,7 @@ export default function Income() {
               netEarnings < 0 ? styles.shineNegative : styles.shinePositive,
           })}
         </div>
+        <div ref={summaryAnchorRef} aria-hidden="true" />
 
         {filtered.length === 0 ? (
           <div className={styles.emptyState}>
@@ -1735,6 +1740,153 @@ export default function Income() {
         title={t(getProFeature("export").titleKey)}
         message={t(getProFeature("export").descriptionKey)}
         canStartTrial={canStartTrial}
+      />
+
+      <FloatingMetricsDock
+        anchorRef={summaryAnchorRef}
+        observeKey={periodKey || selectedYear || "all"}
+        ariaLabel={t("metrics.dockAria")}
+        metrics={
+          <>
+            <div className={dockStyles.metric}>
+              <span className={dockStyles.metricLabel}>{t("metrics.earned")}</span>
+              <span className={dockStyles.metricValue}>
+                ${Number(summary.earned).toLocaleString(locale, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            <div className={dockStyles.metric}>
+              <span className={dockStyles.metricLabel}>
+                {t("metrics.pendingShort")}
+              </span>
+              <span className={dockStyles.metricValue}>
+                ${Number(summary.pending).toLocaleString(locale, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            <div className={dockStyles.metric}>
+              <span className={dockStyles.metricLabel}>
+                {t("metrics.received")}
+              </span>
+              <span className={dockStyles.metricValue}>
+                ${Number(summary.received).toLocaleString(locale, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            <div className={`${dockStyles.metric} ${dockStyles.metricSpend}`}>
+              <span className={dockStyles.metricLabel}>
+                {t("metrics.spendingsShort")}
+              </span>
+              <span className={dockStyles.metricValue}>
+                -$
+                {Number(spendingsTotal).toLocaleString(locale, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            <div
+              className={`${dockStyles.metric} ${dockStyles.metricNet} ${
+                netEarnings < 0 ? dockStyles.metricNegative : ""
+              }`}
+            >
+              <span className={dockStyles.metricLabel}>
+                {t("metrics.netShort")}
+              </span>
+              <span className={dockStyles.metricValue}>
+                $
+                {Number(netEarnings).toLocaleString(locale, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+          </>
+        }
+        filters={
+          <>
+            <select
+              id="incomeDockYearFilter"
+              aria-label={t("income.filterYear")}
+              value={selectedYear}
+              className={dockStyles.pill}
+              onChange={(e) => {
+                setSelectedYear(e.target.value);
+                setSelectedMonth("All");
+                setSelectedCategory("All");
+              }}
+            >
+              <option value="All">{t("common.all")}</option>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+            <select
+              id="incomeDockMonthFilter"
+              aria-label={t("income.filterMonth")}
+              value={selectedMonth}
+              className={dockStyles.pill}
+              disabled={selectedYear === "All"}
+              onChange={(e) => {
+                setSelectedMonth(e.target.value);
+                setSelectedCategory("All");
+              }}
+            >
+              <option value="All">{t("common.all")}</option>
+              {months.map((month) => {
+                const isCurrentMonth =
+                  selectedYear === currentYear && month === currentMonth;
+                return (
+                  <option
+                    key={month}
+                    value={month}
+                    data-current={isCurrentMonth}
+                  >
+                    {month}
+                    {isCurrentMonth ? " ·" : ""}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              id="incomeDockCategoryFilter"
+              aria-label={t("income.filterCategory")}
+              value={selectedCategory}
+              className={dockStyles.pill}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="All">{t("common.all")}</option>
+              {incomeCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.icon} {category.name}
+                </option>
+              ))}
+            </select>
+            <select
+              id="incomeDockStatusFilter"
+              aria-label={t("income.filterStatus")}
+              value={selectedStatus}
+              className={dockStyles.pill}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="All">{t("common.all")}</option>
+              <option value={INCOME_STATUS.CONFIRMED}>
+                {t("income.confirmed")}
+              </option>
+              <option value={INCOME_STATUS.PENDING}>
+                {t("income.pending")}
+              </option>
+            </select>
+          </>
+        }
       />
     </div>
   );

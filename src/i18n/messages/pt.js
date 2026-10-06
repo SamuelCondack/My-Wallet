@@ -105,8 +105,12 @@ const pt = {
   "metrics.openIncome": "Abrir Receitas",
   "metrics.openIncomeAria": "Abrir página de Receitas",
   "metrics.pendingIncome": "Receita pendente",
+  "metrics.pendingShort": "Pendente",
   "metrics.received": "Recebido",
+  "metrics.spendingsShort": "Gastos",
+  "metrics.netShort": "Líquido",
   "metrics.yourSpendings": "Seus gastos",
+  "metrics.dockAria": "Resumo e filtros fixos",
 
   "expenses.activateAll": "Ativar todas",
   "expenses.add": "Adicionar despesa",
