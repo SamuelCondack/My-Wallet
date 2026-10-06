@@ -37,6 +37,12 @@
   --mw-amount-line: #18181b;
   --mw-danger-bg: rgba(255, 255, 255, 0.72);
   --mw-select-option: #0b1220;
+  /* Same atmosphere as the auth shell — used on html/body so iOS
+     overscroll / pull-to-refresh does not flash a flat color band. */
+  --mw-app-bg:
+    radial-gradient(900px 420px at 0% 0%, rgba(62, 146, 235, 0.12), transparent 55%),
+    radial-gradient(700px 380px at 100% 10%, rgba(125, 211, 252, 0.1), transparent 50%),
+    linear-gradient(180deg, var(--mw-surface) 0%, var(--mw-surface) 100%);
 }
 
 html[data-theme="dark"] {
@@ -75,6 +81,10 @@ html[data-theme="dark"] {
   --mw-amount-line: rgba(226, 232, 240, 0.55);
   --mw-danger-bg: rgba(30, 41, 59, 0.9);
   --mw-select-option: #e8eef8;
+  --mw-app-bg:
+    radial-gradient(900px 420px at 0% 0%, rgba(62, 146, 235, 0.16), transparent 55%),
+    radial-gradient(700px 380px at 100% 10%, rgba(56, 189, 248, 0.08), transparent 50%),
+    linear-gradient(180deg, var(--mw-surface) 0%, #070b14 100%);
 }
 
 html {
@@ -83,26 +93,36 @@ html {
   max-width: 100%;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
+  background-color: var(--mw-surface);
+  background-image: var(--mw-app-bg);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 body {
   min-height: 100%;
+  min-height: 100dvh;
   width: 100%;
   max-width: 100%;
   margin: 0;
   color: $ink;
-  background: $surface;
+  background-color: transparent;
+  background-image: none;
   overflow-x: hidden;
   overscroll-behavior-y: none;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: color 0.25s ease;
 }
 
 #root {
   width: 100%;
   max-width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
   overflow-x: hidden;
   color: $ink;
-  background: $surface;
+  background-color: transparent;
+  background-image: none;
 }
 
 * {
