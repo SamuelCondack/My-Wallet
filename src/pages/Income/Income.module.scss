@@ -864,37 +864,6 @@
   font-size: 14px;
 }
 
-.scrollToTopButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  left: calc(10px + env(safe-area-inset-left, 0px));
-  color: var(--mw-ink);
-  border: 1px solid var(--mw-line);
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  font-size: 18px;
-  cursor: pointer;
-  z-index: 2;
-  -webkit-tap-highlight-color: transparent;
-  background: var(--mw-card);
-  box-shadow:
-    0 8px 24px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 var(--mw-inset-highlight);
-  touch-action: manipulation;
-
-  &:hover {
-    background: var(--mw-card);
-    color: var(--mw-ink);
-  }
-}
-
 .floatingAddButton {
   @include glass-button;
   position: fixed;

@@ -21,7 +21,6 @@ const en = {
   "common.processing": "Processing…",
   "common.save": "Save",
   "common.saving": "Saving…",
-  "common.scrollToTop": "Scroll to top",
   "common.search": "Search",
   "common.total": "Total",
   "common.yes": "Yes",

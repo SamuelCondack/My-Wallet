@@ -21,7 +21,6 @@ const pt = {
   "common.processing": "Processando…",
   "common.save": "Salvar",
   "common.saving": "Salvando…",
-  "common.scrollToTop": "Voltar ao topo",
   "common.search": "Buscar",
   "common.total": "Total",
   "common.yes": "Sim",

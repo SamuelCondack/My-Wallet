@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
-const EXPENSES_PATH = "/home/expenses";
-const INCOME_PATH = "/home/income";
-
 /** In-memory scroll Y per pathname (session-lived). */
 const scrollMemory = new Map();
 
@@ -21,16 +18,9 @@ function writeScrollY(y) {
   window.scrollTo(0, top);
 }
 
-function isExpensesIncomeSwap(fromPath, toPath) {
-  return (
-    (fromPath === EXPENSES_PATH && toPath === INCOME_PATH) ||
-    (fromPath === INCOME_PATH && toPath === EXPENSES_PATH)
-  );
-}
-
 /**
  * Remembers scroll per /home/* page and restores it on return.
- * Expenses ↔ Income always resets to the top (does not restore).
+ * First visit to a page scrolls to the top.
  */
 export function useRouteScrollMemory() {
   const location = useLocation();
@@ -52,22 +42,14 @@ export function useRouteScrollMemory() {
 
     scrollMemory.set(prevPath, readScrollY());
 
-    const swap = isExpensesIncomeSwap(prevPath, nextPath);
-    let targetY = 0;
-
-    if (swap) {
-      scrollMemory.delete(nextPath);
-      targetY = 0;
-    } else if (scrollMemory.has(nextPath)) {
-      targetY = scrollMemory.get(nextPath) || 0;
-    }
+    const targetY = scrollMemory.has(nextPath)
+      ? scrollMemory.get(nextPath) || 0
+      : 0;
 
     prevPathRef.current = nextPath;
 
-    // Wait a frame so the new page has painted before restoring.
     const id = window.requestAnimationFrame(() => {
       writeScrollY(targetY);
-      // Second pass after layout (images / lists) settles a bit.
       window.requestAnimationFrame(() => writeScrollY(targetY));
     });
 

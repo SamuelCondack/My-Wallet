@@ -83,7 +83,6 @@ export default function Expenses() {
     year: searchParams.get("year") || undefined,
     month: searchParams.get("month") || undefined,
   });
-  const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [incomes, setIncomes] = useState([]);
   const [isIncomeLoading, setIsIncomeLoading] = useState(true);
   const [expenseToDeleteName, setExpenseToDeleteName] = useState("");
@@ -228,22 +227,6 @@ export default function Expenses() {
   }, [selectedYear, selectedMonth, selectedCategory, setSearchParams]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 300) {
-        setShowScrollToTop(true);
-      } else {
-        setShowScrollToTop(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
     const loadIncomeFromFirestore = async () => {
       if (!userId) {
         setIsIncomeLoading(true);
@@ -325,27 +308,6 @@ export default function Expenses() {
   if (isLoading) {
     return <LoadingComponent variant="expenses" />;
   }
-
-  const scrollToTop = () => {
-    const start = window.scrollY || document.documentElement.scrollTop;
-    if (start <= 0) {
-      return;
-    }
-    const duration = Math.min(900, Math.max(420, start * 0.55));
-    const startTime = performance.now();
-    const easeOutCubic = (t) => 1 - (1 - t) ** 3;
-
-    const step = (now) => {
-      const progress = Math.min(1, (now - startTime) / duration);
-      const nextY = start * (1 - easeOutCubic(progress));
-      window.scrollTo(0, nextY);
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      }
-    };
-
-    requestAnimationFrame(step);
-  };
 
   const openCreateExpense = () => {
     setExpenseModalMode("create");
@@ -1885,22 +1847,6 @@ export default function Expenses() {
               );
             })}
         </div>
-        <AnimatePresence>
-          {showScrollToTop && (
-            <motion.button
-              className={styles.scrollToTopButton}
-              onClick={scrollToTop}
-              initial={{ opacity: 0, y: 28, scale: 0.86 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 18, scale: 0.9 }}
-              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-              whileTap={{ scale: 0.9 }}
-              aria-label={t("common.scrollToTop")}
-            >
-              ↑
-            </motion.button>
-          )}
-        </AnimatePresence>
         {!showExpenseModal && (
           <button
             type="button"
