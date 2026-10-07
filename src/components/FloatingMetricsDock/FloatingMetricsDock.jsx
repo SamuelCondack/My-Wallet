@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import styles from "./FloatingMetricsDock.module.scss";
 
 const MOBILE_MQ = "(max-width: 768px)";
@@ -80,31 +81,13 @@ function isAnchorPastTop(anchor) {
   return scrolled && rect.top < TOP_INSET_PX;
 }
 
-function clearDockViewportPin(el) {
-  if (!(el instanceof HTMLElement)) return;
-  el.style.top = "";
-}
-
-/**
- * Only adjust `top` to match visualViewport.offsetTop.
- * Avoid rewriting width/left every frame — that caused layout jumps on scroll-up.
- */
-function pinDockTopToVisualViewport(el) {
-  if (!(el instanceof HTMLElement)) return;
-  const vv = window.visualViewport;
-  if (!vv) {
-    clearDockViewportPin(el);
-    return;
-  }
-  const next = `${Math.max(0, Math.round(vv.offsetTop))}px`;
-  if (el.style.top !== next) {
-    el.style.top = next;
-  }
-}
-
 /**
  * Frosted floating dock that fades in after `anchorRef` scrolls past the top.
  * Mobile-only. Keeps summary metrics + compact filters visible while editing cards.
+ *
+ * iOS cannot keep position:fixed glued while the document scrolls with the
+ * keyboard open (visualViewport pin jumps on scroll-up). So while the dock
+ * search is focused we lock page scroll and use native fixed top:0.
  */
 export default function FloatingMetricsDock({
   anchorRef,
@@ -127,7 +110,6 @@ export default function FloatingMetricsDock({
   const [searchFocused, setSearchFocused] = useState(false);
   const searchFocusedRef = useRef(false);
   const visibleRef = useRef(false);
-  const dockElRef = useRef(null);
   const pageSearchRef = useRef(handoffSearchFocusTo);
   const dockSearchRef = useRef(dockSearchFocusTo);
   pageSearchRef.current = handoffSearchFocusTo;
@@ -138,27 +120,6 @@ export default function FloatingMetricsDock({
       ? document.documentElement.getAttribute(MENU_OPEN_ATTR) === "1"
       : false
   );
-
-  const keyboardLikelyOpen = () => {
-    const active = document.activeElement;
-    const page = resolveFocusTarget(pageSearchRef.current);
-    const dockSearch = resolveFocusTarget(dockSearchRef.current);
-    return (
-      searchFocusedRef.current ||
-      active === page ||
-      active === dockSearch
-    );
-  };
-
-  const syncDockPosition = () => {
-    const el = dockElRef.current;
-    if (!el || (!visibleRef.current && !searchFocusedRef.current)) return;
-    if (keyboardLikelyOpen()) {
-      pinDockTopToVisualViewport(el);
-      return;
-    }
-    clearDockViewportPin(el);
-  };
 
   const handoffDockToPage = () => {
     if (!searchFocusedRef.current) return;
@@ -175,7 +136,6 @@ export default function FloatingMetricsDock({
       if (handoffFocusTo(dockSearchRef.current)) {
         searchFocusedRef.current = true;
         setSearchFocused(true);
-        syncDockPosition();
         return;
       }
       if (attemptsLeft > 0) {
@@ -208,36 +168,6 @@ export default function FloatingMetricsDock({
     return () => observer.disconnect();
   }, []);
 
-  // Sync top on every visualViewport tick (no rAF, top-only — no width thrash).
-  useEffect(() => {
-    if (!enabled || !isMobile) return undefined;
-    if (!visible && !searchFocused) return undefined;
-
-    const onVisualChange = () => {
-      syncDockPosition();
-    };
-
-    window.visualViewport?.addEventListener("scroll", onVisualChange, {
-      passive: true,
-    });
-    window.visualViewport?.addEventListener("resize", onVisualChange, {
-      passive: true,
-    });
-    window.addEventListener("scroll", onVisualChange, {
-      passive: true,
-      capture: true,
-    });
-
-    syncDockPosition();
-
-    return () => {
-      window.visualViewport?.removeEventListener("scroll", onVisualChange);
-      window.visualViewport?.removeEventListener("resize", onVisualChange);
-      window.removeEventListener("scroll", onVisualChange, { capture: true });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync uses refs
-  }, [enabled, isMobile, visible, searchFocused]);
-
   useEffect(() => {
     if (!enabled || !isMobile || menuOpen) {
       handoffDockToPage();
@@ -254,7 +184,7 @@ export default function FloatingMetricsDock({
 
     const applyVisibility = (pastTop) => {
       if (cancelled) return;
-      // Don't hide/flicker while the dock search owns the keyboard.
+      // Keep the dock up while its search owns the keyboard.
       if (searchFocusedRef.current && !pastTop) {
         return;
       }
@@ -267,7 +197,6 @@ export default function FloatingMetricsDock({
       if (pastTop && !wasVisible) {
         handoffPageToDock();
       }
-      syncDockPosition();
     };
 
     const measure = () => {
@@ -331,23 +260,22 @@ export default function FloatingMetricsDock({
   const show =
     enabled && isMobile && !menuOpen && (visible || searchFocused);
 
+  // Lock document scroll while typing in the dock search. Native fixed stays
+  // glued; no visualViewport chasing (that jumped on reverse scroll on iOS).
+  useBodyScrollLock(Boolean(show && searchFocused));
+
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
     if (show) {
       document.documentElement.setAttribute(DOCK_OPEN_ATTR, "1");
       setMounted(true);
       handoffPageToDock();
-      syncDockPosition();
-      const t1 = window.setTimeout(() => {
-        handoffPageToDock();
-        syncDockPosition();
-      }, 50);
+      const t1 = window.setTimeout(() => handoffPageToDock(), 50);
       return () => {
         window.clearTimeout(t1);
         document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
       };
     }
-    clearDockViewportPin(dockElRef.current);
     document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
     const timeoutId = window.setTimeout(() => setMounted(false), 420);
     return () => {
@@ -360,7 +288,6 @@ export default function FloatingMetricsDock({
   const handleSearchFocusCapture = () => {
     searchFocusedRef.current = true;
     setSearchFocused(true);
-    syncDockPosition();
   };
 
   const handleSearchBlurCapture = (event) => {
@@ -375,10 +302,7 @@ export default function FloatingMetricsDock({
       visibleRef.current = pastTop;
       setVisible(pastTop);
       if (!pastTop) {
-        clearDockViewportPin(dockElRef.current);
         handoffFocusTo(pageSearchRef.current);
-      } else {
-        syncDockPosition();
       }
     });
   };
@@ -388,10 +312,6 @@ export default function FloatingMetricsDock({
 
   return createPortal(
     <div
-      ref={(node) => {
-        dockElRef.current = node;
-        if (node && show) syncDockPosition();
-      }}
       className={`${styles.dock} ${show ? styles.dockVisible : ""}`}
       data-no-pull-refresh="true"
       role="region"
