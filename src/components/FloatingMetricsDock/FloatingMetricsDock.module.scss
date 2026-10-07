@@ -18,7 +18,9 @@
   border-radius: 0;
   box-shadow: none;
   background: transparent;
-  will-change: opacity, transform;
+  /* Avoid transform here — it breaks the iOS text caret inside search. */
+  will-change: opacity;
+  transform: none;
 }
 
 /* Background-only veil — solid through metrics, fade only after Spendings/Net */
@@ -214,6 +216,10 @@
   line-height: 1;
   opacity: 0.9;
   z-index: 1;
+
+  &[data-hidden="true"] {
+    opacity: 0;
+  }
 }
 
 .searchInput {
@@ -223,12 +229,17 @@
   border-radius: 20px;
   /* 16px+ avoids iOS Safari zoom-on-focus */
   font-size: 16px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: normal;
   text-align: left;
+  text-indent: 0;
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
   outline: none;
   color: var(--mw-ink);
+  transform: none;
   @include glass-panel(20px);
   background: color-mix(in srgb, var(--mw-glass-border) 22%, transparent);
   background: var(--mw-glass-bg);
@@ -241,6 +252,10 @@
     appearance: none;
   }
 
+  &::placeholder {
+    color: transparent;
+  }
+
   &:focus {
     border-color: color-mix(in srgb, $defaultBlue 55%, var(--mw-glass-border));
   }
@@ -250,7 +265,9 @@
   position: absolute;
   top: 50%;
   right: 6px;
-  transform: translateY(-50%);
+  /* top/right centering avoids transform on a control near the input caret */
+  margin-top: -12px;
+  transform: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,6 +283,10 @@
   line-height: 1;
   padding: 0;
   cursor: pointer;
+
+  &[hidden] {
+    display: none;
+  }
 }
 
 .metricNet {

@@ -1788,11 +1788,13 @@ export default function Income() {
         handoffSearchFocusTo="#incomePageSearch"
         search={
           <div className={dockStyles.searchContainer}>
-            {!searchQuery ? (
-              <span className={dockStyles.searchPlaceholder} aria-hidden="true">
-                {t("income.searchPlaceholderShort")}
-              </span>
-            ) : null}
+            <span
+              className={dockStyles.searchPlaceholder}
+              data-hidden={searchQuery ? "true" : "false"}
+              aria-hidden="true"
+            >
+              {t("income.searchPlaceholderShort")}
+            </span>
             <input
               type="text"
               inputMode="search"
@@ -1804,18 +1806,21 @@ export default function Income() {
               aria-label={t("income.searchAria")}
               autoComplete="off"
               enterKeyHint="search"
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
             />
-            {searchQuery ? (
-              <button
-                type="button"
-                className={dockStyles.searchClearButton}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={clearSearchQuery}
-                aria-label={t("income.clearSearch")}
-              >
-                ×
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className={dockStyles.searchClearButton}
+              hidden={!searchQuery}
+              tabIndex={searchQuery ? 0 : -1}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={clearSearchQuery}
+              aria-label={t("income.clearSearch")}
+            >
+              ×
+            </button>
           </div>
         }
         metrics={

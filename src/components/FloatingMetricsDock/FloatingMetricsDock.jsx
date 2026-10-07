@@ -263,9 +263,11 @@ export default function FloatingMetricsDock({
           key="floating-metrics-dock"
           className={styles.dock}
           data-no-pull-refresh="true"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
+          // Opacity only — iOS Safari misplaces the caret inside inputs when a
+          // parent keeps a transform (even translateY(0) from Framer Motion).
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={fadeTransition}
           role="region"
           aria-label={ariaLabel || "Summary"}
