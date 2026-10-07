@@ -202,6 +202,20 @@
   box-sizing: border-box;
 }
 
+.searchPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: var(--mw-muted);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  opacity: 0.9;
+  z-index: 1;
+}
+
 .searchInput {
   display: block;
   width: 100%;
@@ -221,17 +235,6 @@
   box-shadow:
     var(--mw-glass-shadow),
     inset 0 1px 0 var(--mw-inset-highlight);
-
-  &::placeholder {
-    color: var(--mw-muted);
-    opacity: 0.85;
-    /* Center only the empty-state label; typed text stays LTR from the left */
-    text-align: center;
-  }
-
-  &:placeholder-shown {
-    text-align: center;
-  }
 
   &::-webkit-search-cancel-button {
     -webkit-appearance: none;

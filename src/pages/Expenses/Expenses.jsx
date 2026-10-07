@@ -1582,6 +1582,7 @@ export default function Expenses() {
                     <div className={styles.searchContainer}>
                       <input
                         type="search"
+                        id="expensesPageSearch"
                         placeholder={t("expenses.searchPlaceholder")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -1918,12 +1919,18 @@ export default function Expenses() {
         ariaLabel={t("metrics.dockAria")}
         metrics={dockMetrics}
         filters={dockFilters}
+        handoffSearchFocusTo="#expensesPageSearch"
         search={
           <div className={dockStyles.searchContainer}>
+            {!searchQuery ? (
+              <span className={dockStyles.searchPlaceholder} aria-hidden="true">
+                {t("expenses.searchPlaceholderShort")}
+              </span>
+            ) : null}
             <input
               type="search"
               id="expensesDockSearch"
-              placeholder={t("expenses.searchPlaceholderShort")}
+              placeholder=""
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={dockStyles.searchInput}

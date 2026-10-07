@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import PropTypes from "prop-types";
@@ -23,6 +23,7 @@ export default function FloatingMetricsDock({
   metrics,
   filters,
   search,
+  handoffSearchFocusTo,
   enabled = true,
   ariaLabel,
   observeKey,
@@ -33,6 +34,8 @@ export default function FloatingMetricsDock({
       : false
   );
   const [visible, setVisible] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchFocusedRef = useRef(false);
   const [menuOpen, setMenuOpen] = useState(() =>
     typeof document !== "undefined"
       ? document.documentElement.getAttribute(MENU_OPEN_ATTR) === "1"
@@ -106,7 +109,10 @@ export default function FloatingMetricsDock({
     };
   }, [anchorRef, enabled, isMobile, menuOpen, observeKey]);
 
-  const show = enabled && isMobile && visible && !menuOpen;
+  // Stay open while the dock search is focused so filtering/scroll jumps
+  // do not unmount the input and dismiss the mobile keyboard.
+  const show =
+    enabled && isMobile && !menuOpen && (visible || searchFocused);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -120,10 +126,50 @@ export default function FloatingMetricsDock({
     };
   }, [show]);
 
+  const handoffFocusToPageSearch = () => {
+    if (!handoffSearchFocusTo || typeof document === "undefined") return;
+    const target =
+      typeof handoffSearchFocusTo === "string"
+        ? document.querySelector(handoffSearchFocusTo)
+        : handoffSearchFocusTo.current;
+    if (!(target instanceof HTMLElement)) return;
+    try {
+      target.focus({ preventScroll: true });
+    } catch {
+      target.focus();
+    }
+  };
+
+  const handleSearchFocusCapture = () => {
+    searchFocusedRef.current = true;
+    setSearchFocused(true);
+  };
+
+  const handleSearchBlurCapture = (event) => {
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) {
+      return;
+    }
+    searchFocusedRef.current = false;
+    setSearchFocused(false);
+    // If scroll already returned above the anchor, move focus to page search
+    // so the keyboard can stay up on the top bar.
+    if (!visible && handoffSearchFocusTo) {
+      window.requestAnimationFrame(() => handoffFocusToPageSearch());
+    }
+  };
+
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence
+      onExitComplete={() => {
+        if (searchFocusedRef.current) {
+          handoffFocusToPageSearch();
+          searchFocusedRef.current = false;
+        }
+      }}
+    >
       {show ? (
         <motion.div
           key="floating-metrics-dock"
@@ -143,7 +189,13 @@ export default function FloatingMetricsDock({
               <div className={styles.metrics}>
                 {metrics}
                 {search ? (
-                  <div className={styles.metricSearch}>{search}</div>
+                  <div
+                    className={styles.metricSearch}
+                    onFocusCapture={handleSearchFocusCapture}
+                    onBlurCapture={handleSearchBlurCapture}
+                  >
+                    {search}
+                  </div>
                 ) : null}
               </div>
             ) : null}
@@ -160,6 +212,10 @@ FloatingMetricsDock.propTypes = {
   metrics: PropTypes.node,
   filters: PropTypes.node,
   search: PropTypes.node,
+  handoffSearchFocusTo: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({ current: PropTypes.any }),
+  ]),
   enabled: PropTypes.bool,
   ariaLabel: PropTypes.string,
   observeKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
