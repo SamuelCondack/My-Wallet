@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
-import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import styles from "./FloatingMetricsDock.module.scss";
 
 const MOBILE_MQ = "(max-width: 768px)";
 const TOP_INSET_PX = 64;
 const MENU_OPEN_ATTR = "data-mw-menu-open";
 const DOCK_OPEN_ATTR = "data-mw-dock-open";
+/** Ignore tiny scroll jitter when deciding hide/show direction. */
+const DIRECTION_THRESHOLD_PX = 8;
 
 function resolveFocusTarget(targetRefOrSelector) {
   if (!targetRefOrSelector || typeof document === "undefined") return null;
@@ -70,9 +71,8 @@ function getScrollY() {
 }
 
 /**
- * Show only after Net Earnings (anchor) has scrolled past the top inset.
- * At the real top of the page always hide — even if a short filtered layout
- * leaves the anchor inside the inset band.
+ * True after Net Earnings (anchor) has scrolled past the top inset.
+ * At the real top of the page this is always false.
  */
 function isAnchorPastTop(anchor) {
   if (!(anchor instanceof HTMLElement)) return false;
@@ -82,12 +82,15 @@ function isAnchorPastTop(anchor) {
 }
 
 /**
- * Frosted floating dock that fades in after `anchorRef` scrolls past the top.
- * Mobile-only. Keeps summary metrics + compact filters visible while editing cards.
+ * Frosted floating dock — mobile only.
  *
- * iOS cannot keep position:fixed glued while the document scrolls with the
- * keyboard open (visualViewport pin jumps on scroll-up). So while the dock
- * search is focused we lock page scroll and use native fixed top:0.
+ * Feature (embracing iOS keyboard/fixed limits):
+ * - Scroll down → hide the dock
+ * - Scroll up → show the dock (only while still past Net Earnings)
+ * - Scroll back above Net Earnings → hide and, if the dock search had focus,
+ *   hand focus to the in-page search at the top
+ *
+ * Page scroll stays unlocked; no visualViewport pinning / scroll-lock.
  */
 export default function FloatingMetricsDock({
   anchorRef,
@@ -107,9 +110,10 @@ export default function FloatingMetricsDock({
   );
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
   const searchFocusedRef = useRef(false);
   const visibleRef = useRef(false);
+  const pastAnchorRef = useRef(false);
+  const lastScrollYRef = useRef(0);
   const pageSearchRef = useRef(handoffSearchFocusTo);
   const dockSearchRef = useRef(dockSearchFocusTo);
   pageSearchRef.current = handoffSearchFocusTo;
@@ -121,11 +125,15 @@ export default function FloatingMetricsDock({
       : false
   );
 
+  const setDockVisible = (next) => {
+    visibleRef.current = next;
+    setVisible((prev) => (prev === next ? prev : next));
+  };
+
   const handoffDockToPage = () => {
     if (!searchFocusedRef.current) return;
     handoffFocusTo(pageSearchRef.current);
     searchFocusedRef.current = false;
-    setSearchFocused(false);
   };
 
   const handoffPageToDock = () => {
@@ -135,7 +143,6 @@ export default function FloatingMetricsDock({
     const tryFocus = (attemptsLeft) => {
       if (handoffFocusTo(dockSearchRef.current)) {
         searchFocusedRef.current = true;
-        setSearchFocused(true);
         return;
       }
       if (attemptsLeft > 0) {
@@ -143,6 +150,15 @@ export default function FloatingMetricsDock({
       }
     };
     window.requestAnimationFrame(() => tryFocus(8));
+  };
+
+  const dismissAboveNetEarnings = () => {
+    const hadDockSearchFocus = searchFocusedRef.current;
+    if (hadDockSearchFocus) {
+      handoffDockToPage();
+    }
+    searchFocusedRef.current = false;
+    setDockVisible(false);
   };
 
   useEffect(() => {
@@ -170,70 +186,84 @@ export default function FloatingMetricsDock({
 
   useEffect(() => {
     if (!enabled || !isMobile || menuOpen) {
-      handoffDockToPage();
-      visibleRef.current = false;
-      setVisible(false);
+      dismissAboveNetEarnings();
+      pastAnchorRef.current = false;
       return undefined;
     }
 
     let io;
-    let ro;
     let cancelled = false;
     let pollId = 0;
     let rafId = 0;
 
-    const applyVisibility = (pastTop) => {
+    lastScrollYRef.current = getScrollY();
+
+    const apply = () => {
       if (cancelled) return;
-      // Keep the dock up while its search owns the keyboard.
-      if (searchFocusedRef.current && !pastTop) {
+      const anchor = anchorRef?.current;
+      const pastTop = isAnchorPastTop(anchor);
+      const y = getScrollY();
+      const delta = y - lastScrollYRef.current;
+      const wasPast = pastAnchorRef.current;
+      pastAnchorRef.current = pastTop;
+
+      if (Math.abs(delta) >= DIRECTION_THRESHOLD_PX) {
+        lastScrollYRef.current = y;
+      }
+
+      // Back above Net Earnings → always dismiss; hand focus to page search
+      // if the user was typing in the dock search.
+      if (!pastTop) {
+        if (visibleRef.current || searchFocusedRef.current) {
+          dismissAboveNetEarnings();
+        }
         return;
       }
-      const wasVisible = visibleRef.current;
-      if (!pastTop && wasVisible) {
-        handoffDockToPage();
-      }
-      visibleRef.current = pastTop;
-      setVisible((prev) => (prev === pastTop ? prev : pastTop));
-      if (pastTop && !wasVisible) {
+
+      // Just crossed past Net Earnings → show once, handoff page → dock search.
+      if (pastTop && !wasPast) {
+        setDockVisible(true);
         handoffPageToDock();
+        lastScrollYRef.current = y;
+        return;
+      }
+
+      // Direction chrome while still past Net Earnings:
+      // scroll down → hide, scroll up → show.
+      if (delta > DIRECTION_THRESHOLD_PX) {
+        if (visibleRef.current) {
+          searchFocusedRef.current = false;
+          setDockVisible(false);
+        }
+      } else if (delta < -DIRECTION_THRESHOLD_PX) {
+        if (!visibleRef.current) {
+          setDockVisible(true);
+        }
       }
     };
 
-    const measure = () => {
-      if (cancelled) return;
-      applyVisibility(isAnchorPastTop(anchorRef?.current));
-    };
-
-    const measureSoon = () => {
+    const applySoon = () => {
       if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        rafId = requestAnimationFrame(measure);
-      });
+      rafId = requestAnimationFrame(apply);
     };
 
     const connect = () => {
       const anchor = anchorRef?.current;
       if (!anchor || cancelled) return false;
 
-      io = new IntersectionObserver(measure, {
+      io = new IntersectionObserver(applySoon, {
         root: null,
         threshold: [0, 1],
         rootMargin: `-${TOP_INSET_PX}px 0px 0px 0px`,
       });
       io.observe(anchor);
 
-      ro = new ResizeObserver(measureSoon);
-      ro.observe(anchor);
-      if (document.body) ro.observe(document.body);
-      ro.observe(document.documentElement);
+      window.addEventListener("scroll", apply, { passive: true, capture: true });
+      window.addEventListener("touchmove", applySoon, { passive: true });
+      window.visualViewport?.addEventListener("resize", applySoon);
+      window.visualViewport?.addEventListener("scroll", apply);
 
-      window.addEventListener("scroll", measure, { passive: true, capture: true });
-      window.addEventListener("touchmove", measureSoon, { passive: true });
-      window.visualViewport?.addEventListener("resize", measureSoon);
-      window.visualViewport?.addEventListener("scroll", measure);
-
-      measure();
-      measureSoon();
+      apply();
       return true;
     };
 
@@ -248,46 +278,33 @@ export default function FloatingMetricsDock({
       if (pollId) window.clearInterval(pollId);
       if (rafId) cancelAnimationFrame(rafId);
       io?.disconnect();
-      ro?.disconnect();
-      window.removeEventListener("scroll", measure, { capture: true });
-      window.removeEventListener("touchmove", measureSoon);
-      window.visualViewport?.removeEventListener("resize", measureSoon);
-      window.visualViewport?.removeEventListener("scroll", measure);
+      window.removeEventListener("scroll", apply, { capture: true });
+      window.removeEventListener("touchmove", applySoon);
+      window.visualViewport?.removeEventListener("resize", applySoon);
+      window.visualViewport?.removeEventListener("scroll", apply);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- handoff uses refs
   }, [anchorRef, enabled, isMobile, menuOpen, observeKey]);
 
-  const show =
-    enabled && isMobile && !menuOpen && (visible || searchFocused);
-
-  // Lock document scroll while typing in the dock search. Native fixed stays
-  // glued; no visualViewport chasing (that jumped on reverse scroll on iOS).
-  useBodyScrollLock(Boolean(show && searchFocused));
+  const show = enabled && isMobile && !menuOpen && visible;
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
     if (show) {
       document.documentElement.setAttribute(DOCK_OPEN_ATTR, "1");
       setMounted(true);
-      handoffPageToDock();
-      const t1 = window.setTimeout(() => handoffPageToDock(), 50);
-      return () => {
-        window.clearTimeout(t1);
-        document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
-      };
+    } else {
+      document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
+      const timeoutId = window.setTimeout(() => setMounted(false), 420);
+      return () => window.clearTimeout(timeoutId);
     }
-    document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
-    const timeoutId = window.setTimeout(() => setMounted(false), 420);
     return () => {
-      window.clearTimeout(timeoutId);
       document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handoff uses refs
   }, [show]);
 
   const handleSearchFocusCapture = () => {
     searchFocusedRef.current = true;
-    setSearchFocused(true);
   };
 
   const handleSearchBlurCapture = (event) => {
@@ -296,15 +313,6 @@ export default function FloatingMetricsDock({
       return;
     }
     searchFocusedRef.current = false;
-    setSearchFocused(false);
-    window.requestAnimationFrame(() => {
-      const pastTop = isAnchorPastTop(anchorRef?.current);
-      visibleRef.current = pastTop;
-      setVisible(pastTop);
-      if (!pastTop) {
-        handoffFocusTo(pageSearchRef.current);
-      }
-    });
   };
 
   if (typeof document === "undefined") return null;
