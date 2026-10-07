@@ -1140,20 +1140,28 @@ export default function Income() {
           <p className={styles.expenseMethod}>
             {isPending ? t("income.pending") : t("income.confirmed")}
           </p>
-          <p className={styles.incomeMeta}>
-            {isPending
-              ? t("income.expected", {
-                  date: formatDisplayDate(income.expectedDate, language),
-                })
-              : t("income.receivedOn", {
-                  date: formatDisplayDate(income.receivedDate, language),
-                })}
-          </p>
           <p className={styles.incomePeriod}>
             {t("income.periodLabel", {
               period: formatPeriodLabel(income.incomePeriod, locale),
             })}
           </p>
+          <p className={styles.incomeMeta}>
+            {t("income.chargeLabel", {
+              date: formatDisplayDate(income.occurrenceDate, language) || "—",
+            })}
+          </p>
+          <p className={styles.incomeMeta}>
+            {t("income.expected", {
+              date: formatDisplayDate(income.expectedDate, language) || "—",
+            })}
+          </p>
+          {!isPending ? (
+            <p className={styles.incomeMeta}>
+              {t("income.receivedOn", {
+                date: formatDisplayDate(income.receivedDate, language) || "—",
+              })}
+            </p>
+          ) : null}
 
           {!inSelectMode && (
             <div
