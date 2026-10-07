@@ -51,6 +51,7 @@ import {
   buildExpensesByMonth,
   getMonthTotal,
 } from "../../utils/expenseCalculations";
+import { matchesExpenseValueQuery } from "../../utils/finance";
 import { countsInTotals } from "../../utils/totalsVisibility";
 import { DEFAULT_INCOME_CATEGORY_ID } from "../../constants/defaultCategories";
 import { getProFeature } from "../../constants/subscription";
@@ -151,6 +152,7 @@ export default function Income() {
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [pressedIncomeKey, setPressedIncomeKey] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const activeTouchIdRef = useRef(null);
   const pressReleaseTimerRef = useRef(0);
   const [copiedMetric, setCopiedMetric] = useState(null);
@@ -328,16 +330,51 @@ export default function Income() {
     return Array.from(set).sort();
   }, [incomes, selectedYear, currentMonth]);
 
-  const filtered = useMemo(
-    () =>
-      filterIncomes(incomes, {
-        year: selectedYear,
-        month: selectedMonth,
-        categoryId: selectedCategory,
-        status: selectedStatus,
-      }),
-    [incomes, selectedYear, selectedMonth, selectedCategory, selectedStatus]
-  );
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filtered = useMemo(() => {
+    const base = filterIncomes(incomes, {
+      year: selectedYear,
+      month: selectedMonth,
+      categoryId: selectedCategory,
+      status: selectedStatus,
+    });
+
+    if (!normalizedSearchQuery) {
+      return base;
+    }
+
+    const pendingLabel = t("income.pending").toLowerCase();
+    const confirmedLabel = t("income.confirmed").toLowerCase();
+
+    return base.filter((item) => {
+      const description = String(item.description || "").toLowerCase();
+      const category =
+        categoriesMap[item.categoryId || DEFAULT_INCOME_CATEGORY_ID]?.name?.toLowerCase() ??
+        "";
+      const statusLabel =
+        item.status === INCOME_STATUS.PENDING ? pendingLabel : confirmedLabel;
+      const matchesText =
+        description.includes(normalizedSearchQuery) ||
+        category.includes(normalizedSearchQuery) ||
+        statusLabel.includes(normalizedSearchQuery);
+      const matchesValue = matchesExpenseValueQuery(
+        item.amount,
+        searchQuery.trim()
+      );
+      return matchesText || matchesValue;
+    });
+  }, [
+    incomes,
+    selectedYear,
+    selectedMonth,
+    selectedCategory,
+    selectedStatus,
+    normalizedSearchQuery,
+    searchQuery,
+    categoriesMap,
+    t,
+  ]);
 
   const periodKey =
     selectedYear !== "All" && selectedMonth !== "All"
@@ -1353,10 +1390,52 @@ export default function Income() {
         </div>
         <div ref={summaryAnchorRef} aria-hidden="true" />
 
+        <div className={styles.searchWrap}>
+          <div className={styles.searchContainer}>
+            <input
+              type="search"
+              id="incomePageSearch"
+              placeholder={t("income.searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={styles.searchInput}
+              aria-label={t("income.searchAria")}
+              autoComplete="off"
+              enterKeyHint="search"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                className={styles.searchClearButton}
+                onClick={() => setSearchQuery("")}
+                aria-label={t("income.clearSearch")}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+          {normalizedSearchQuery && filtered.length === 0 ? (
+            <p className={styles.noSearchResults}>
+              {selectedCategory !== "All"
+                ? t("income.emptySearchCategory", {
+                    query: searchQuery.trim(),
+                    category:
+                      categoriesMap[selectedCategory]?.name ||
+                      t("income.thisCategory"),
+                  })
+                : t("income.emptySearch", { query: searchQuery.trim() })}
+            </p>
+          ) : null}
+        </div>
+
         {filtered.length === 0 ? (
           <div className={styles.emptyState}>
-            <p>{t("income.emptyPeriod")}</p>
-            <p>{t("income.tapToAdd")}</p>
+            {normalizedSearchQuery ? null : (
+              <>
+                <p>{t("income.emptyPeriod")}</p>
+                <p>{t("income.tapToAdd")}</p>
+              </>
+            )}
           </div>
         ) : (
           <>
@@ -1697,6 +1776,37 @@ export default function Income() {
         anchorRef={summaryAnchorRef}
         observeKey={periodKey || selectedYear || "all"}
         ariaLabel={t("metrics.dockAria")}
+        handoffSearchFocusTo="#incomePageSearch"
+        search={
+          <div className={dockStyles.searchContainer}>
+            {!searchQuery ? (
+              <span className={dockStyles.searchPlaceholder} aria-hidden="true">
+                {t("income.searchPlaceholderShort")}
+              </span>
+            ) : null}
+            <input
+              type="search"
+              id="incomeDockSearch"
+              placeholder=""
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={dockStyles.searchInput}
+              aria-label={t("income.searchAria")}
+              autoComplete="off"
+              enterKeyHint="search"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                className={dockStyles.searchClearButton}
+                onClick={() => setSearchQuery("")}
+                aria-label={t("income.clearSearch")}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+        }
         metrics={
           <>
             <div className={`${dockStyles.metric} ${dockStyles.metricEarned}`}>
