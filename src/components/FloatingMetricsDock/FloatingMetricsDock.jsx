@@ -60,13 +60,12 @@ function handoffFocusTo(targetRefOrSelector) {
 }
 
 function getScrollY() {
-  const layout =
+  return (
     window.scrollY ||
     document.documentElement.scrollTop ||
     document.body.scrollTop ||
-    0;
-  const visualOffset = window.visualViewport?.offsetTop || 0;
-  return layout + visualOffset;
+    0
+  );
 }
 
 /**
@@ -77,43 +76,30 @@ function getScrollY() {
 function isAnchorPastTop(anchor) {
   if (!(anchor instanceof HTMLElement)) return false;
   const rect = anchor.getBoundingClientRect();
-  const vv = window.visualViewport;
-  const topInVisual = vv ? rect.top - vv.offsetTop : rect.top;
   const scrolled = getScrollY() > 1 || rect.top < 0;
-  return scrolled && topInVisual < TOP_INSET_PX;
+  return scrolled && rect.top < TOP_INSET_PX;
 }
 
 function clearDockViewportPin(el) {
   if (!(el instanceof HTMLElement)) return;
   el.style.top = "";
-  el.style.left = "";
-  el.style.width = "";
-  el.style.right = "";
 }
 
 /**
- * Pin position:fixed to the visual viewport. Must run synchronously on
- * visualViewport scroll — rAF batching makes the dock lag one frame behind.
+ * Only adjust `top` to match visualViewport.offsetTop.
+ * Avoid rewriting width/left every frame — that caused layout jumps on scroll-up.
  */
-function pinDockToVisualViewport(el) {
+function pinDockTopToVisualViewport(el) {
   if (!(el instanceof HTMLElement)) return;
   const vv = window.visualViewport;
   if (!vv) {
     clearDockViewportPin(el);
     return;
   }
-  el.style.top = `${Math.round(vv.offsetTop)}px`;
-  el.style.left = `${Math.round(vv.offsetLeft)}px`;
-  el.style.width = `${Math.round(vv.width)}px`;
-  el.style.right = "auto";
-}
-
-function isNodeInside(root, node) {
-  return (
-    root instanceof HTMLElement &&
-    node instanceof Node &&
-    (node === root || root.contains(node))
-  );
+  const next = `${Math.max(0, Math.round(vv.offsetTop))}px`;
+  if (el.style.top !== next) {
+    el.style.top = next;
+  }
 }
 
 /**
@@ -138,6 +124,7 @@ export default function FloatingMetricsDock({
   );
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
   const searchFocusedRef = useRef(false);
   const visibleRef = useRef(false);
   const dockElRef = useRef(null);
@@ -152,24 +139,22 @@ export default function FloatingMetricsDock({
       : false
   );
 
-  /** True while either search field owns focus (keyboard likely open). */
-  const isSearchKeyboardOpen = () => {
+  const keyboardLikelyOpen = () => {
     const active = document.activeElement;
     const page = resolveFocusTarget(pageSearchRef.current);
     const dockSearch = resolveFocusTarget(dockSearchRef.current);
-    return isNodeInside(page, active) || isNodeInside(dockSearch, active);
+    return (
+      searchFocusedRef.current ||
+      active === page ||
+      active === dockSearch
+    );
   };
 
-  /**
-   * With the keyboard open, iOS detaches position:fixed from the screen top.
-   * Pin synchronously to visualViewport. With keyboard closed, clear the pin
-   * so native fixed stays rock-solid.
-   */
   const syncDockPosition = () => {
     const el = dockElRef.current;
-    if (!el || !visibleRef.current) return;
-    if (isSearchKeyboardOpen() || searchFocusedRef.current) {
-      pinDockToVisualViewport(el);
+    if (!el || (!visibleRef.current && !searchFocusedRef.current)) return;
+    if (keyboardLikelyOpen()) {
+      pinDockTopToVisualViewport(el);
       return;
     }
     clearDockViewportPin(el);
@@ -179,6 +164,7 @@ export default function FloatingMetricsDock({
     if (!searchFocusedRef.current) return;
     handoffFocusTo(pageSearchRef.current);
     searchFocusedRef.current = false;
+    setSearchFocused(false);
   };
 
   const handoffPageToDock = () => {
@@ -188,6 +174,7 @@ export default function FloatingMetricsDock({
     const tryFocus = (attemptsLeft) => {
       if (handoffFocusTo(dockSearchRef.current)) {
         searchFocusedRef.current = true;
+        setSearchFocused(true);
         syncDockPosition();
         return;
       }
@@ -221,9 +208,10 @@ export default function FloatingMetricsDock({
     return () => observer.disconnect();
   }, []);
 
-  // Dedicated sync — no rAF — so the dock tracks the keyboard viewport tightly.
+  // Sync top on every visualViewport tick (no rAF, top-only — no width thrash).
   useEffect(() => {
-    if (!enabled || !isMobile || !visible) return undefined;
+    if (!enabled || !isMobile) return undefined;
+    if (!visible && !searchFocused) return undefined;
 
     const onVisualChange = () => {
       syncDockPosition();
@@ -239,7 +227,6 @@ export default function FloatingMetricsDock({
       passive: true,
       capture: true,
     });
-    window.addEventListener("touchmove", onVisualChange, { passive: true });
 
     syncDockPosition();
 
@@ -247,10 +234,9 @@ export default function FloatingMetricsDock({
       window.visualViewport?.removeEventListener("scroll", onVisualChange);
       window.visualViewport?.removeEventListener("resize", onVisualChange);
       window.removeEventListener("scroll", onVisualChange, { capture: true });
-      window.removeEventListener("touchmove", onVisualChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync uses refs
-  }, [enabled, isMobile, visible]);
+  }, [enabled, isMobile, visible, searchFocused]);
 
   useEffect(() => {
     if (!enabled || !isMobile || menuOpen) {
@@ -268,6 +254,10 @@ export default function FloatingMetricsDock({
 
     const applyVisibility = (pastTop) => {
       if (cancelled) return;
+      // Don't hide/flicker while the dock search owns the keyboard.
+      if (searchFocusedRef.current && !pastTop) {
+        return;
+      }
       const wasVisible = visibleRef.current;
       if (!pastTop && wasVisible) {
         handoffDockToPage();
@@ -338,7 +328,8 @@ export default function FloatingMetricsDock({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- handoff uses refs
   }, [anchorRef, enabled, isMobile, menuOpen, observeKey]);
 
-  const show = enabled && isMobile && !menuOpen && visible;
+  const show =
+    enabled && isMobile && !menuOpen && (visible || searchFocused);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -368,6 +359,7 @@ export default function FloatingMetricsDock({
 
   const handleSearchFocusCapture = () => {
     searchFocusedRef.current = true;
+    setSearchFocused(true);
     syncDockPosition();
   };
 
@@ -377,7 +369,18 @@ export default function FloatingMetricsDock({
       return;
     }
     searchFocusedRef.current = false;
-    syncDockPosition();
+    setSearchFocused(false);
+    window.requestAnimationFrame(() => {
+      const pastTop = isAnchorPastTop(anchorRef?.current);
+      visibleRef.current = pastTop;
+      setVisible(pastTop);
+      if (!pastTop) {
+        clearDockViewportPin(dockElRef.current);
+        handoffFocusTo(pageSearchRef.current);
+      } else {
+        syncDockPosition();
+      }
+    });
   };
 
   if (typeof document === "undefined") return null;
