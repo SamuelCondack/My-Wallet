@@ -103,10 +103,8 @@ export default function FloatingMetricsDock({
       : false
   );
   const [visible, setVisible] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
   const searchFocusedRef = useRef(false);
-  const dockRef = useRef(null);
   const handoffToRef = useRef(handoffSearchFocusTo);
   handoffToRef.current = handoffSearchFocusTo;
 
@@ -116,31 +114,10 @@ export default function FloatingMetricsDock({
       : false
   );
 
-  const clearFixedCaretHack = () => {
-    const el = dockRef.current;
-    if (!el) return;
-    el.style.position = "";
-    el.style.top = "";
-  };
-
-  /**
-   * iOS Safari misplaces the caret in inputs inside position:fixed layers.
-   * While the dock search is focused, pin the dock with position:absolute at
-   * the current scroll offset so caret and glyphs stay aligned.
-   */
-  const applyFixedCaretHack = () => {
-    const el = dockRef.current;
-    if (!el) return;
-    el.style.position = "absolute";
-    el.style.top = `${getScrollY()}px`;
-  };
-
   const handoffIfDockSearchFocused = () => {
     if (!searchFocusedRef.current) return;
     handoffFocusToPageSearch(handoffToRef.current);
     searchFocusedRef.current = false;
-    setSearchFocused(false);
-    clearFixedCaretHack();
   };
 
   useEffect(() => {
@@ -243,7 +220,6 @@ export default function FloatingMetricsDock({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- handoff uses refs
   }, [anchorRef, enabled, isMobile, menuOpen, observeKey]);
 
-  // Hide for real when back above Net Earnings — never keep open just for focus.
   const show = enabled && isMobile && !menuOpen && visible;
 
   useEffect(() => {
@@ -253,8 +229,6 @@ export default function FloatingMetricsDock({
       setMounted(true);
     } else {
       document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
-      clearFixedCaretHack();
-      setSearchFocused(false);
       const timeoutId = window.setTimeout(() => setMounted(false), 420);
       return () => window.clearTimeout(timeoutId);
     }
@@ -265,8 +239,6 @@ export default function FloatingMetricsDock({
 
   const handleSearchFocusCapture = () => {
     searchFocusedRef.current = true;
-    setSearchFocused(true);
-    applyFixedCaretHack();
   };
 
   const handleSearchBlurCapture = (event) => {
@@ -275,8 +247,6 @@ export default function FloatingMetricsDock({
       return;
     }
     searchFocusedRef.current = false;
-    setSearchFocused(false);
-    clearFixedCaretHack();
   };
 
   if (typeof document === "undefined") return null;
@@ -284,10 +254,7 @@ export default function FloatingMetricsDock({
 
   return createPortal(
     <div
-      ref={dockRef}
-      className={`${styles.dock} ${show ? styles.dockVisible : ""} ${
-        searchFocused ? styles.dockSearchFocused : ""
-      }`}
+      className={`${styles.dock} ${show ? styles.dockVisible : ""}`}
       data-no-pull-refresh="true"
       role="region"
       aria-label={ariaLabel || "Summary"}

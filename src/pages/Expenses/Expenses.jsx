@@ -56,6 +56,7 @@ import excludeStyles from "../../styles/excludeFromTotals.module.scss";
 import { useLanguage } from "../../i18n/useLanguage";
 import { formatMonthName } from "../../i18n/format";
 import { PAYMENT_METHOD_LABEL_KEYS } from "../../constants/quickAdd";
+import useSharedSearchFields from "../../hooks/useSharedSearchFields";
 
 export default function Expenses() {
   const navigate = useNavigate();
@@ -94,14 +95,13 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [expenseFormInitial, setExpenseFormInitial] = useState(null);
 
-  // One shared query for page search + floating dock search (type + clear).
-  const [searchQuery, setSearchQuery] = useState("");
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-  };
-  const clearSearchQuery = () => {
-    setSearchQuery("");
-  };
+  const {
+    searchQuery,
+    pageInputRef,
+    dockInputRef,
+    handleSearchChange,
+    clearSearchQuery,
+  } = useSharedSearchFields();
   const [selectedCategory, setSelectedCategoryState] = useState(() => {
     const fromUrl = searchParams.get("category");
     if (fromUrl) return fromUrl;
@@ -1588,16 +1588,20 @@ export default function Expenses() {
                   <div className={styles.searchWrap}>
                     <div className={styles.searchContainer}>
                       <input
+                        ref={pageInputRef}
                         type="text"
                         inputMode="search"
                         id="expensesPageSearch"
                         placeholder={t("expenses.searchPlaceholder")}
-                        value={searchQuery}
+                        defaultValue={searchQuery}
                         onChange={handleSearchChange}
                         className={styles.searchInput}
                         aria-label={t("expenses.searchAria")}
                         autoComplete="off"
                         enterKeyHint="search"
+                        spellCheck={false}
+                        autoCorrect="off"
+                        autoCapitalize="off"
                       />
                       {searchQuery ? (
                         <button
@@ -1924,26 +1928,20 @@ export default function Expenses() {
       </div>
       <FloatingMetricsDock
         anchorRef={summaryAnchorRef}
-        observeKey={`${primaryMonthKey || "empty"}:${searchQuery}:${hasVisibleResults ? 1 : 0}`}
+        observeKey={`${primaryMonthKey || "empty"}:${hasVisibleResults ? 1 : 0}`}
         ariaLabel={t("metrics.dockAria")}
         metrics={dockMetrics}
         filters={dockFilters}
         handoffSearchFocusTo="#expensesPageSearch"
         search={
           <div className={dockStyles.searchContainer}>
-            <span
-              className={dockStyles.searchPlaceholder}
-              data-hidden={searchQuery ? "true" : "false"}
-              aria-hidden="true"
-            >
-              {t("expenses.searchPlaceholderShort")}
-            </span>
             <input
+              ref={dockInputRef}
               type="text"
               inputMode="search"
               id="expensesDockSearch"
-              placeholder=""
-              value={searchQuery}
+              placeholder={t("expenses.searchPlaceholderShort")}
+              defaultValue={searchQuery}
               onChange={handleSearchChange}
               className={dockStyles.searchInput}
               aria-label={t("expenses.searchAria")}

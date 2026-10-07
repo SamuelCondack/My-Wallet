@@ -63,6 +63,7 @@ import FloatingMetricsDock, {
 import excludeStyles from "../../styles/excludeFromTotals.module.scss";
 import { useLanguage } from "../../i18n/useLanguage";
 import { formatMonthName } from "../../i18n/format";
+import useSharedSearchFields from "../../hooks/useSharedSearchFields";
 import styles from "./Income.module.scss";
 
 export default function Income() {
@@ -152,14 +153,13 @@ export default function Income() {
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [pressedIncomeKey, setPressedIncomeKey] = useState(null);
-  // One shared query for page search + floating dock search (type + clear).
-  const [searchQuery, setSearchQuery] = useState("");
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-  };
-  const clearSearchQuery = () => {
-    setSearchQuery("");
-  };
+  const {
+    searchQuery,
+    pageInputRef,
+    dockInputRef,
+    handleSearchChange,
+    clearSearchQuery,
+  } = useSharedSearchFields();
   const activeTouchIdRef = useRef(null);
   const pressReleaseTimerRef = useRef(0);
   const [copiedMetric, setCopiedMetric] = useState(null);
@@ -1400,16 +1400,20 @@ export default function Income() {
         <div className={styles.searchWrap}>
           <div className={styles.searchContainer}>
             <input
+              ref={pageInputRef}
               type="text"
               inputMode="search"
               id="incomePageSearch"
               placeholder={t("income.searchPlaceholder")}
-              value={searchQuery}
+              defaultValue={searchQuery}
               onChange={handleSearchChange}
               className={styles.searchInput}
               aria-label={t("income.searchAria")}
               autoComplete="off"
               enterKeyHint="search"
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
             />
             {searchQuery ? (
               <button
@@ -1783,24 +1787,18 @@ export default function Income() {
 
       <FloatingMetricsDock
         anchorRef={summaryAnchorRef}
-        observeKey={`${periodKey || selectedYear || "all"}:${searchQuery}:${filtered.length}`}
+        observeKey={`${periodKey || selectedYear || "all"}:${filtered.length}`}
         ariaLabel={t("metrics.dockAria")}
         handoffSearchFocusTo="#incomePageSearch"
         search={
           <div className={dockStyles.searchContainer}>
-            <span
-              className={dockStyles.searchPlaceholder}
-              data-hidden={searchQuery ? "true" : "false"}
-              aria-hidden="true"
-            >
-              {t("income.searchPlaceholderShort")}
-            </span>
             <input
+              ref={dockInputRef}
               type="text"
               inputMode="search"
               id="incomeDockSearch"
-              placeholder=""
-              value={searchQuery}
+              placeholder={t("income.searchPlaceholderShort")}
+              defaultValue={searchQuery}
               onChange={handleSearchChange}
               className={dockStyles.searchInput}
               aria-label={t("income.searchAria")}
