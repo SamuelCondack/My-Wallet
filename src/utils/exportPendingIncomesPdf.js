@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { createTranslator } from "../i18n/translate";
+import { deliverPdf } from "./deliverPdf";
 
 const defaultT = createTranslator("en");
 
@@ -322,5 +323,5 @@ export async function downloadPendingIncomesPdf({
     /[^\w.-]+/g,
     "-"
   );
-  doc.save(`${safeStem}.pdf`);
+  await deliverPdf(doc, `${safeStem}.pdf`);
 }

@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { createTranslator } from "../i18n/translate";
 import { PAYMENT_METHOD_LABEL_KEYS } from "../constants/quickAdd";
+import { deliverPdf } from "./deliverPdf";
 
 const defaultT = createTranslator("en");
 
@@ -28,7 +29,7 @@ function shortDate(value, locale = "en-US") {
  * Optional `t` (translate function from useT()) and `locale` (e.g. "pt-BR")
  * localize all PDF strings. Defaults to English.
  */
-export function downloadMonthExpensesPdf({
+export async function downloadMonthExpensesPdf({
   expenses = [],
   categoriesMap = {},
   categoryTotals = [],
@@ -183,5 +184,5 @@ export function downloadMonthExpensesPdf({
     /[^\w.-]+/g,
     "-"
   );
-  doc.save(`${safeStem}.pdf`);
+  await deliverPdf(doc, `${safeStem}.pdf`);
 }
