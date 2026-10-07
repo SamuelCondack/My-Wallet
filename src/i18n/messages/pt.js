@@ -110,6 +110,8 @@ const pt = {
   "metrics.netShort": "Líquido",
   "metrics.yourSpendings": "Seus gastos",
   "metrics.dockAria": "Resumo e filtros fixos",
+  "metrics.prevMonth": "Mês anterior",
+  "metrics.nextMonth": "Próximo mês",
 
   "expenses.activateAll": "Ativar todas",
   "expenses.add": "Adicionar despesa",

@@ -64,6 +64,7 @@ import excludeStyles from "../../styles/excludeFromTotals.module.scss";
 import { useLanguage } from "../../i18n/useLanguage";
 import { formatMonthName } from "../../i18n/format";
 import useSharedSearchFields from "../../hooks/useSharedSearchFields";
+import { shiftPeriodMonth } from "../../utils/periodStep";
 import styles from "./Income.module.scss";
 
 export default function Income() {
@@ -94,10 +95,16 @@ export default function Income() {
     selectedMonth,
     setSelectedYear,
     setSelectedMonth,
+    setPeriodBoth,
   } = useSessionPeriodFilter({
     year: searchParams.get("year") || undefined,
     month: searchParams.get("month") || undefined,
   });
+  const [monthStepPulse, setMonthStepPulse] = useState({
+    side: null,
+    tick: 0,
+  });
+  const monthStepPulseTimerRef = useRef(0);
   const [selectedCategory, setSelectedCategoryState] = useState(() => {
     const fromUrl = searchParams.get("category");
     if (fromUrl) return fromUrl;
@@ -172,6 +179,26 @@ export default function Income() {
     [categories]
   );
   const categoriesMap = getCategoryMap(categories);
+
+  const pulseMonthStepper = (side) => {
+    if (monthStepPulseTimerRef.current) {
+      window.clearTimeout(monthStepPulseTimerRef.current);
+      monthStepPulseTimerRef.current = 0;
+    }
+    setMonthStepPulse((prev) => ({ side, tick: prev.tick + 1 }));
+    monthStepPulseTimerRef.current = window.setTimeout(() => {
+      setMonthStepPulse((prev) => ({ ...prev, side: null }));
+      monthStepPulseTimerRef.current = 0;
+    }, 1150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (monthStepPulseTimerRef.current) {
+        window.clearTimeout(monthStepPulseTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -387,6 +414,22 @@ export default function Income() {
     selectedYear !== "All" && selectedMonth !== "All"
       ? `${selectedYear}-${selectedMonth}`
       : null;
+
+  const stepDockMonth = (delta, side) => {
+    pulseMonthStepper(side);
+    const [fallbackYear, fallbackMonth] = (
+      periodKey || `${currentYear}-${currentMonth}`
+    ).split("-");
+    const next = shiftPeriodMonth(
+      selectedYear,
+      selectedMonth,
+      delta,
+      fallbackYear || currentYear,
+      fallbackMonth || currentMonth
+    );
+    setPeriodBoth(next.year, next.month);
+    setSelectedCategory("All");
+  };
 
   const summarySource = useMemo(() => {
     if (!periodKey) {
@@ -1888,6 +1931,42 @@ export default function Income() {
                 })}
               </span>
             </div>
+            <button
+              key={
+                monthStepPulse.side === "prev"
+                  ? `prev-${monthStepPulse.tick}`
+                  : "prev"
+              }
+              type="button"
+              className={`${dockStyles.stepperBtn} ${dockStyles.monthNavPrev} ${
+                monthStepPulse.side === "prev" ? dockStyles.stepperBtnPulse : ""
+              }`}
+              aria-label={t("metrics.prevMonth")}
+              onClick={(event) => {
+                event.currentTarget.blur();
+                stepDockMonth(-1, "prev");
+              }}
+            >
+              ‹
+            </button>
+            <button
+              key={
+                monthStepPulse.side === "next"
+                  ? `next-${monthStepPulse.tick}`
+                  : "next"
+              }
+              type="button"
+              className={`${dockStyles.stepperBtn} ${dockStyles.monthNavNext} ${
+                monthStepPulse.side === "next" ? dockStyles.stepperBtnPulse : ""
+              }`}
+              aria-label={t("metrics.nextMonth")}
+              onClick={(event) => {
+                event.currentTarget.blur();
+                stepDockMonth(1, "next");
+              }}
+            >
+              ›
+            </button>
           </>
         }
         filters={

@@ -57,6 +57,7 @@ import { useLanguage } from "../../i18n/useLanguage";
 import { formatMonthName } from "../../i18n/format";
 import { PAYMENT_METHOD_LABEL_KEYS } from "../../constants/quickAdd";
 import useSharedSearchFields from "../../hooks/useSharedSearchFields";
+import { shiftPeriodMonth } from "../../utils/periodStep";
 
 export default function Expenses() {
   const navigate = useNavigate();
@@ -102,6 +103,11 @@ export default function Expenses() {
     handleSearchChange,
     clearSearchQuery,
   } = useSharedSearchFields();
+  const [monthStepPulse, setMonthStepPulse] = useState({
+    side: null,
+    tick: 0,
+  });
+  const monthStepPulseTimerRef = useRef(0);
   const [selectedCategory, setSelectedCategoryState] = useState(() => {
     const fromUrl = searchParams.get("category");
     if (fromUrl) return fromUrl;
@@ -429,6 +435,26 @@ export default function Expenses() {
       <span className={dockStyles.metricValue}>{displayValue}</span>
     </div>
   );
+
+  const pulseMonthStepper = (side) => {
+    if (monthStepPulseTimerRef.current) {
+      window.clearTimeout(monthStepPulseTimerRef.current);
+      monthStepPulseTimerRef.current = 0;
+    }
+    setMonthStepPulse((prev) => ({ side, tick: prev.tick + 1 }));
+    monthStepPulseTimerRef.current = window.setTimeout(() => {
+      setMonthStepPulse((prev) => ({ ...prev, side: null }));
+      monthStepPulseTimerRef.current = 0;
+    }, 1150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (monthStepPulseTimerRef.current) {
+        window.clearTimeout(monthStepPulseTimerRef.current);
+      }
+    };
+  }, []);
 
   const handlePauseExpense = (expense) => {
     setSelectedExpense(expense);
@@ -1381,6 +1407,22 @@ export default function Expenses() {
     ? getNetEarnings(incomes, primaryMonthKey, dockSpendings)
     : 0;
 
+  const stepDockMonth = (delta, side) => {
+    pulseMonthStepper(side);
+    const [fallbackYear, fallbackMonth] = (
+      primaryMonthKey || presentMonth
+    ).split("-");
+    const next = shiftPeriodMonth(
+      selectedYear,
+      selectedMonth,
+      delta,
+      fallbackYear || currentYear,
+      fallbackMonth || currentMonth
+    );
+    setPeriodBoth(next.year, next.month);
+    setSelectedCategory("All");
+  };
+
   const dockFilters = (
     <>
       <select
@@ -1474,6 +1516,42 @@ export default function Expenses() {
           !isIncomeLoading && dockNet < 0 ? dockStyles.metricNegative : ""
         }`
       )}
+      <button
+        key={
+          monthStepPulse.side === "prev"
+            ? `prev-${monthStepPulse.tick}`
+            : "prev"
+        }
+        type="button"
+        className={`${dockStyles.stepperBtn} ${dockStyles.monthNavPrev} ${
+          monthStepPulse.side === "prev" ? dockStyles.stepperBtnPulse : ""
+        }`}
+        aria-label={t("metrics.prevMonth")}
+        onClick={(event) => {
+          event.currentTarget.blur();
+          stepDockMonth(-1, "prev");
+        }}
+      >
+        ‹
+      </button>
+      <button
+        key={
+          monthStepPulse.side === "next"
+            ? `next-${monthStepPulse.tick}`
+            : "next"
+        }
+        type="button"
+        className={`${dockStyles.stepperBtn} ${dockStyles.monthNavNext} ${
+          monthStepPulse.side === "next" ? dockStyles.stepperBtnPulse : ""
+        }`}
+        aria-label={t("metrics.nextMonth")}
+        onClick={(event) => {
+          event.currentTarget.blur();
+          stepDockMonth(1, "next");
+        }}
+      >
+        ›
+      </button>
     </>
   ) : null;
 

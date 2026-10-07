@@ -109,6 +109,8 @@ const en = {
   "metrics.netShort": "Net",
   "metrics.yourSpendings": "Your Spendings",
   "metrics.dockAria": "Pinned summary and filters",
+  "metrics.prevMonth": "Previous month",
+  "metrics.nextMonth": "Next month",
 
   "expenses.activateAll": "Activate all",
   "expenses.add": "Add expense",

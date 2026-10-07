@@ -288,6 +288,94 @@
   color: red;
 }
 
+/* Month steppers under Spendings (left) and Net Earnings (right) */
+.monthNavPrev {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: start;
+  align-self: start;
+  margin-top: 2px;
+}
+
+.monthNavNext {
+  grid-column: 3;
+  grid-row: 3;
+  justify-self: end;
+  align-self: start;
+  margin-top: 2px;
+}
+
+.stepperBtn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--mw-line);
+  border-radius: 50%;
+  background: var(--mw-card);
+  color: $inkSoft;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    color 0.35s ease,
+    box-shadow 0.35s ease;
+
+  &:hover:not(:disabled) {
+    border-color: rgba(62, 146, 235, 0.35);
+    color: $defaultBlue;
+    background: rgba(62, 146, 235, 0.08);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus:not(:focus-visible) {
+    border-color: rgba(15, 23, 42, 0.1);
+    color: $inkSoft;
+    background: var(--mw-card);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.stepperBtnPulse {
+  animation: stepperPulseFade 1.15s ease forwards;
+}
+
+@keyframes stepperPulseFade {
+  0% {
+    background: rgba(62, 146, 235, 0.28);
+    border-color: rgba(62, 146, 235, 0.7);
+    color: $defaultBlue;
+    box-shadow: 0 0 0 0 rgba(62, 146, 235, 0.35);
+  }
+  35% {
+    background: rgba(62, 146, 235, 0.18);
+    border-color: rgba(62, 146, 235, 0.5);
+    color: $defaultBlue;
+    box-shadow: 0 0 0 6px rgba(62, 146, 235, 0);
+  }
+  100% {
+    background: var(--mw-card);
+    border-color: rgba(15, 23, 42, 0.1);
+    color: $inkSoft;
+    box-shadow: none;
+  }
+}
+
 .pill {
   flex: 1 1 0;
   min-width: 0;
