@@ -1918,6 +1918,31 @@ export default function Expenses() {
         ariaLabel={t("metrics.dockAria")}
         metrics={dockMetrics}
         filters={dockFilters}
+        search={
+          <div className={dockStyles.searchContainer}>
+            <input
+              type="search"
+              id="expensesDockSearch"
+              placeholder={t("expenses.searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={dockStyles.searchInput}
+              aria-label={t("expenses.searchAria")}
+              autoComplete="off"
+              enterKeyHint="search"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                className={dockStyles.searchClearButton}
+                onClick={() => setSearchQuery("")}
+                aria-label={t("expenses.clearSearch")}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+        }
       />
     </>
   );

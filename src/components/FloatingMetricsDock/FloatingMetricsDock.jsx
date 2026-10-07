@@ -22,6 +22,7 @@ export default function FloatingMetricsDock({
   anchorRef,
   metrics,
   filters,
+  search,
   enabled = true,
   ariaLabel,
   observeKey,
@@ -138,7 +139,14 @@ export default function FloatingMetricsDock({
           <div className={styles.dockVeil} aria-hidden="true" />
           <div className={styles.dockInner}>
             {filters ? <div className={styles.filters}>{filters}</div> : null}
-            {metrics ? <div className={styles.metrics}>{metrics}</div> : null}
+            {metrics || search ? (
+              <div className={styles.metrics}>
+                {metrics}
+                {search ? (
+                  <div className={styles.metricSearch}>{search}</div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </motion.div>
       ) : null}
@@ -151,6 +159,7 @@ FloatingMetricsDock.propTypes = {
   anchorRef: PropTypes.shape({ current: PropTypes.any }).isRequired,
   metrics: PropTypes.node,
   filters: PropTypes.node,
+  search: PropTypes.node,
   enabled: PropTypes.bool,
   ariaLabel: PropTypes.string,
   observeKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
