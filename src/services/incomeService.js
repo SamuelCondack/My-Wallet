@@ -58,6 +58,8 @@ function normalizeIncome(id, data) {
     amount: Number(data.amount) || 0,
     categoryId: data.categoryId || "income-other",
     incomePeriod: data.incomePeriod || "",
+    /** Day the deal closed / card was charged (full YYYY-MM-DD). */
+    occurrenceDate: data.occurrenceDate || null,
     expectedDate: data.expectedDate || null,
     receivedDate: data.receivedDate ?? null,
     status:
@@ -120,6 +122,12 @@ export function validateIncomePayload(payload, { isConfirm = false } = {}) {
   if (!payload.incomePeriod || !/^\d{4}-\d{2}$/.test(payload.incomePeriod)) {
     errors.push(tNow("validation.income.period"));
   }
+  if (
+    !payload.occurrenceDate ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(payload.occurrenceDate)
+  ) {
+    errors.push(tNow("validation.income.occurrenceDate"));
+  }
   if (!payload.expectedDate) {
     errors.push(tNow("validation.income.expectedDate"));
   }
@@ -173,6 +181,10 @@ async function createMonthlyIncome(userId, payload) {
         statusOverride: status,
       }),
       incomePeriod: period,
+      occurrenceDate: shiftDateOnly(
+        payload.occurrenceDate || `${payload.incomePeriod}-01`,
+        index
+      ),
       expectedDate: shiftDateOnly(payload.expectedDate, index),
       receivedDate:
         status === INCOME_STATUS.CONFIRMED ? payload.receivedDate || null : null,
@@ -216,6 +228,8 @@ export async function createIncome(userId, payload, { id } = {}) {
     const data = {
       ...baseIncomeFields(payload, { now }),
       incomePeriod: payload.incomePeriod,
+      occurrenceDate:
+        payload.occurrenceDate || `${payload.incomePeriod}-01`,
       expectedDate: payload.expectedDate,
       isMonthly: false,
       monthlyGroupId: null,
@@ -241,6 +255,10 @@ export async function createIncome(userId, payload, { id } = {}) {
       amount: eachAmount,
       categoryId: payload.categoryId,
       incomePeriod: shiftPeriod(payload.incomePeriod, index),
+      occurrenceDate: shiftDateOnly(
+        payload.occurrenceDate || `${payload.incomePeriod}-01`,
+        index
+      ),
       expectedDate: shiftDateOnly(payload.expectedDate, index),
       receivedDate: null,
       status: INCOME_STATUS.PENDING,
@@ -320,6 +338,10 @@ export async function ensureMonthlyIncomeHorizon(userId, incomes) {
         amount: Number(template.amount),
         categoryId: template.categoryId,
         incomePeriod: period,
+        occurrenceDate: shiftDateOnly(
+          template.occurrenceDate || `${template.incomePeriod}-01`,
+          offset
+        ),
         expectedDate: shiftDateOnly(template.expectedDate, offset),
         receivedDate: null,
         status: INCOME_STATUS.PENDING,
@@ -362,6 +384,8 @@ export async function updateIncome(userId, incomeId, payload) {
     amount: Number(payload.amount),
     categoryId: payload.categoryId,
     incomePeriod: payload.incomePeriod,
+    occurrenceDate:
+      payload.occurrenceDate || `${payload.incomePeriod}-01`,
     expectedDate: payload.expectedDate,
     receivedDate:
       status === INCOME_STATUS.CONFIRMED ? payload.receivedDate : null,
@@ -394,6 +418,8 @@ export async function convertIncomeToMonthly(userId, income, payload) {
     amount: Number(payload.amount),
     categoryId: payload.categoryId,
     incomePeriod: startPeriod,
+    occurrenceDate:
+      payload.occurrenceDate || `${startPeriod}-01`,
     expectedDate: payload.expectedDate,
     receivedDate:
       payload.status === INCOME_STATUS.CONFIRMED
@@ -453,6 +479,8 @@ export async function convertMonthlyIncomeToOneOff(userId, income, payload) {
           amount: Number(payload.amount),
           categoryId: payload.categoryId,
           incomePeriod: payload.incomePeriod,
+          occurrenceDate:
+            payload.occurrenceDate || `${payload.incomePeriod}-01`,
           expectedDate: payload.expectedDate,
           receivedDate:
             payload.status === INCOME_STATUS.CONFIRMED
@@ -674,6 +702,7 @@ export async function migrateEarningsToIncome(userId, existingIncomes = null) {
         amount: value,
         categoryId: "income-other",
         incomePeriod: monthKey,
+        occurrenceDate: receivedDate,
         expectedDate: receivedDate,
         receivedDate,
         status: INCOME_STATUS.CONFIRMED,

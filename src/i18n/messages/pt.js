@@ -268,6 +268,9 @@ const pt = {
   "incomeForm.expectedDate": "Data prevista",
   "incomeForm.expectedLine": "Previsto: {date}",
   "incomeForm.incomePeriod": "Período da receita",
+  "incomeForm.occurrenceDate": "Data do cartão",
+  "incomeForm.occurrenceDateHint":
+    "Quando o cartão foi passado ou o acordo foi fechado (pode ser fora do período).",
   "incomeForm.increaseInstallments": "Aumentar parcelas",
   "incomeForm.installmentBadge": "Parcela {n}/{count}",
   "incomeForm.installments": "Parcelas",
@@ -623,6 +626,7 @@ const pt = {
   "validation.income.description": "A descrição é obrigatória.",
   "validation.income.expectedDate": "A data prevista é obrigatória.",
   "validation.income.notMonthly": "Esta não é uma receita mensal.",
+  "validation.income.occurrenceDate": "A data do cartão é obrigatória.",
   "validation.income.period": "O período da receita é obrigatório.",
   "validation.income.receivedDate": "A data de recebimento é obrigatória.",
   "validation.income.receivedDateConfirmed":

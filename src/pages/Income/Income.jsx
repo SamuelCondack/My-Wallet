@@ -45,7 +45,6 @@ import {
   formatPeriodLabel,
   getIncomeSummaryForPeriod,
   INCOME_STATUS,
-  periodToDateInput,
 } from "../../utils/incomeCalculations";
 import {
   buildExpensesByMonth,
@@ -1765,9 +1764,10 @@ export default function Income() {
             ? {
                 categoryId:
                   incomeCategories[0]?.id || DEFAULT_INCOME_CATEGORY_ID,
-                incomePeriodDate: periodKey
-                  ? periodToDateInput(periodKey)
-                  : new Date().toLocaleDateString("en-CA"),
+                incomePeriod:
+                  periodKey ||
+                  new Date().toLocaleDateString("en-CA").slice(0, 7),
+                occurrenceDate: new Date().toLocaleDateString("en-CA"),
                 expectedDate: new Date().toLocaleDateString("en-CA"),
                 status: INCOME_STATUS.PENDING,
               }

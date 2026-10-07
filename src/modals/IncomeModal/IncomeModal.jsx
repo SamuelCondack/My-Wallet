@@ -4,11 +4,9 @@ import { FaTimes } from "react-icons/fa";
 import BottomSheet from "../../components/BottomSheet/BottomSheet";
 import sheetStyles from "../../components/BottomSheet/BottomSheet.module.scss";
 import {
-  dateInputToPeriod,
   formatDisplayDate,
   formatPeriodLabel,
   INCOME_STATUS,
-  periodToDateInput,
 } from "../../utils/incomeCalculations";
 import { DEFAULT_INCOME_CATEGORY_ID } from "../../constants/defaultCategories";
 import { useLanguage } from "../../i18n/useLanguage";
@@ -18,7 +16,8 @@ const EMPTY_FORM = {
   description: "",
   amount: "",
   categoryId: DEFAULT_INCOME_CATEGORY_ID,
-  incomePeriodDate: "",
+  incomePeriod: "",
+  occurrenceDate: "",
   expectedDate: "",
   receivedDate: "",
   status: INCOME_STATUS.PENDING,
@@ -27,6 +26,10 @@ const EMPTY_FORM = {
   pauseDate: "",
   notes: "",
 };
+
+function currentPeriod() {
+  return new Date().toLocaleDateString("en-CA").slice(0, 7);
+}
 
 export default function IncomeModal({
   isOpen,
@@ -67,6 +70,11 @@ export default function IncomeModal({
     if (!isOpen) return;
 
     if (initialValues) {
+      const today = new Date().toLocaleDateString("en-CA");
+      const period =
+        initialValues.incomePeriod ||
+        (initialValues.incomePeriodDate || "").slice(0, 7) ||
+        currentPeriod();
       setForm({
         description: initialValues.description || "",
         amount:
@@ -77,9 +85,11 @@ export default function IncomeModal({
           initialValues.categoryId ||
           categories[0]?.id ||
           DEFAULT_INCOME_CATEGORY_ID,
-        incomePeriodDate: periodToDateInput(
-          initialValues.incomePeriodDate || initialValues.incomePeriod
-        ),
+        incomePeriod: period,
+        occurrenceDate:
+          initialValues.occurrenceDate ||
+          initialValues.expectedDate ||
+          today,
         expectedDate: initialValues.expectedDate || "",
         receivedDate: initialValues.receivedDate || "",
         status: initialValues.status || INCOME_STATUS.PENDING,
@@ -96,7 +106,8 @@ export default function IncomeModal({
       setForm({
         ...EMPTY_FORM,
         categoryId: categories[0]?.id || DEFAULT_INCOME_CATEGORY_ID,
-        incomePeriodDate: today,
+        incomePeriod: currentPeriod(),
+        occurrenceDate: today,
         expectedDate: today,
         status: INCOME_STATUS.PENDING,
         installments: "",
@@ -160,7 +171,8 @@ export default function IncomeModal({
       description: form.description,
       amount: parseFloat(String(form.amount).replace(/,/g, ".")),
       categoryId: form.categoryId,
-      incomePeriod: dateInputToPeriod(form.incomePeriodDate),
+      incomePeriod: form.incomePeriod,
+      occurrenceDate: form.occurrenceDate,
       expectedDate: form.expectedDate,
       notes: form.notes,
       installments: resolvedInstallments,
@@ -258,9 +270,9 @@ export default function IncomeModal({
               </label>
               <input
                 id="income-period"
-                name="incomePeriodDate"
-                type="date"
-                value={form.incomePeriodDate}
+                name="incomePeriod"
+                type="month"
+                value={form.incomePeriod}
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
@@ -268,11 +280,28 @@ export default function IncomeModal({
               />
               <span className={sheetStyles.fieldHint}>
                 {t("incomeForm.belongsTo", {
-                  period: formatPeriodLabel(
-                    dateInputToPeriod(form.incomePeriodDate),
-                    locale
-                  ),
+                  period: formatPeriodLabel(form.incomePeriod, locale),
                 })}
+              </span>
+
+              <label
+                className={sheetStyles.fieldLabel}
+                htmlFor="income-occurrence"
+              >
+                {t("incomeForm.occurrenceDate")}
+              </label>
+              <input
+                id="income-occurrence"
+                name="occurrenceDate"
+                type="date"
+                value={form.occurrenceDate}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className={sheetStyles.textInput}
+              />
+              <span className={sheetStyles.fieldHint}>
+                {t("incomeForm.occurrenceDateHint")}
               </span>
 
               <label className={sheetStyles.fieldLabel} htmlFor="income-expected">
@@ -387,12 +416,8 @@ export default function IncomeModal({
                     disabled={isSubmitting}
                     className={sheetStyles.textInput}
                     min={
-                      form.incomePeriodDate
-                        ? new Date(
-                            new Date(form.incomePeriodDate).getTime() + 86400000
-                          )
-                            .toISOString()
-                            .split("T")[0]
+                      form.incomePeriod
+                        ? `${form.incomePeriod}-02`
                         : undefined
                     }
                   />
@@ -509,10 +534,7 @@ export default function IncomeModal({
               </p>
               <p>
                 {t("income.periodLabel", {
-                  period: formatPeriodLabel(
-                    dateInputToPeriod(form.incomePeriodDate),
-                    locale
-                  ),
+                  period: formatPeriodLabel(form.incomePeriod, locale),
                 })}
               </p>
               <p>

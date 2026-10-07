@@ -32,16 +32,13 @@ function periodMonthLabel(period, locale = "en-US") {
 }
 
 /**
- * Registration / period of the income beside the name (no year — header has it).
- * Prefer createdAt day/month; otherwise the income period month.
+ * Day the deal closed / card was charged (beside the name, no year — header has it).
+ * Uses occurrenceDate; falls back to period month for older records.
  */
 function registrationLabel(item, locale = "en-US") {
-  const created = item.createdAt;
-  if (created) {
-    const iso = String(created).slice(0, 10);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-      return shortDate(iso, locale, { includeYear: false });
-    }
+  const occurrence = item.occurrenceDate;
+  if (occurrence && /^\d{4}-\d{2}-\d{2}$/.test(String(occurrence))) {
+    return shortDate(occurrence, locale, { includeYear: false });
   }
   return periodMonthLabel(item.incomePeriod, locale);
 }

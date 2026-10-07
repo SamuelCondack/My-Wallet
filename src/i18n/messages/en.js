@@ -266,6 +266,9 @@ const en = {
   "incomeForm.expectedDate": "Expected date",
   "incomeForm.expectedLine": "Expected: {date}",
   "incomeForm.incomePeriod": "Income period",
+  "incomeForm.occurrenceDate": "Charge date",
+  "incomeForm.occurrenceDateHint":
+    "When the card was charged or the deal closed (can be outside the period).",
   "incomeForm.increaseInstallments": "Increase installments",
   "incomeForm.installmentBadge": "Installment {n}/{count}",
   "incomeForm.installments": "Installments",
@@ -602,6 +605,7 @@ const en = {
   "validation.income.description": "Description is required.",
   "validation.income.expectedDate": "Expected date is required.",
   "validation.income.notMonthly": "Not a monthly income.",
+  "validation.income.occurrenceDate": "Charge date is required.",
   "validation.income.period": "Income period is required.",
   "validation.income.receivedDate": "Received date is required.",
   "validation.income.receivedDateConfirmed":
