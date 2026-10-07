@@ -158,6 +158,7 @@ export default function Income() {
   const [monthlyActionIncome, setMonthlyActionIncome] = useState(null);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [activateAllTarget, setActivateAllTarget] = useState(null);
   const [pressedIncomeKey, setPressedIncomeKey] = useState(null);
   const {
     searchQuery,
@@ -663,9 +664,18 @@ export default function Income() {
     }
   };
 
-  const activateAllIncomes = async (items) => {
+  const requestActivateAllIncomes = (items, label) => {
     if (!userId) return;
-    const ids = items
+    const excluded = items.filter((item) => item.excludedFromTotals);
+    if (!excluded.length) return;
+    setActivateAllTarget({ items, label });
+  };
+
+  const handleConfirmActivateAllIncomes = async () => {
+    const target = activateAllTarget;
+    setActivateAllTarget(null);
+    if (!userId || !target?.items?.length) return;
+    const ids = target.items
       .filter((item) => item.excludedFromTotals)
       .map((item) => item.id);
     if (!ids.length) return;
@@ -1521,7 +1531,12 @@ export default function Income() {
                         <button
                           type="button"
                           className={styles.activateAllBtn}
-                          onClick={() => activateAllIncomes(pendingList)}
+                          onClick={() =>
+                            requestActivateAllIncomes(
+                              pendingList,
+                              t("income.pending")
+                            )
+                          }
                         >
                           {t("income.activateAll")}
                         </button>
@@ -1579,7 +1594,12 @@ export default function Income() {
                     <button
                       type="button"
                       className={styles.activateAllBtn}
-                      onClick={() => activateAllIncomes(confirmedList)}
+                      onClick={() =>
+                        requestActivateAllIncomes(
+                          confirmedList,
+                          t("income.confirmed")
+                        )
+                      }
                     >
                       {t("income.activateAll")}
                     </button>
@@ -1834,6 +1854,16 @@ export default function Income() {
         message={t("income.resumeMessage")}
         expenseName={monthlyActionIncome?.description}
         isSubmitting={isSubmitting}
+      />
+
+      <ConfirmationModal
+        isOpen={Boolean(activateAllTarget)}
+        onRequestClose={() => setActivateAllTarget(null)}
+        onConfirm={handleConfirmActivateAllIncomes}
+        title={t("income.activateAllTitle")}
+        message={t("income.activateAllMessage")}
+        identifier={activateAllTarget?.label}
+        expenseName={activateAllTarget?.label}
       />
 
       <PaywallModal

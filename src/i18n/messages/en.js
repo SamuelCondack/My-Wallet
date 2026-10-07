@@ -113,6 +113,9 @@ const en = {
   "metrics.nextMonth": "Next month",
 
   "expenses.activateAll": "Activate all",
+  "expenses.activateAllMessage":
+    "Activate all excluded expenses for",
+  "expenses.activateAllTitle": "Activate all",
   "expenses.add": "Add expense",
   "expenses.categoryHintTitle":
     "Temporary total for the selected category filter",
@@ -195,6 +198,8 @@ const en = {
   "expenseForm.totalAmount": "Total amount",
 
   "income.activateAll": "Activate all",
+  "income.activateAllMessage": "Activate all excluded incomes in",
+  "income.activateAllTitle": "Activate all",
   "income.add": "Add income",
   "income.allPeriods": "All periods",
   "income.categoryHintTitle":

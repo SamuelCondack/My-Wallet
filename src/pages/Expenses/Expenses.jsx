@@ -97,6 +97,7 @@ export default function Expenses() {
   const [expenseToDeleteName, setExpenseToDeleteName] = useState("");
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [activateAllTarget, setActivateAllTarget] = useState(null);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [expenseModalMode, setExpenseModalMode] = useState("create");
@@ -1379,8 +1380,29 @@ export default function Expenses() {
     }
   };
 
-  const activateAllExpenses = async (monthExpenses, monthKey) => {
+  const requestActivateAllExpenses = (monthExpenses, monthKey) => {
     if (!userId || !monthKey) return;
+    const excludedInMonth = monthExpenses.filter((item) =>
+      isExpenseExcludedInMonth(
+        expensesList.find((raw) => raw.id === item.id) || item,
+        monthKey
+      )
+    );
+    if (!excludedInMonth.length) return;
+    const [year, month] = monthKey.split("-");
+    setActivateAllTarget({
+      monthKey,
+      expenses: monthExpenses,
+      label: `${formatMonthName(month, locale)} ${year}`,
+    });
+  };
+
+  const handleConfirmActivateAllExpenses = async () => {
+    const target = activateAllTarget;
+    setActivateAllTarget(null);
+    if (!userId || !target?.monthKey) return;
+
+    const { monthKey, expenses: monthExpenses } = target;
     const excludedInMonth = monthExpenses.filter((item) =>
       isExpenseExcludedInMonth(
         expensesList.find((raw) => raw.id === item.id) || item,
@@ -1412,11 +1434,9 @@ export default function Expenses() {
       return next;
     });
     try {
-      await clearExpenseExclusionsForMonth(
-        userId,
-        monthKey,
-        [...rawById.values()]
-      );
+      await clearExpenseExclusionsForMonth(userId, monthKey, [
+        ...rawById.values(),
+      ]);
     } catch (error) {
       console.error(error);
       toast.error(t("toast.expenseActivateFailed"));
@@ -1783,7 +1803,9 @@ export default function Expenses() {
                     <button
                       type="button"
                       className={styles.activateAllBtn}
-                      onClick={() => activateAllExpenses(expenses, monthKey)}
+                      onClick={() =>
+                        requestActivateAllExpenses(expenses, monthKey)
+                      }
                     >
                       {t("expenses.activateAll")}
                     </button>
@@ -2037,6 +2059,15 @@ export default function Expenses() {
             expenseName={expenseToDeleteName}
           />
         )}
+        <ConfirmationModal
+          isOpen={Boolean(activateAllTarget)}
+          onRequestClose={() => setActivateAllTarget(null)}
+          onConfirm={handleConfirmActivateAllExpenses}
+          title={t("expenses.activateAllTitle")}
+          message={t("expenses.activateAllMessage")}
+          identifier={activateAllTarget?.label}
+          expenseName={activateAllTarget?.label}
+        />
         <ExpenseFormModal
           isOpen={showExpenseModal}
           mode={expenseModalMode}

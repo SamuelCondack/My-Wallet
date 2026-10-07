@@ -114,6 +114,9 @@ const pt = {
   "metrics.nextMonth": "Próximo mês",
 
   "expenses.activateAll": "Ativar todas",
+  "expenses.activateAllMessage":
+    "Ativar todas as despesas excluídas de",
+  "expenses.activateAllTitle": "Ativar todas",
   "expenses.add": "Adicionar despesa",
   "expenses.categoryHintTitle":
     "Total temporário da categoria selecionada no filtro",
@@ -197,6 +200,8 @@ const pt = {
   "expenseForm.totalAmount": "Valor total",
 
   "income.activateAll": "Ativar todas",
+  "income.activateAllMessage": "Ativar todas as receitas excluídas em",
+  "income.activateAllTitle": "Ativar todas",
   "income.add": "Adicionar receita",
   "income.allPeriods": "Todos os períodos",
   "income.categoryHintTitle":
