@@ -318,6 +318,14 @@ export default function Expenses() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
+  useEffect(() => {
+    return () => {
+      if (monthStepPulseTimerRef.current) {
+        window.clearTimeout(monthStepPulseTimerRef.current);
+      }
+    };
+  }, []);
+
   if (isLoading) {
     return <LoadingComponent variant="expenses" />;
   }
@@ -447,14 +455,6 @@ export default function Expenses() {
       monthStepPulseTimerRef.current = 0;
     }, 1150);
   };
-
-  useEffect(() => {
-    return () => {
-      if (monthStepPulseTimerRef.current) {
-        window.clearTimeout(monthStepPulseTimerRef.current);
-      }
-    };
-  }, []);
 
   const handlePauseExpense = (expense) => {
     setSelectedExpense(expense);
