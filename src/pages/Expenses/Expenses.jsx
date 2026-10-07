@@ -37,8 +37,8 @@ import {
 import { matchesExpenseValueQuery } from "../../utils/finance";
 import { loadIncomesWithMigration } from "../../services/incomeService";
 import {
+  clearExpenseExclusionsForMonth,
   setExpenseExcludedFromTotals,
-  setExpensesExcludedFromTotals,
 } from "../../services/excludedFromTotalsService";
 import {
   getEarnedIncome,
@@ -46,7 +46,14 @@ import {
   getPendingIncome,
   getReceivedIncomeForFinancialPeriod,
 } from "../../utils/incomeCalculations";
-import { countsInTotals } from "../../utils/totalsVisibility";
+import {
+  countsInTotals,
+  expenseUsesMonthScopedExclusion,
+  isExpenseExcludedInMonth,
+  nextExcludedMonths,
+  normalizeExcludedMonths,
+  withExpenseExclusionForMonth,
+} from "../../utils/totalsVisibility";
 import { useExcludeFromTotalsToggle } from "../../hooks/useExcludeFromTotalsToggle";
 import ExcludeSplashLayer from "../../components/ExcludeSplashLayer/ExcludeSplashLayer";
 import FloatingMetricsDock, {
@@ -180,6 +187,7 @@ export default function Expenses() {
           cachedExpenses.map((item) => ({
             ...item,
             excludedFromTotals: Boolean(item.excludedFromTotals),
+            excludedMonths: normalizeExcludedMonths(item.excludedMonths),
           }))
         );
         setIsLoading(false);
@@ -199,6 +207,7 @@ export default function Expenses() {
               ...dataItem,
               id: doc.id,
               excludedFromTotals: Boolean(dataItem.excludedFromTotals),
+              excludedMonths: normalizeExcludedMonths(dataItem.excludedMonths),
             };
           });
 
@@ -563,13 +572,18 @@ export default function Expenses() {
           expensesByMonth[monthKey] = [];
         }
 
-        expensesByMonth[monthKey].push({
-          ...expense,
-          value: expense.value / installments,
-          installmentNumber: i + 1,
-          totalValue: expense.value,
-          installments,
-        });
+        expensesByMonth[monthKey].push(
+          withExpenseExclusionForMonth(
+            {
+              ...expense,
+              value: expense.value / installments,
+              installmentNumber: i + 1,
+              totalValue: expense.value,
+              installments,
+            },
+            monthKey
+          )
+        );
       }
     }
   });
@@ -658,22 +672,20 @@ export default function Expenses() {
       (e) => e.id === expense.id
     );
 
+    const projected = withExpenseExclusionForMonth(
+      {
+        ...expense,
+        installmentNumber: null,
+        totalValue: expense.value,
+        installments: 1,
+      },
+      monthKey
+    );
+
     if (existingExpenseIndex === -1) {
-      // Se não existe, adiciona
-      expensesByMonth[monthKey].push({
-        ...expense,
-        installmentNumber: null,
-        totalValue: expense.value,
-        installments: 1,
-      });
+      expensesByMonth[monthKey].push(projected);
     } else {
-      // Se existe, atualiza
-      expensesByMonth[monthKey][existingExpenseIndex] = {
-        ...expense,
-        installmentNumber: null,
-        totalValue: expense.value,
-        installments: 1,
-      };
+      expensesByMonth[monthKey][existingExpenseIndex] = projected;
     }
   }
 
@@ -989,6 +1001,7 @@ export default function Expenses() {
             ...dataItem,
             id: docItem.id,
             excludedFromTotals: Boolean(dataItem.excludedFromTotals),
+            excludedMonths: normalizeExcludedMonths(dataItem.excludedMonths),
           };
         });
 
@@ -1314,28 +1327,51 @@ export default function Expenses() {
   const renderSpendingsSummary = (monthKey, monthExpenses) =>
     renderIncomeSummary(monthKey, getMonthSpendingsTotal(monthExpenses));
 
-  const applyExpenseExcluded = async (expense, nextExcluded) => {
+  const applyExpenseExcluded = async (expense, nextExcluded, monthKey) => {
     if (!userId || !expense?.id) return;
-    const previous = Boolean(expense.excludedFromTotals);
+    const raw =
+      expensesList.find((item) => item.id === expense.id) || expense;
+    const previousExcluded = Boolean(
+      isExpenseExcludedInMonth(raw, monthKey)
+    );
+    const previousMonths = normalizeExcludedMonths(raw.excludedMonths);
+    const previousGlobal = Boolean(raw.excludedFromTotals);
+    const monthScoped = expenseUsesMonthScopedExclusion(raw);
+
     setExpensesList((prev) => {
-      const next = prev.map((item) =>
-        item.id === expense.id
-          ? { ...item, excludedFromTotals: nextExcluded }
-          : item
-      );
+      const next = prev.map((item) => {
+        if (item.id !== expense.id) return item;
+        if (monthScoped && monthKey) {
+          return {
+            ...item,
+            excludedMonths: nextExcludedMonths(item, monthKey, nextExcluded),
+            excludedFromTotals: false,
+          };
+        }
+        return { ...item, excludedFromTotals: nextExcluded };
+      });
       setCached("expenses", userId, next);
       return next;
     });
     try {
-      await setExpenseExcludedFromTotals(userId, expense.id, nextExcluded);
+      await setExpenseExcludedFromTotals(userId, expense.id, nextExcluded, {
+        monthKey,
+        expense: raw,
+      });
     } catch (error) {
       console.error(error);
       setExpensesList((prev) => {
-        const next = prev.map((item) =>
-          item.id === expense.id
-            ? { ...item, excludedFromTotals: previous }
-            : item
-        );
+        const next = prev.map((item) => {
+          if (item.id !== expense.id) return item;
+          if (monthScoped && monthKey) {
+            return {
+              ...item,
+              excludedMonths: previousMonths,
+              excludedFromTotals: previousGlobal,
+            };
+          }
+          return { ...item, excludedFromTotals: previousExcluded };
+        });
         setCached("expenses", userId, next);
         return next;
       });
@@ -1343,26 +1379,44 @@ export default function Expenses() {
     }
   };
 
-  const activateAllExpenses = async (monthExpenses) => {
-    if (!userId) return;
-    const ids = [
-      ...new Set(
-        monthExpenses
-          .filter((item) => item.excludedFromTotals)
-          .map((item) => item.id)
-      ),
-    ];
-    if (!ids.length) return;
+  const activateAllExpenses = async (monthExpenses, monthKey) => {
+    if (!userId || !monthKey) return;
+    const excludedInMonth = monthExpenses.filter((item) =>
+      isExpenseExcludedInMonth(
+        expensesList.find((raw) => raw.id === item.id) || item,
+        monthKey
+      )
+    );
+    if (!excludedInMonth.length) return;
+
+    const rawById = new Map(
+      excludedInMonth.map((item) => [
+        item.id,
+        expensesList.find((raw) => raw.id === item.id) || item,
+      ])
+    );
+
     setExpensesList((prev) => {
-      const idSet = new Set(ids);
-      const next = prev.map((item) =>
-        idSet.has(item.id) ? { ...item, excludedFromTotals: false } : item
-      );
+      const next = prev.map((item) => {
+        if (!rawById.has(item.id)) return item;
+        if (expenseUsesMonthScopedExclusion(item)) {
+          return {
+            ...item,
+            excludedMonths: nextExcludedMonths(item, monthKey, false),
+            excludedFromTotals: false,
+          };
+        }
+        return { ...item, excludedFromTotals: false };
+      });
       setCached("expenses", userId, next);
       return next;
     });
     try {
-      await setExpensesExcludedFromTotals(userId, ids, false);
+      await clearExpenseExclusionsForMonth(
+        userId,
+        monthKey,
+        [...rawById.values()]
+      );
     } catch (error) {
       console.error(error);
       toast.error(t("toast.expenseActivateFailed"));
@@ -1729,7 +1783,7 @@ export default function Expenses() {
                     <button
                       type="button"
                       className={styles.activateAllBtn}
-                      onClick={() => activateAllExpenses(expenses)}
+                      onClick={() => activateAllExpenses(expenses, monthKey)}
                     >
                       {t("expenses.activateAll")}
                     </button>
@@ -1819,7 +1873,11 @@ export default function Expenses() {
                                   key: expenseKey,
                                   currentlyExcluded: isExcluded,
                                   persist: (nextExcluded) =>
-                                    applyExpenseExcluded(expense, nextExcluded),
+                                    applyExpenseExcluded(
+                                      expense,
+                                      nextExcluded,
+                                      monthKey
+                                    ),
                                 });
                               }}
                               role="button"
@@ -1840,7 +1898,11 @@ export default function Expenses() {
                                   key: expenseKey,
                                   currentlyExcluded: isExcluded,
                                   persist: (nextExcluded) =>
-                                    applyExpenseExcluded(expense, nextExcluded),
+                                    applyExpenseExcluded(
+                                      expense,
+                                      nextExcluded,
+                                      monthKey
+                                    ),
                                 });
                               }}
                             >

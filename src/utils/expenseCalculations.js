@@ -1,4 +1,7 @@
-import { countsInTotals } from "./totalsVisibility.js";
+import {
+  countsInTotals,
+  withExpenseExclusionForMonth,
+} from "./totalsVisibility.js";
 
 export function buildExpensesByMonth(expensesList, referenceDate = new Date()) {
   const expensesByMonth = {};
@@ -25,10 +28,15 @@ export function buildExpensesByMonth(expensesList, referenceDate = new Date()) {
         expensesByMonth[monthKey] = [];
       }
 
-      expensesByMonth[monthKey].push({
-        ...expense,
-        value: expense.value / installments,
-      });
+      expensesByMonth[monthKey].push(
+        withExpenseExclusionForMonth(
+          {
+            ...expense,
+            value: expense.value / installments,
+          },
+          monthKey
+        )
+      );
     }
   });
 
@@ -40,7 +48,7 @@ export function buildExpensesByMonth(expensesList, referenceDate = new Date()) {
     }
 
     const index = expensesByMonth[monthKey].findIndex((e) => e.id === expense.id);
-    const payload = { ...expense };
+    const payload = withExpenseExclusionForMonth({ ...expense }, monthKey);
 
     if (index === -1) {
       expensesByMonth[monthKey].push(payload);
