@@ -152,7 +152,14 @@ export default function Income() {
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [pressedIncomeKey, setPressedIncomeKey] = useState(null);
+  // One shared query for page search + floating dock search (type + clear).
   const [searchQuery, setSearchQuery] = useState("");
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+  const clearSearchQuery = () => {
+    setSearchQuery("");
+  };
   const activeTouchIdRef = useRef(null);
   const pressReleaseTimerRef = useRef(0);
   const [copiedMetric, setCopiedMetric] = useState(null);
@@ -1393,11 +1400,12 @@ export default function Income() {
         <div className={styles.searchWrap}>
           <div className={styles.searchContainer}>
             <input
-              type="search"
+              type="text"
+              inputMode="search"
               id="incomePageSearch"
               placeholder={t("income.searchPlaceholder")}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className={styles.searchInput}
               aria-label={t("income.searchAria")}
               autoComplete="off"
@@ -1407,7 +1415,8 @@ export default function Income() {
               <button
                 type="button"
                 className={styles.searchClearButton}
-                onClick={() => setSearchQuery("")}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={clearSearchQuery}
                 aria-label={t("income.clearSearch")}
               >
                 ×
@@ -1774,7 +1783,7 @@ export default function Income() {
 
       <FloatingMetricsDock
         anchorRef={summaryAnchorRef}
-        observeKey={periodKey || selectedYear || "all"}
+        observeKey={`${periodKey || selectedYear || "all"}:${searchQuery}:${filtered.length}`}
         ariaLabel={t("metrics.dockAria")}
         handoffSearchFocusTo="#incomePageSearch"
         search={
@@ -1785,11 +1794,12 @@ export default function Income() {
               </span>
             ) : null}
             <input
-              type="search"
+              type="text"
+              inputMode="search"
               id="incomeDockSearch"
               placeholder=""
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className={dockStyles.searchInput}
               aria-label={t("income.searchAria")}
               autoComplete="off"
@@ -1799,7 +1809,8 @@ export default function Income() {
               <button
                 type="button"
                 className={dockStyles.searchClearButton}
-                onClick={() => setSearchQuery("")}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={clearSearchQuery}
                 aria-label={t("income.clearSearch")}
               >
                 ×

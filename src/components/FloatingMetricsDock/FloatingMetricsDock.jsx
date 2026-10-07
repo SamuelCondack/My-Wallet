@@ -14,6 +14,81 @@ const fadeTransition = {
   ease: [0.22, 1, 0.36, 1],
 };
 
+function resolveHandoffTarget(handoffSearchFocusTo) {
+  if (!handoffSearchFocusTo || typeof document === "undefined") return null;
+  const target =
+    typeof handoffSearchFocusTo === "string"
+      ? document.querySelector(handoffSearchFocusTo)
+      : handoffSearchFocusTo.current;
+  return target instanceof HTMLElement ? target : null;
+}
+
+/**
+ * Move focus (and caret) to the in-page search before the dock unmounts so the
+ * mobile keyboard can stay open across the handoff.
+ */
+function handoffFocusToPageSearch(handoffSearchFocusTo) {
+  const target = resolveHandoffTarget(handoffSearchFocusTo);
+  if (!target) return false;
+
+  const active = document.activeElement;
+  let start = null;
+  let end = null;
+  if (
+    active instanceof HTMLInputElement ||
+    active instanceof HTMLTextAreaElement
+  ) {
+    try {
+      start = active.selectionStart;
+      end = active.selectionEnd;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  try {
+    target.focus({ preventScroll: true });
+  } catch {
+    target.focus();
+  }
+
+  if (
+    (target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement) &&
+    typeof start === "number" &&
+    typeof end === "number"
+  ) {
+    try {
+      target.setSelectionRange(start, end);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return document.activeElement === target;
+}
+
+function getScrollY() {
+  return (
+    window.scrollY ||
+    document.documentElement.scrollTop ||
+    document.body.scrollTop ||
+    0
+  );
+}
+
+/**
+ * Show only after Net Earnings (anchor) has scrolled past the top inset.
+ * At the real top of the page (scrollY ≈ 0) always hide — even if a short
+ * filtered layout leaves the anchor inside the inset band.
+ */
+function isAnchorPastTop(anchor) {
+  if (!(anchor instanceof HTMLElement)) return false;
+  const rect = anchor.getBoundingClientRect();
+  const scrolled = getScrollY() > 1 || rect.top < 0;
+  return scrolled && rect.top < TOP_INSET_PX;
+}
+
 /**
  * Frosted floating dock that fades in after `anchorRef` scrolls past the top.
  * Mobile-only. Keeps summary metrics + compact filters visible while editing cards.
@@ -34,13 +109,21 @@ export default function FloatingMetricsDock({
       : false
   );
   const [visible, setVisible] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
   const searchFocusedRef = useRef(false);
+  const handoffToRef = useRef(handoffSearchFocusTo);
+  handoffToRef.current = handoffSearchFocusTo;
+
   const [menuOpen, setMenuOpen] = useState(() =>
     typeof document !== "undefined"
       ? document.documentElement.getAttribute(MENU_OPEN_ATTR) === "1"
       : false
   );
+
+  const handoffIfDockSearchFocused = () => {
+    if (!searchFocusedRef.current) return;
+    handoffFocusToPageSearch(handoffToRef.current);
+    searchFocusedRef.current = false;
+  };
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_MQ);
@@ -67,32 +150,61 @@ export default function FloatingMetricsDock({
 
   useEffect(() => {
     if (!enabled || !isMobile || menuOpen) {
+      handoffIfDockSearchFocused();
       setVisible(false);
       return undefined;
     }
 
-    let observer;
+    let io;
+    let ro;
     let cancelled = false;
     let pollId = 0;
+    let rafId = 0;
+
+    const applyVisibility = (pastTop) => {
+      if (cancelled) return;
+      if (!pastTop) {
+        handoffIfDockSearchFocused();
+      }
+      setVisible((prev) => (prev === pastTop ? prev : pastTop));
+    };
+
+    const measure = () => {
+      if (cancelled) return;
+      applyVisibility(isAnchorPastTop(anchorRef?.current));
+    };
+
+    const measureSoon = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(measure);
+      });
+    };
 
     const connect = () => {
       const anchor = anchorRef?.current;
       if (!anchor || cancelled) return false;
 
-      observer = new IntersectionObserver(
-        ([entry]) => {
-          if (!entry) return;
-          const pastTop =
-            !entry.isIntersecting && entry.boundingClientRect.top < TOP_INSET_PX;
-          setVisible(pastTop);
-        },
-        {
-          root: null,
-          threshold: 0,
-          rootMargin: `-${TOP_INSET_PX}px 0px 0px 0px`,
-        }
-      );
-      observer.observe(anchor);
+      // IO wakes measure; the Net Earnings rule lives in isAnchorPastTop.
+      io = new IntersectionObserver(measure, {
+        root: null,
+        threshold: [0, 1],
+        rootMargin: `-${TOP_INSET_PX}px 0px 0px 0px`,
+      });
+      io.observe(anchor);
+
+      // Filtered lists can clamp scroll without a reliable IO event (iOS).
+      ro = new ResizeObserver(measureSoon);
+      ro.observe(anchor);
+      if (document.body) ro.observe(document.body);
+      ro.observe(document.documentElement);
+
+      window.addEventListener("scroll", measure, { passive: true });
+      window.visualViewport?.addEventListener("resize", measureSoon);
+      window.visualViewport?.addEventListener("scroll", measure);
+
+      measure();
+      measureSoon();
       return true;
     };
 
@@ -105,14 +217,18 @@ export default function FloatingMetricsDock({
     return () => {
       cancelled = true;
       if (pollId) window.clearInterval(pollId);
-      observer?.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
+      io?.disconnect();
+      ro?.disconnect();
+      window.removeEventListener("scroll", measure);
+      window.visualViewport?.removeEventListener("resize", measureSoon);
+      window.visualViewport?.removeEventListener("scroll", measure);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handoff uses refs
   }, [anchorRef, enabled, isMobile, menuOpen, observeKey]);
 
-  // Stay open while the dock search is focused so filtering/scroll jumps
-  // do not unmount the input and dismiss the mobile keyboard.
-  const show =
-    enabled && isMobile && !menuOpen && (visible || searchFocused);
+  // Hide for real when back above Net Earnings — never keep open just for focus.
+  const show = enabled && isMobile && !menuOpen && visible;
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -126,23 +242,8 @@ export default function FloatingMetricsDock({
     };
   }, [show]);
 
-  const handoffFocusToPageSearch = () => {
-    if (!handoffSearchFocusTo || typeof document === "undefined") return;
-    const target =
-      typeof handoffSearchFocusTo === "string"
-        ? document.querySelector(handoffSearchFocusTo)
-        : handoffSearchFocusTo.current;
-    if (!(target instanceof HTMLElement)) return;
-    try {
-      target.focus({ preventScroll: true });
-    } catch {
-      target.focus();
-    }
-  };
-
   const handleSearchFocusCapture = () => {
     searchFocusedRef.current = true;
-    setSearchFocused(true);
   };
 
   const handleSearchBlurCapture = (event) => {
@@ -151,25 +252,12 @@ export default function FloatingMetricsDock({
       return;
     }
     searchFocusedRef.current = false;
-    setSearchFocused(false);
-    // If scroll already returned above the anchor, move focus to page search
-    // so the keyboard can stay up on the top bar.
-    if (!visible && handoffSearchFocusTo) {
-      window.requestAnimationFrame(() => handoffFocusToPageSearch());
-    }
   };
 
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <AnimatePresence
-      onExitComplete={() => {
-        if (searchFocusedRef.current) {
-          handoffFocusToPageSearch();
-          searchFocusedRef.current = false;
-        }
-      }}
-    >
+    <AnimatePresence>
       {show ? (
         <motion.div
           key="floating-metrics-dock"

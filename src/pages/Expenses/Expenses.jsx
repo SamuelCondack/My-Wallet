@@ -94,7 +94,14 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [expenseFormInitial, setExpenseFormInitial] = useState(null);
 
+  // One shared query for page search + floating dock search (type + clear).
   const [searchQuery, setSearchQuery] = useState("");
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+  const clearSearchQuery = () => {
+    setSearchQuery("");
+  };
   const [selectedCategory, setSelectedCategoryState] = useState(() => {
     const fromUrl = searchParams.get("category");
     if (fromUrl) return fromUrl;
@@ -1581,26 +1588,28 @@ export default function Expenses() {
                   <div className={styles.searchWrap}>
                     <div className={styles.searchContainer}>
                       <input
-                        type="search"
+                        type="text"
+                        inputMode="search"
                         id="expensesPageSearch"
                         placeholder={t("expenses.searchPlaceholder")}
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={handleSearchChange}
                         className={styles.searchInput}
                         aria-label={t("expenses.searchAria")}
                         autoComplete="off"
                         enterKeyHint="search"
                       />
-                      {searchQuery && (
+                      {searchQuery ? (
                         <button
                           type="button"
                           className={styles.searchClearButton}
-                          onClick={() => setSearchQuery("")}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={clearSearchQuery}
                           aria-label={t("expenses.clearSearch")}
                         >
                           ×
                         </button>
-                      )}
+                      ) : null}
                     </div>
                     {hasActiveFilters && !hasVisibleResults && (
                       <p className={styles.noSearchResults}>
@@ -1915,7 +1924,7 @@ export default function Expenses() {
       </div>
       <FloatingMetricsDock
         anchorRef={summaryAnchorRef}
-        observeKey={primaryMonthKey || "empty"}
+        observeKey={`${primaryMonthKey || "empty"}:${searchQuery}:${hasVisibleResults ? 1 : 0}`}
         ariaLabel={t("metrics.dockAria")}
         metrics={dockMetrics}
         filters={dockFilters}
@@ -1928,11 +1937,12 @@ export default function Expenses() {
               </span>
             ) : null}
             <input
-              type="search"
+              type="text"
+              inputMode="search"
               id="expensesDockSearch"
               placeholder=""
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className={dockStyles.searchInput}
               aria-label={t("expenses.searchAria")}
               autoComplete="off"
@@ -1942,7 +1952,8 @@ export default function Expenses() {
               <button
                 type="button"
                 className={dockStyles.searchClearButton}
-                onClick={() => setSearchQuery("")}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={clearSearchQuery}
                 aria-label={t("expenses.clearSearch")}
               >
                 ×
