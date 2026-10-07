@@ -139,6 +139,7 @@ const en = {
   "expenses.resumeTitle": "Resume Expense",
   "expenses.searchAria": "Search expenses",
   "expenses.searchPlaceholder": "Search expenses...",
+  "expenses.searchPlaceholderShort": "Search",
   "expenses.thisCategory": "this category",
   "expenses.title": "Expenses",
   "expenses.totalLabel": "Total: {amount}",

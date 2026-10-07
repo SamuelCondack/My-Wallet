@@ -140,6 +140,7 @@ const pt = {
   "expenses.resumeTitle": "Retomar despesa",
   "expenses.searchAria": "Buscar despesas",
   "expenses.searchPlaceholder": "Buscar despesas...",
+  "expenses.searchPlaceholderShort": "Buscar",
   "expenses.thisCategory": "esta categoria",
   "expenses.title": "Despesas",
   "expenses.totalLabel": "Total: {amount}",

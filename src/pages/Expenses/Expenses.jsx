@@ -1923,7 +1923,7 @@ export default function Expenses() {
             <input
               type="search"
               id="expensesDockSearch"
-              placeholder={t("expenses.searchPlaceholder")}
+              placeholder={t("expenses.searchPlaceholderShort")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={dockStyles.searchInput}
