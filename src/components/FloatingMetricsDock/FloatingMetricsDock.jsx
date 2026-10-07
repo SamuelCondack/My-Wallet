@@ -92,9 +92,8 @@ function clearDockViewportPin(el) {
 }
 
 /**
- * Pin a position:fixed element to the *visual* viewport top.
- * Needed only while the in-page search (outside the dock) keeps the keyboard
- * open — iOS then offsets the visual viewport so plain top:0 is wrong.
+ * Pin position:fixed to the visual viewport. Must run synchronously on
+ * visualViewport scroll — rAF batching makes the dock lag one frame behind.
  */
 function pinDockToVisualViewport(el) {
   if (!(el instanceof HTMLElement)) return;
@@ -103,10 +102,18 @@ function pinDockToVisualViewport(el) {
     clearDockViewportPin(el);
     return;
   }
-  el.style.top = `${vv.offsetTop}px`;
-  el.style.left = `${vv.offsetLeft}px`;
-  el.style.width = `${vv.width}px`;
+  el.style.top = `${Math.round(vv.offsetTop)}px`;
+  el.style.left = `${Math.round(vv.offsetLeft)}px`;
+  el.style.width = `${Math.round(vv.width)}px`;
   el.style.right = "auto";
+}
+
+function isNodeInside(root, node) {
+  return (
+    root instanceof HTMLElement &&
+    node instanceof Node &&
+    (node === root || root.contains(node))
+  );
 }
 
 /**
@@ -145,33 +152,26 @@ export default function FloatingMetricsDock({
       : false
   );
 
+  /** True while either search field owns focus (keyboard likely open). */
+  const isSearchKeyboardOpen = () => {
+    const active = document.activeElement;
+    const page = resolveFocusTarget(pageSearchRef.current);
+    const dockSearch = resolveFocusTarget(dockSearchRef.current);
+    return isNodeInside(page, active) || isNodeInside(dockSearch, active);
+  };
+
   /**
-   * JS visualViewport pinning lags one frame while scrolling and looks "loose".
-   * Use it only while the *page* search is focused. Once the dock search owns
-   * focus, native position:fixed is stable — clear the inline pin.
+   * With the keyboard open, iOS detaches position:fixed from the screen top.
+   * Pin synchronously to visualViewport. With keyboard closed, clear the pin
+   * so native fixed stays rock-solid.
    */
   const syncDockPosition = () => {
     const el = dockElRef.current;
     if (!el || !visibleRef.current) return;
-
-    const page = resolveFocusTarget(pageSearchRef.current);
-    const dockSearch = resolveFocusTarget(dockSearchRef.current);
-    const active = document.activeElement;
-
-    if (
-      dockSearch &&
-      (active === dockSearch ||
-        (active instanceof Node && dockSearch.contains(active)))
-    ) {
-      clearDockViewportPin(el);
-      return;
-    }
-
-    if (page && active === page) {
+    if (isSearchKeyboardOpen() || searchFocusedRef.current) {
       pinDockToVisualViewport(el);
       return;
     }
-
     clearDockViewportPin(el);
   };
 
@@ -188,8 +188,7 @@ export default function FloatingMetricsDock({
     const tryFocus = (attemptsLeft) => {
       if (handoffFocusTo(dockSearchRef.current)) {
         searchFocusedRef.current = true;
-        // Drop the visualViewport pin — dock search focus uses native fixed.
-        clearDockViewportPin(dockElRef.current);
+        syncDockPosition();
         return;
       }
       if (attemptsLeft > 0) {
@@ -221,6 +220,37 @@ export default function FloatingMetricsDock({
     });
     return () => observer.disconnect();
   }, []);
+
+  // Dedicated sync — no rAF — so the dock tracks the keyboard viewport tightly.
+  useEffect(() => {
+    if (!enabled || !isMobile || !visible) return undefined;
+
+    const onVisualChange = () => {
+      syncDockPosition();
+    };
+
+    window.visualViewport?.addEventListener("scroll", onVisualChange, {
+      passive: true,
+    });
+    window.visualViewport?.addEventListener("resize", onVisualChange, {
+      passive: true,
+    });
+    window.addEventListener("scroll", onVisualChange, {
+      passive: true,
+      capture: true,
+    });
+    window.addEventListener("touchmove", onVisualChange, { passive: true });
+
+    syncDockPosition();
+
+    return () => {
+      window.visualViewport?.removeEventListener("scroll", onVisualChange);
+      window.visualViewport?.removeEventListener("resize", onVisualChange);
+      window.removeEventListener("scroll", onVisualChange, { capture: true });
+      window.removeEventListener("touchmove", onVisualChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync uses refs
+  }, [enabled, isMobile, visible]);
 
   useEffect(() => {
     if (!enabled || !isMobile || menuOpen) {
@@ -338,8 +368,7 @@ export default function FloatingMetricsDock({
 
   const handleSearchFocusCapture = () => {
     searchFocusedRef.current = true;
-    // Native fixed while typing in the dock — no JS viewport chasing.
-    clearDockViewportPin(dockElRef.current);
+    syncDockPosition();
   };
 
   const handleSearchBlurCapture = (event) => {
