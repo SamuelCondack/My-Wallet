@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import PropTypes from "prop-types";
 import styles from "./FloatingMetricsDock.module.scss";
 
@@ -8,11 +7,6 @@ const MOBILE_MQ = "(max-width: 768px)";
 const TOP_INSET_PX = 64;
 const MENU_OPEN_ATTR = "data-mw-menu-open";
 const DOCK_OPEN_ATTR = "data-mw-dock-open";
-
-const fadeTransition = {
-  duration: 0.42,
-  ease: [0.22, 1, 0.36, 1],
-};
 
 function resolveHandoffTarget(handoffSearchFocusTo) {
   if (!handoffSearchFocusTo || typeof document === "undefined") return null;
@@ -109,7 +103,10 @@ export default function FloatingMetricsDock({
       : false
   );
   const [visible, setVisible] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const searchFocusedRef = useRef(false);
+  const dockRef = useRef(null);
   const handoffToRef = useRef(handoffSearchFocusTo);
   handoffToRef.current = handoffSearchFocusTo;
 
@@ -119,10 +116,31 @@ export default function FloatingMetricsDock({
       : false
   );
 
+  const clearFixedCaretHack = () => {
+    const el = dockRef.current;
+    if (!el) return;
+    el.style.position = "";
+    el.style.top = "";
+  };
+
+  /**
+   * iOS Safari misplaces the caret in inputs inside position:fixed layers.
+   * While the dock search is focused, pin the dock with position:absolute at
+   * the current scroll offset so caret and glyphs stay aligned.
+   */
+  const applyFixedCaretHack = () => {
+    const el = dockRef.current;
+    if (!el) return;
+    el.style.position = "absolute";
+    el.style.top = `${getScrollY()}px`;
+  };
+
   const handoffIfDockSearchFocused = () => {
     if (!searchFocusedRef.current) return;
     handoffFocusToPageSearch(handoffToRef.current);
     searchFocusedRef.current = false;
+    setSearchFocused(false);
+    clearFixedCaretHack();
   };
 
   useEffect(() => {
@@ -185,7 +203,6 @@ export default function FloatingMetricsDock({
       const anchor = anchorRef?.current;
       if (!anchor || cancelled) return false;
 
-      // IO wakes measure; the Net Earnings rule lives in isAnchorPastTop.
       io = new IntersectionObserver(measure, {
         root: null,
         threshold: [0, 1],
@@ -193,7 +210,6 @@ export default function FloatingMetricsDock({
       });
       io.observe(anchor);
 
-      // Filtered lists can clamp scroll without a reliable IO event (iOS).
       ro = new ResizeObserver(measureSoon);
       ro.observe(anchor);
       if (document.body) ro.observe(document.body);
@@ -234,8 +250,13 @@ export default function FloatingMetricsDock({
     if (typeof document === "undefined") return undefined;
     if (show) {
       document.documentElement.setAttribute(DOCK_OPEN_ATTR, "1");
+      setMounted(true);
     } else {
       document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
+      clearFixedCaretHack();
+      setSearchFocused(false);
+      const timeoutId = window.setTimeout(() => setMounted(false), 420);
+      return () => window.clearTimeout(timeoutId);
     }
     return () => {
       document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
@@ -244,6 +265,8 @@ export default function FloatingMetricsDock({
 
   const handleSearchFocusCapture = () => {
     searchFocusedRef.current = true;
+    setSearchFocused(true);
+    applyFixedCaretHack();
   };
 
   const handleSearchBlurCapture = (event) => {
@@ -252,47 +275,42 @@ export default function FloatingMetricsDock({
       return;
     }
     searchFocusedRef.current = false;
+    setSearchFocused(false);
+    clearFixedCaretHack();
   };
 
   if (typeof document === "undefined") return null;
+  if (!mounted && !show) return null;
 
   return createPortal(
-    <AnimatePresence>
-      {show ? (
-        <motion.div
-          key="floating-metrics-dock"
-          className={styles.dock}
-          data-no-pull-refresh="true"
-          // Opacity only — iOS Safari misplaces the caret inside inputs when a
-          // parent keeps a transform (even translateY(0) from Framer Motion).
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={fadeTransition}
-          role="region"
-          aria-label={ariaLabel || "Summary"}
-        >
-          <div className={styles.dockVeil} aria-hidden="true" />
-          <div className={styles.dockInner}>
-            {filters ? <div className={styles.filters}>{filters}</div> : null}
-            {metrics || search ? (
-              <div className={styles.metrics}>
-                {metrics}
-                {search ? (
-                  <div
-                    className={styles.metricSearch}
-                    onFocusCapture={handleSearchFocusCapture}
-                    onBlurCapture={handleSearchBlurCapture}
-                  >
-                    {search}
-                  </div>
-                ) : null}
+    <div
+      ref={dockRef}
+      className={`${styles.dock} ${show ? styles.dockVisible : ""} ${
+        searchFocused ? styles.dockSearchFocused : ""
+      }`}
+      data-no-pull-refresh="true"
+      role="region"
+      aria-label={ariaLabel || "Summary"}
+    >
+      <div className={styles.dockVeil} aria-hidden="true" />
+      <div className={styles.dockInner}>
+        {filters ? <div className={styles.filters}>{filters}</div> : null}
+        {metrics || search ? (
+          <div className={styles.metrics}>
+            {metrics}
+            {search ? (
+              <div
+                className={styles.metricSearch}
+                onFocusCapture={handleSearchFocusCapture}
+                onBlurCapture={handleSearchBlurCapture}
+              >
+                {search}
               </div>
             ) : null}
           </div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
+        ) : null}
+      </div>
+    </div>,
     document.body
   );
 }

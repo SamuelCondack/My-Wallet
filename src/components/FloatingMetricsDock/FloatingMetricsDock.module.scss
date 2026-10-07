@@ -18,9 +18,22 @@
   border-radius: 0;
   box-shadow: none;
   background: transparent;
-  /* Avoid transform here — it breaks the iOS text caret inside search. */
-  will-change: opacity;
+  /* No transform / will-change — both break the iOS caret in the search field. */
   transform: none;
+  opacity: 0;
+  transition: opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dockVisible {
+  opacity: 1;
+}
+
+/* While typing: drop veil blur (compositor) — position:absolute is applied in JS. */
+.dockSearchFocused {
+  .dockVeil {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 /* Background-only veil — solid through metrics, fade only after Spendings/Net */
@@ -196,6 +209,7 @@
   justify-self: stretch;
   min-width: 0;
   width: 100%;
+  text-align: left;
 }
 
 .searchContainer {
@@ -218,15 +232,19 @@
   z-index: 1;
 
   &[data-hidden="true"] {
+    visibility: hidden;
     opacity: 0;
   }
 }
 
 .searchInput {
   display: block;
+  position: relative;
+  z-index: 2;
   width: 100%;
   padding: 8px 32px 8px 12px;
   border-radius: 20px;
+  border: 1px solid var(--mw-input-border);
   /* 16px+ avoids iOS Safari zoom-on-focus */
   font-size: 16px;
   font-weight: 500;
@@ -239,13 +257,13 @@
   appearance: none;
   outline: none;
   color: var(--mw-ink);
+  /* Opaque fill, no backdrop-filter — glass/blur on the input offsets the caret on iOS. */
+  background: var(--mw-input-bg);
+  box-shadow: inset 0 1px 0 var(--mw-inset-highlight);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   transform: none;
-  @include glass-panel(20px);
-  background: color-mix(in srgb, var(--mw-glass-border) 22%, transparent);
-  background: var(--mw-glass-bg);
-  box-shadow:
-    var(--mw-glass-shadow),
-    inset 0 1px 0 var(--mw-inset-highlight);
+  filter: none;
 
   &::-webkit-search-cancel-button {
     -webkit-appearance: none;
@@ -257,7 +275,7 @@
   }
 
   &:focus {
-    border-color: color-mix(in srgb, $defaultBlue 55%, var(--mw-glass-border));
+    border-color: color-mix(in srgb, $defaultBlue 55%, var(--mw-input-border));
   }
 }
 
