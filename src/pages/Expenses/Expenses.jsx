@@ -1681,17 +1681,17 @@ export default function Expenses() {
                         autoCorrect="off"
                         autoCapitalize="off"
                       />
-                      {searchQuery ? (
-                        <button
-                          type="button"
-                          className={styles.searchClearButton}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={clearSearchQuery}
-                          aria-label={t("expenses.clearSearch")}
-                        >
-                          ×
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        className={styles.searchClearButton}
+                        hidden={!searchQuery}
+                        tabIndex={searchQuery ? 0 : -1}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={clearSearchQuery}
+                        aria-label={t("expenses.clearSearch")}
+                      >
+                        ×
+                      </button>
                     </div>
                     {hasActiveFilters && !hasVisibleResults && (
                       <p className={styles.noSearchResults}>
@@ -2011,6 +2011,7 @@ export default function Expenses() {
         metrics={dockMetrics}
         filters={dockFilters}
         handoffSearchFocusTo="#expensesPageSearch"
+        dockSearchFocusTo="#expensesDockSearch"
         search={
           <div className={dockStyles.searchContainer}>
             <input

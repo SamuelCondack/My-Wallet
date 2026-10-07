@@ -145,21 +145,30 @@
   width: 100%;
   padding: 10px 40px 10px 14px;
   border-radius: 20px;
+  border: 1px solid var(--mw-input-border);
   font-size: 16px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: normal;
+  text-align: left;
+  text-indent: 0;
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
   outline: none;
   color: var(--mw-ink);
-  @include glass-panel(20px);
-  background: var(--mw-glass-bg);
-  box-shadow:
-    var(--mw-glass-shadow),
-    inset 0 1px 0 var(--mw-inset-highlight);
+  /* Opaque, no backdrop-filter — glass blur offsets the iOS caret on this field. */
+  background: var(--mw-input-bg);
+  box-shadow: inset 0 1px 0 var(--mw-inset-highlight);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transform: none;
+  filter: none;
 
   &::placeholder {
     color: var(--mw-muted);
     opacity: 0.85;
+    text-align: left;
   }
 
   &::-webkit-search-cancel-button {
@@ -168,7 +177,7 @@
   }
 
   &:focus {
-    border-color: color-mix(in srgb, $defaultBlue 55%, var(--mw-glass-border));
+    border-color: color-mix(in srgb, $defaultBlue 55%, var(--mw-input-border));
   }
 }
 
@@ -176,7 +185,8 @@
   position: absolute;
   top: 50%;
   right: 10px;
-  transform: translateY(-50%);
+  margin-top: -14px;
+  transform: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,6 +202,10 @@
   line-height: 1;
   padding: 0;
   cursor: pointer;
+
+  &[hidden] {
+    display: none;
+  }
 }
 
 .noSearchResults {

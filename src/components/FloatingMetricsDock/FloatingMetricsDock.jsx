@@ -8,21 +8,18 @@ const TOP_INSET_PX = 64;
 const MENU_OPEN_ATTR = "data-mw-menu-open";
 const DOCK_OPEN_ATTR = "data-mw-dock-open";
 
-function resolveHandoffTarget(handoffSearchFocusTo) {
-  if (!handoffSearchFocusTo || typeof document === "undefined") return null;
+function resolveFocusTarget(targetRefOrSelector) {
+  if (!targetRefOrSelector || typeof document === "undefined") return null;
   const target =
-    typeof handoffSearchFocusTo === "string"
-      ? document.querySelector(handoffSearchFocusTo)
-      : handoffSearchFocusTo.current;
+    typeof targetRefOrSelector === "string"
+      ? document.querySelector(targetRefOrSelector)
+      : targetRefOrSelector.current;
   return target instanceof HTMLElement ? target : null;
 }
 
-/**
- * Move focus (and caret) to the in-page search before the dock unmounts so the
- * mobile keyboard can stay open across the handoff.
- */
-function handoffFocusToPageSearch(handoffSearchFocusTo) {
-  const target = resolveHandoffTarget(handoffSearchFocusTo);
+/** Move focus + caret from the active field to `targetRefOrSelector`. */
+function handoffFocusTo(targetRefOrSelector) {
+  const target = resolveFocusTarget(targetRefOrSelector);
   if (!target) return false;
 
   const active = document.activeElement;
@@ -63,24 +60,27 @@ function handoffFocusToPageSearch(handoffSearchFocusTo) {
 }
 
 function getScrollY() {
-  return (
+  const layout =
     window.scrollY ||
     document.documentElement.scrollTop ||
     document.body.scrollTop ||
-    0
-  );
+    0;
+  const visualOffset = window.visualViewport?.offsetTop || 0;
+  return layout + visualOffset;
 }
 
 /**
  * Show only after Net Earnings (anchor) has scrolled past the top inset.
- * At the real top of the page (scrollY ≈ 0) always hide — even if a short
- * filtered layout leaves the anchor inside the inset band.
+ * At the real top of the page always hide — even if a short filtered layout
+ * leaves the anchor inside the inset band.
  */
 function isAnchorPastTop(anchor) {
   if (!(anchor instanceof HTMLElement)) return false;
   const rect = anchor.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const topInVisual = vv ? rect.top - vv.offsetTop : rect.top;
   const scrolled = getScrollY() > 1 || rect.top < 0;
-  return scrolled && rect.top < TOP_INSET_PX;
+  return scrolled && topInVisual < TOP_INSET_PX;
 }
 
 /**
@@ -93,6 +93,7 @@ export default function FloatingMetricsDock({
   filters,
   search,
   handoffSearchFocusTo,
+  dockSearchFocusTo,
   enabled = true,
   ariaLabel,
   observeKey,
@@ -105,8 +106,11 @@ export default function FloatingMetricsDock({
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
   const searchFocusedRef = useRef(false);
-  const handoffToRef = useRef(handoffSearchFocusTo);
-  handoffToRef.current = handoffSearchFocusTo;
+  const visibleRef = useRef(false);
+  const pageSearchRef = useRef(handoffSearchFocusTo);
+  const dockSearchRef = useRef(dockSearchFocusTo);
+  pageSearchRef.current = handoffSearchFocusTo;
+  dockSearchRef.current = dockSearchFocusTo;
 
   const [menuOpen, setMenuOpen] = useState(() =>
     typeof document !== "undefined"
@@ -114,10 +118,27 @@ export default function FloatingMetricsDock({
       : false
   );
 
-  const handoffIfDockSearchFocused = () => {
+  const handoffDockToPage = () => {
     if (!searchFocusedRef.current) return;
-    handoffFocusToPageSearch(handoffToRef.current);
+    handoffFocusTo(pageSearchRef.current);
     searchFocusedRef.current = false;
+  };
+
+  const handoffPageToDock = () => {
+    const page = resolveFocusTarget(pageSearchRef.current);
+    if (!(page instanceof HTMLElement)) return;
+    if (document.activeElement !== page) return;
+    // Dock input may mount this frame — retry a couple of times.
+    const tryFocus = (attemptsLeft) => {
+      if (handoffFocusTo(dockSearchRef.current)) {
+        searchFocusedRef.current = true;
+        return;
+      }
+      if (attemptsLeft > 0) {
+        window.requestAnimationFrame(() => tryFocus(attemptsLeft - 1));
+      }
+    };
+    window.requestAnimationFrame(() => tryFocus(8));
   };
 
   useEffect(() => {
@@ -145,7 +166,8 @@ export default function FloatingMetricsDock({
 
   useEffect(() => {
     if (!enabled || !isMobile || menuOpen) {
-      handoffIfDockSearchFocused();
+      handoffDockToPage();
+      visibleRef.current = false;
       setVisible(false);
       return undefined;
     }
@@ -158,10 +180,15 @@ export default function FloatingMetricsDock({
 
     const applyVisibility = (pastTop) => {
       if (cancelled) return;
-      if (!pastTop) {
-        handoffIfDockSearchFocused();
+      const wasVisible = visibleRef.current;
+      if (!pastTop && wasVisible) {
+        handoffDockToPage();
       }
+      visibleRef.current = pastTop;
       setVisible((prev) => (prev === pastTop ? prev : pastTop));
+      if (pastTop && !wasVisible) {
+        handoffPageToDock();
+      }
     };
 
     const measure = () => {
@@ -192,7 +219,8 @@ export default function FloatingMetricsDock({
       if (document.body) ro.observe(document.body);
       ro.observe(document.documentElement);
 
-      window.addEventListener("scroll", measure, { passive: true });
+      window.addEventListener("scroll", measure, { passive: true, capture: true });
+      window.addEventListener("touchmove", measureSoon, { passive: true });
       window.visualViewport?.addEventListener("resize", measureSoon);
       window.visualViewport?.addEventListener("scroll", measure);
 
@@ -213,7 +241,8 @@ export default function FloatingMetricsDock({
       if (rafId) cancelAnimationFrame(rafId);
       io?.disconnect();
       ro?.disconnect();
-      window.removeEventListener("scroll", measure);
+      window.removeEventListener("scroll", measure, { capture: true });
+      window.removeEventListener("touchmove", measureSoon);
       window.visualViewport?.removeEventListener("resize", measureSoon);
       window.visualViewport?.removeEventListener("scroll", measure);
     };
@@ -227,6 +256,8 @@ export default function FloatingMetricsDock({
     if (show) {
       document.documentElement.setAttribute(DOCK_OPEN_ATTR, "1");
       setMounted(true);
+      // Page → dock after the dock search is in the DOM.
+      handoffPageToDock();
     } else {
       document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
       const timeoutId = window.setTimeout(() => setMounted(false), 420);
@@ -235,6 +266,7 @@ export default function FloatingMetricsDock({
     return () => {
       document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handoff uses refs
   }, [show]);
 
   const handleSearchFocusCapture = () => {
@@ -288,6 +320,10 @@ FloatingMetricsDock.propTypes = {
   filters: PropTypes.node,
   search: PropTypes.node,
   handoffSearchFocusTo: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({ current: PropTypes.any }),
+  ]),
+  dockSearchFocusTo: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.shape({ current: PropTypes.any }),
   ]),

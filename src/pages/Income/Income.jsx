@@ -1458,17 +1458,17 @@ export default function Income() {
               autoCorrect="off"
               autoCapitalize="off"
             />
-            {searchQuery ? (
-              <button
-                type="button"
-                className={styles.searchClearButton}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={clearSearchQuery}
-                aria-label={t("income.clearSearch")}
-              >
-                ×
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className={styles.searchClearButton}
+              hidden={!searchQuery}
+              tabIndex={searchQuery ? 0 : -1}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={clearSearchQuery}
+              aria-label={t("income.clearSearch")}
+            >
+              ×
+            </button>
           </div>
           {normalizedSearchQuery && filtered.length === 0 ? (
             <p className={styles.noSearchResults}>
@@ -1833,6 +1833,7 @@ export default function Income() {
         observeKey={`${periodKey || selectedYear || "all"}:${filtered.length}`}
         ariaLabel={t("metrics.dockAria")}
         handoffSearchFocusTo="#incomePageSearch"
+        dockSearchFocusTo="#incomeDockSearch"
         search={
           <div className={dockStyles.searchContainer}>
             <input
