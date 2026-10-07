@@ -205,11 +205,11 @@
 .searchInput {
   display: block;
   width: 100%;
-  padding: 8px 32px;
+  padding: 8px 32px 8px 12px;
   border-radius: 20px;
   /* 16px+ avoids iOS Safari zoom-on-focus */
   font-size: 16px;
-  text-align: center;
+  text-align: left;
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
@@ -225,6 +225,11 @@
   &::placeholder {
     color: var(--mw-muted);
     opacity: 0.85;
+    /* Center only the empty-state label; typed text stays LTR from the left */
+    text-align: center;
+  }
+
+  &:placeholder-shown {
     text-align: center;
   }
 
