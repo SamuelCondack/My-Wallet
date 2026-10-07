@@ -205,10 +205,11 @@
 .searchInput {
   display: block;
   width: 100%;
-  padding: 8px 32px 8px 12px;
+  padding: 8px 32px;
   border-radius: 20px;
   /* 16px+ avoids iOS Safari zoom-on-focus */
   font-size: 16px;
+  text-align: center;
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
@@ -224,6 +225,7 @@
   &::placeholder {
     color: var(--mw-muted);
     opacity: 0.85;
+    text-align: center;
   }
 
   &::-webkit-search-cancel-button {
