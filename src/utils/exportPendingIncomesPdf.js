@@ -10,14 +10,15 @@ function money(value) {
   });
 }
 
-function shortDate(value, locale = "en-US") {
+function shortDate(value, locale = "en-US", { includeYear = true } = {}) {
   if (!value) return "—";
   const [year, month, day] = String(value).split("-");
   if (!year || !month) return String(value);
+  const d = day || "01";
   if (String(locale).toLowerCase().startsWith("pt")) {
-    return `${day || "01"}/${month}/${year}`;
+    return includeYear ? `${d}/${month}/${year}` : `${d}/${month}`;
   }
-  return `${month}/${day || "01"}/${year}`;
+  return includeYear ? `${month}/${d}/${year}` : `${month}/${d}`;
 }
 
 function displayName(item) {
@@ -188,14 +189,23 @@ export async function downloadPendingIncomesPdf({
     rows.forEach((item) => {
       const name = displayName(item);
       const amount = money(item.amount);
-      const dateLabel = t("export.pdf.expected", {
-        date: shortDate(item.expectedDate, locale),
-      });
+      // Day/month only — period month/year is already in the header.
+      const dateBesideName = item.expectedDate
+        ? shortDate(item.expectedDate, locale, { includeYear: false })
+        : "";
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      const amountWidth = doc.getTextWidth(amount) + 12;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      const dateGap = dateBesideName ? doc.getTextWidth(`  ${dateBesideName}`) : 0;
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
-      const nameLines = doc.splitTextToSize(name, contentWidth * 0.62);
-      const blockH = Math.max(44, 16 + nameLines.length * 16 + 18);
+      const nameMaxWidth = Math.max(80, contentWidth - amountWidth - dateGap - 8);
+      const nameLines = doc.splitTextToSize(name, nameMaxWidth);
+      const blockH = Math.max(40, 14 + nameLines.length * 16 + 8);
 
       cursorY = ensureSpace(
         doc,
@@ -211,15 +221,19 @@ export async function downloadPendingIncomesPdf({
       doc.setTextColor(15, 23, 42);
       doc.text(nameLines, marginX, nameY);
 
+      if (dateBesideName) {
+        const firstLine = nameLines[0] || "";
+        const nameWidth = doc.getTextWidth(firstLine);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`  ${dateBesideName}`, marginX + nameWidth, nameY);
+      }
+
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.setTextColor(11, 18, 32);
       doc.text(amount, contentRight, nameY, { align: "right" });
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(100, 116, 139);
-      doc.text(dateLabel, marginX, nameY + nameLines.length * 16 + 2);
 
       cursorY += blockH;
       drawHairline(doc, marginX, cursorY, contentRight);
