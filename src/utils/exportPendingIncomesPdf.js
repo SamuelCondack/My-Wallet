@@ -3,8 +3,8 @@ import { createTranslator } from "../i18n/translate";
 
 const defaultT = createTranslator("en");
 
-function money(value) {
-  return Number(value || 0).toLocaleString("en-US", {
+function money(value, locale = "en-US") {
+  return Number(value || 0).toLocaleString(locale, {
     style: "currency",
     currency: "USD",
   });
@@ -19,6 +19,31 @@ function shortDate(value, locale = "en-US", { includeYear = true } = {}) {
     return includeYear ? `${d}/${month}/${year}` : `${d}/${month}`;
   }
   return includeYear ? `${month}/${d}/${year}` : `${month}/${d}`;
+}
+
+/** incomePeriod is YYYY-MM — show month only when year is already in the header. */
+function periodMonthLabel(period, locale = "en-US") {
+  if (!period || !String(period).includes("-")) return "";
+  const [, month] = String(period).split("-");
+  if (!month) return "";
+  return new Date(2000, Number(month) - 1, 1).toLocaleString(locale, {
+    month: "short",
+  });
+}
+
+/**
+ * Registration / period of the income beside the name (no year — header has it).
+ * Prefer createdAt day/month; otherwise the income period month.
+ */
+function registrationLabel(item, locale = "en-US") {
+  const created = item.createdAt;
+  if (created) {
+    const iso = String(created).slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+      return shortDate(iso, locale, { includeYear: false });
+    }
+  }
+  return periodMonthLabel(item.incomePeriod, locale);
 }
 
 function displayName(item) {
@@ -80,6 +105,7 @@ export async function downloadPendingIncomesPdf({
   );
   const total = rows.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   const logoDataUrl = await loadLogoDataUrl();
+  const formatMoney = (value) => money(value, locale);
 
   // Narrow portrait ≈ phone content width so WhatsApp fit-to-width keeps type large.
   const pageWidth = 420;
@@ -147,7 +173,7 @@ export async function downloadPendingIncomesPdf({
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(28);
-  doc.text(money(total), marginX + 18, cursorY + 58);
+  doc.text(formatMoney(total), marginX + 18, cursorY + 58);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
@@ -188,24 +214,29 @@ export async function downloadPendingIncomesPdf({
   } else {
     rows.forEach((item) => {
       const name = displayName(item);
-      const amount = money(item.amount);
-      // Day/month only — period month/year is already in the header.
-      const dateBesideName = item.expectedDate
-        ? shortDate(item.expectedDate, locale, { includeYear: false })
-        : "";
+      const amount = formatMoney(item.amount);
+      const registerBesideName = registrationLabel(item, locale);
+      const expectedLabel = t("export.pdf.expected", {
+        date: shortDate(item.expectedDate, locale),
+      });
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       const amountWidth = doc.getTextWidth(amount) + 12;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      const dateGap = dateBesideName ? doc.getTextWidth(`  ${dateBesideName}`) : 0;
+      const dateGap = registerBesideName
+        ? doc.getTextWidth(`  ${registerBesideName}`)
+        : 0;
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
-      const nameMaxWidth = Math.max(80, contentWidth - amountWidth - dateGap - 8);
+      const nameMaxWidth = Math.max(
+        80,
+        contentWidth - amountWidth - dateGap - 8
+      );
       const nameLines = doc.splitTextToSize(name, nameMaxWidth);
-      const blockH = Math.max(40, 14 + nameLines.length * 16 + 8);
+      const blockH = Math.max(44, 16 + nameLines.length * 16 + 18);
 
       cursorY = ensureSpace(
         doc,
@@ -221,19 +252,24 @@ export async function downloadPendingIncomesPdf({
       doc.setTextColor(15, 23, 42);
       doc.text(nameLines, marginX, nameY);
 
-      if (dateBesideName) {
+      if (registerBesideName) {
         const firstLine = nameLines[0] || "";
         const nameWidth = doc.getTextWidth(firstLine);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(11);
         doc.setTextColor(100, 116, 139);
-        doc.text(`  ${dateBesideName}`, marginX + nameWidth, nameY);
+        doc.text(`  ${registerBesideName}`, marginX + nameWidth, nameY);
       }
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.setTextColor(11, 18, 32);
       doc.text(amount, contentRight, nameY, { align: "right" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(100, 116, 139);
+      doc.text(expectedLabel, marginX, nameY + nameLines.length * 16 + 2);
 
       cursorY += blockH;
       drawHairline(doc, marginX, cursorY, contentRight);
@@ -257,7 +293,7 @@ export async function downloadPendingIncomesPdf({
   doc.setTextColor(15, 23, 42);
   doc.text(t("export.pdf.totalDue"), marginX, cursorY);
   doc.setFontSize(16);
-  doc.text(money(total), contentRight, cursorY, { align: "right" });
+  doc.text(formatMoney(total), contentRight, cursorY, { align: "right" });
 
   // Footers on every page
   const pageCount = doc.getNumberOfPages();

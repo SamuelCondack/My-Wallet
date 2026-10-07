@@ -1193,7 +1193,7 @@ export default function Expenses() {
           </p>
           <p className={styles.totalSpendings}>
             {t("metrics.yourSpendings")}:{" "}
-            <b>-${Number(totalSpendings || 0).toFixed(2)}</b>
+            <b>-${formatValue(totalSpendings)}</b>
           </p>
           <p className={styles.netEarnings}>
             {t("metrics.netEarnings")}:{" "}
@@ -1225,7 +1225,7 @@ export default function Expenses() {
             metricKey: earnedMetricKey,
             label: t("metrics.earned"),
             numericValue: earned,
-            displayValue: `$${earned.toFixed(2)}`,
+            displayValue: `$${formatValue(earned)}`,
             className: styles.summaryEarned,
             shineClass: styles.shineNeutral,
             hideFeedback: true,
@@ -1267,7 +1267,7 @@ export default function Expenses() {
           metricKey: `${monthKey}-pending`,
           label: t("metrics.pendingIncome"),
           numericValue: pending,
-          displayValue: `$${pending.toFixed(2)}`,
+          displayValue: `$${formatValue(pending)}`,
           className:
             pending > 0 ? styles.summaryPending : styles.summaryPendingZero,
           shineClass: styles.shinePending,
@@ -1276,7 +1276,7 @@ export default function Expenses() {
           metricKey: `${monthKey}-received`,
           label: t("metrics.received"),
           numericValue: received,
-          displayValue: `$${received.toFixed(2)}`,
+          displayValue: `$${formatValue(received)}`,
           className: styles.summaryReceived,
           shineClass: styles.shineReceived,
         })}
@@ -1284,7 +1284,7 @@ export default function Expenses() {
           metricKey: `${monthKey}-spendings`,
           label: t("metrics.yourSpendings"),
           numericValue: spendingsValue,
-          displayValue: `-$${spendingsValue.toFixed(2)}`,
+          displayValue: `-$${formatValue(spendingsValue)}`,
           className: styles.totalSpendings,
           shineClass: styles.shineNeutral,
         })}
@@ -1292,7 +1292,7 @@ export default function Expenses() {
           metricKey: `${monthKey}-net`,
           label: t("metrics.netEarnings"),
           numericValue: netValue,
-          displayValue: `$${netValue.toFixed(2)}`,
+          displayValue: `$${formatValue(netValue)}`,
           className: `${styles.netEarnings} ${
             netValue < 0 ? styles.netEarningsNegative : ""
           }`,

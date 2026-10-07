@@ -720,6 +720,12 @@ export default function Income() {
     copyTimeoutsRef.current = [];
   };
 
+  const formatValue = (value) =>
+    Number(value || 0).toLocaleString(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
   const copyMetricValue = async (metricKey, numericValue) => {
     const plain = Number(numericValue).toFixed(2);
     try {
@@ -1348,7 +1354,7 @@ export default function Income() {
             metricKey: `${periodKey || "all"}-earned`,
             label: t("metrics.earned"),
             numericValue: summary.earned,
-            displayValue: `$${summary.earned.toFixed(2)}`,
+            displayValue: `$${formatValue(summary.earned)}`,
             className: styles.summaryEarned,
             shineClass: styles.shineNeutral,
           })}
@@ -1356,7 +1362,7 @@ export default function Income() {
             metricKey: `${periodKey || "all"}-pending`,
             label: t("metrics.pendingIncome"),
             numericValue: summary.pending,
-            displayValue: `$${summary.pending.toFixed(2)}`,
+            displayValue: `$${formatValue(summary.pending)}`,
             className:
               summary.pending > 0
                 ? styles.summaryPending
@@ -1367,7 +1373,7 @@ export default function Income() {
             metricKey: `${periodKey || "all"}-received`,
             label: t("metrics.received"),
             numericValue: summary.received,
-            displayValue: `$${summary.received.toFixed(2)}`,
+            displayValue: `$${formatValue(summary.received)}`,
             className: styles.summaryReceived,
             shineClass: styles.shineReceived,
           })}
@@ -1383,7 +1389,7 @@ export default function Income() {
                   metricKey: spendingsMetricKey,
                   label: t("metrics.yourSpendings"),
                   numericValue: spendingsTotal,
-                  displayValue: `-$${spendingsTotal.toFixed(2)}`,
+                  displayValue: `-$${formatValue(spendingsTotal)}`,
                   className: styles.totalSpendings,
                   shineClass: styles.shineNeutral,
                   hideFeedback: true,
@@ -1430,7 +1436,7 @@ export default function Income() {
             metricKey: `${periodKey || "all"}-net`,
             label: t("metrics.netEarnings"),
             numericValue: netEarnings,
-            displayValue: `$${netEarnings.toFixed(2)}`,
+            displayValue: `$${formatValue(netEarnings)}`,
             className: `${styles.netEarnings} ${
               netEarnings < 0 ? styles.netEarningsNegative : ""
             }`,
