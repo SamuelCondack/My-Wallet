@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   updateDoc,
@@ -249,16 +250,17 @@ export async function createIncome(userId, payload, { id } = {}) {
   const eachAmount = totalAmount / installments;
   const created = [];
 
+  // Charge date is the purchase day — same on every installment.
+  const occurrenceDate =
+    payload.occurrenceDate || `${payload.incomePeriod}-01`;
+
   for (let index = 0; index < installments; index += 1) {
     const data = {
       description: payload.description.trim(),
       amount: eachAmount,
       categoryId: payload.categoryId,
       incomePeriod: shiftPeriod(payload.incomePeriod, index),
-      occurrenceDate: shiftDateOnly(
-        payload.occurrenceDate || `${payload.incomePeriod}-01`,
-        index
-      ),
+      occurrenceDate,
       expectedDate: shiftDateOnly(payload.expectedDate, index),
       receivedDate: null,
       status: INCOME_STATUS.PENDING,
@@ -400,9 +402,41 @@ export async function updateIncome(userId, incomeId, payload) {
     data.isPaused = Boolean(pauseDate);
   }
 
+  const existingSnap = await getDoc(incomeDoc(userId, incomeId));
+  const existing = existingSnap.exists() ? existingSnap.data() : null;
+  const groupId = existing?.installmentGroupId || null;
+
   await updateDoc(incomeDoc(userId, incomeId), data);
+
+  // Installments share one purchase charge date — keep the group in sync.
+  if (groupId && data.occurrenceDate) {
+    const incomes = await fetchIncomes(userId);
+    const siblings = incomes.filter(
+      (item) =>
+        item.installmentGroupId === groupId && item.id !== incomeId
+    );
+    if (siblings.length > 0) {
+      const batch = writeBatch(db);
+      siblings.forEach((item) => {
+        batch.update(incomeDoc(userId, item.id), {
+          occurrenceDate: data.occurrenceDate,
+          updatedAt: data.updatedAt,
+        });
+      });
+      await batch.commit();
+    }
+  }
+
   invalidateCached("income", userId);
-  return normalizeIncome(incomeId, { ...payload, ...data });
+  return normalizeIncome(incomeId, {
+    ...payload,
+    ...data,
+    installmentGroupId: groupId || payload.installmentGroupId || null,
+    installments: existing?.installments ?? payload.installments,
+    installmentNumber:
+      existing?.installmentNumber ?? payload.installmentNumber,
+    totalAmount: existing?.totalAmount ?? payload.totalAmount,
+  });
 }
 
 /**

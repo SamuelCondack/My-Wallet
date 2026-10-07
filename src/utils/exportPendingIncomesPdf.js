@@ -97,9 +97,16 @@ export async function downloadPendingIncomesPdf({
   t = defaultT,
   locale = "en-US",
 } = {}) {
-  const rows = [...incomes].sort((a, b) =>
-    String(a.expectedDate || "").localeCompare(String(b.expectedDate || ""))
-  );
+  const chargeKey = (item) =>
+    String(item.occurrenceDate || item.expectedDate || "");
+  // Newest charge first, oldest last; same charge → installment order.
+  const rows = [...incomes].sort((a, b) => {
+    const byCharge = chargeKey(b).localeCompare(chargeKey(a));
+    if (byCharge !== 0) return byCharge;
+    return (
+      (Number(a.installmentNumber) || 1) - (Number(b.installmentNumber) || 1)
+    );
+  });
   const total = rows.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   const logoDataUrl = await loadLogoDataUrl();
   const formatMoney = (value) => money(value, locale);
