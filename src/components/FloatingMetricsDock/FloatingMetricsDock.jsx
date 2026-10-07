@@ -84,6 +84,27 @@ function isAnchorPastTop(anchor) {
 }
 
 /**
+ * Pin a position:fixed element to the *visual* viewport top.
+ * iOS shifts the visual viewport while the keyboard is open / an offscreen
+ * input stays focused, so plain `top: 0` leaves the dock floating mid-page.
+ */
+function pinDockToVisualViewport(el) {
+  if (!(el instanceof HTMLElement)) return;
+  const vv = window.visualViewport;
+  if (!vv) {
+    el.style.top = "";
+    el.style.left = "";
+    el.style.width = "";
+    el.style.right = "";
+    return;
+  }
+  el.style.top = `${vv.offsetTop}px`;
+  el.style.left = `${vv.offsetLeft}px`;
+  el.style.width = `${vv.width}px`;
+  el.style.right = "auto";
+}
+
+/**
  * Frosted floating dock that fades in after `anchorRef` scrolls past the top.
  * Mobile-only. Keeps summary metrics + compact filters visible while editing cards.
  */
@@ -107,6 +128,7 @@ export default function FloatingMetricsDock({
   const [mounted, setMounted] = useState(false);
   const searchFocusedRef = useRef(false);
   const visibleRef = useRef(false);
+  const dockElRef = useRef(null);
   const pageSearchRef = useRef(handoffSearchFocusTo);
   const dockSearchRef = useRef(dockSearchFocusTo);
   pageSearchRef.current = handoffSearchFocusTo;
@@ -128,10 +150,10 @@ export default function FloatingMetricsDock({
     const page = resolveFocusTarget(pageSearchRef.current);
     if (!(page instanceof HTMLElement)) return;
     if (document.activeElement !== page) return;
-    // Dock input may mount this frame — retry a couple of times.
     const tryFocus = (attemptsLeft) => {
       if (handoffFocusTo(dockSearchRef.current)) {
         searchFocusedRef.current = true;
+        pinDockToVisualViewport(dockElRef.current);
         return;
       }
       if (attemptsLeft > 0) {
@@ -189,11 +211,17 @@ export default function FloatingMetricsDock({
       if (pastTop && !wasVisible) {
         handoffPageToDock();
       }
+      if (pastTop) {
+        pinDockToVisualViewport(dockElRef.current);
+      }
     };
 
     const measure = () => {
       if (cancelled) return;
       applyVisibility(isAnchorPastTop(anchorRef?.current));
+      if (visibleRef.current) {
+        pinDockToVisualViewport(dockElRef.current);
+      }
     };
 
     const measureSoon = () => {
@@ -256,14 +284,27 @@ export default function FloatingMetricsDock({
     if (show) {
       document.documentElement.setAttribute(DOCK_OPEN_ATTR, "1");
       setMounted(true);
-      // Page → dock after the dock search is in the DOM.
       handoffPageToDock();
-    } else {
-      document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
-      const timeoutId = window.setTimeout(() => setMounted(false), 420);
-      return () => window.clearTimeout(timeoutId);
+      pinDockToVisualViewport(dockElRef.current);
+      // Re-pin after layout/keyboard settle.
+      const t1 = window.setTimeout(() => {
+        pinDockToVisualViewport(dockElRef.current);
+        handoffPageToDock();
+      }, 50);
+      const t2 = window.setTimeout(
+        () => pinDockToVisualViewport(dockElRef.current),
+        200
+      );
+      return () => {
+        window.clearTimeout(t1);
+        window.clearTimeout(t2);
+        document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
+      };
     }
+    document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
+    const timeoutId = window.setTimeout(() => setMounted(false), 420);
     return () => {
+      window.clearTimeout(timeoutId);
       document.documentElement.removeAttribute(DOCK_OPEN_ATTR);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- handoff uses refs
@@ -271,6 +312,7 @@ export default function FloatingMetricsDock({
 
   const handleSearchFocusCapture = () => {
     searchFocusedRef.current = true;
+    pinDockToVisualViewport(dockElRef.current);
   };
 
   const handleSearchBlurCapture = (event) => {
@@ -286,6 +328,10 @@ export default function FloatingMetricsDock({
 
   return createPortal(
     <div
+      ref={(node) => {
+        dockElRef.current = node;
+        if (node && show) pinDockToVisualViewport(node);
+      }}
       className={`${styles.dock} ${show ? styles.dockVisible : ""}`}
       data-no-pull-refresh="true"
       role="region"
